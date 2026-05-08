@@ -24,17 +24,31 @@ def _slugify(value: str) -> str:
 
 @router.get("/tenants")
 def list_tenants(request: Request, user: User = Depends(require_superadmin), db: Session = Depends(get_db)):
+    # Counts pro Tenant in Subqueries -- so vermeiden wir den GROUP-BY-Konflikt
+    # mit eager-loaded Relationships (tenant_settings, resellers), den Postgres
+    # nicht schluckt (SQLite waere kulant).
+    users_q = (
+        select(User.tenant_id.label("tid"), func.count(User.id).label("c"))
+        .group_by(User.tenant_id).subquery()
+    )
+    domains_q = (
+        select(Domain.tenant_id.label("tid"), func.count(Domain.id).label("c"))
+        .group_by(Domain.tenant_id).subquery()
+    )
+    reports_q = (
+        select(Report.tenant_id.label("tid"), func.count(Report.id).label("c"))
+        .group_by(Report.tenant_id).subquery()
+    )
     rows = db.execute(
         select(
             Tenant,
-            func.count(func.distinct(User.id)).label("users"),
-            func.count(func.distinct(Domain.id)).label("domains"),
-            func.count(func.distinct(Report.id)).label("reports"),
+            func.coalesce(users_q.c.c, 0).label("users"),
+            func.coalesce(domains_q.c.c, 0).label("domains"),
+            func.coalesce(reports_q.c.c, 0).label("reports"),
         )
-        .outerjoin(User, User.tenant_id == Tenant.id)
-        .outerjoin(Domain, Domain.tenant_id == Tenant.id)
-        .outerjoin(Report, Report.tenant_id == Tenant.id)
-        .group_by(Tenant.id)
+        .outerjoin(users_q, users_q.c.tid == Tenant.id)
+        .outerjoin(domains_q, domains_q.c.tid == Tenant.id)
+        .outerjoin(reports_q, reports_q.c.tid == Tenant.id)
         .order_by(Tenant.name)
     ).all()
     return render(request, "admin_tenants.html", user=user, tenant=user.tenant,
@@ -144,17 +158,32 @@ def tenant_detail(tenant_id: int, request: Request, user: User = Depends(require
 # --- Resellers ----------------------------------------------------------------
 @router.get("/resellers")
 def list_resellers(request: Request, user: User = Depends(require_superadmin), db: Session = Depends(get_db)):
+    # Subquery-Aggregation -- vermeidet GROUP-BY-Konflikt mit eager-loaded
+    # Reseller-Relationships unter Postgres.
+    tenants_q = (
+        select(Tenant.reseller_id.label("rid"), func.count(Tenant.id).label("c"))
+        .group_by(Tenant.reseller_id).subquery()
+    )
+    domains_q = (
+        select(Tenant.reseller_id.label("rid"), func.count(Domain.id).label("c"))
+        .join(Domain, Domain.tenant_id == Tenant.id)
+        .group_by(Tenant.reseller_id).subquery()
+    )
+    reports_q = (
+        select(Tenant.reseller_id.label("rid"), func.count(Report.id).label("c"))
+        .join(Report, Report.tenant_id == Tenant.id)
+        .group_by(Tenant.reseller_id).subquery()
+    )
     rows = db.execute(
         select(
             Reseller,
-            func.count(func.distinct(Tenant.id)).label("n_tenants"),
-            func.count(func.distinct(Domain.id)).label("n_domains"),
-            func.count(func.distinct(Report.id)).label("n_reports"),
+            func.coalesce(tenants_q.c.c, 0).label("n_tenants"),
+            func.coalesce(domains_q.c.c, 0).label("n_domains"),
+            func.coalesce(reports_q.c.c, 0).label("n_reports"),
         )
-        .outerjoin(Tenant, Tenant.reseller_id == Reseller.id)
-        .outerjoin(Domain, Domain.tenant_id == Tenant.id)
-        .outerjoin(Report, Report.tenant_id == Tenant.id)
-        .group_by(Reseller.id)
+        .outerjoin(tenants_q, tenants_q.c.rid == Reseller.id)
+        .outerjoin(domains_q, domains_q.c.rid == Reseller.id)
+        .outerjoin(reports_q, reports_q.c.rid == Reseller.id)
         .order_by(Reseller.is_platform.desc(), Reseller.name)
     ).all()
     return render(request, "admin_resellers.html", user=user, tenant=user.tenant,
