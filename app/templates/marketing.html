@@ -146,9 +146,11 @@
 <section class="video-showcase">
   <div class="container-mkt">
     <div class="vs-head">
-      <span class="eyebrow"><span class="dot-live"></span>2 Minuten Erklaervideo</span>
-      <h2>Sieh's in Aktion.</h2>
-      <p class="lede">Ein kurzer Walkthrough durch das Dashboard, den DMARC-Generator und die Managed-DMARC-Delegation.</p>
+      <span class="eyebrow"><span class="dot-live"></span>Erklaervideo &middot; 2 Minuten</span>
+      <h2>Für wen wir das gebaut haben — und welcher Schmerz weggeht.</h2>
+      <p class="lede">Wenn du IT-Verantwortlicher, MSP, Agentur oder Hostmaster bist und DMARC-Reports
+        bisher nur als unleserliche XML-Mails kennst: in zwei Minuten siehst du, warum das Tool genau dafuer da ist —
+        und wie es Spoofing, schlechte Pass-Raten und „bin ich auf einer Blacklist?“ ohne Excel-Pivots loest.</p>
     </div>
     <div class="vs-player" data-yt="IOeKjtEocpk" role="button" tabindex="0"
          aria-label="Video abspielen: DMARC Geeks Erklaervideo">
@@ -985,48 +987,7 @@
   <a href="/signup" class="btn-primary">Jetzt starten</a>
 </div>
 
-<footer class="mkt-footer">
-  <div class="container-mkt">
-    <div class="footer-cols">
-      <div>
-        <strong>DMARC<span style="color:var(--brand)">Aggregator</span></strong>
-        <p class="muted small">Self-hosted &amp; Whitelabel-DMARC für IT-Teams, Agenturen und MSPs.</p>
-        <p class="muted small">Made in Switzerland <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg> · DSGVO-konform · DPA auf Anfrage</p>
-      </div>
-      <div>
-        <h4>Produkt</h4>
-        <ul>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#preise">Preise</a></li>
-          <li><a href="#audience">Für MSPs</a></li>
-          <li><a href="/login">Login</a></li>
-          <li><a href="/help">Dokumentation</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Unternehmen</h4>
-        <ul>
-          <li><a href="#how">So funktioniert's</a></li>
-          <li><a href="#vergleich">Vergleich</a></li>
-          <li><a href="#faq">FAQ</a></li>
-          <li><a href="/kontakt?topic=general">Kontakt</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Rechtliches</h4>
-        <ul>
-          <li><a href="/about#datenschutz">Datenschutz</a></li>
-          <li><a href="/about#impressum">Impressum</a></li>
-          <li><a href="/about#agb">AGB</a></li>
-          <li><a href="/kontakt?topic=general">DPA / AVV</a></li>
-        </ul>
-      </div>
-    </div>
-    <p class="muted small" style="text-align:center; margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
-      © 2026 DMARC Geeks
-    </p>
-  </div>
-</footer>
+{% include "_marketing_footer.html" %}
 
 <script>
 function toggleTheme() {

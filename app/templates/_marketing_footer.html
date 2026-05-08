@@ -1,0 +1,83 @@
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <div class="footer-cols">
+      <div>
+        <strong style="font-size:16px;display:inline-flex;align-items:center;gap:6px;">
+          <img src="/static/logo.svg" alt="" width="22" height="22">
+          DMARC<span style="color:var(--brand)">Geeks</span>
+        </strong>
+        <p class="muted small">Self-hosted &amp; Whitelabel-DMARC für IT-Teams, Agenturen und MSPs.</p>
+        <p class="muted small">
+          Made in Switzerland
+          <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img" style="width:14px;height:14px;vertical-align:-2px;"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+          &middot; DSG / DSGVO &middot; <a href="/kontakt?topic=dpa">DPA / AVV auf Anfrage</a>
+        </p>
+      </div>
+      <div>
+        <h4>Produkt</h4>
+        <ul>
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#preise">Preise</a></li>
+          <li><a href="/services">Services</a></li>
+          <li><a href="/wissen">Wissen</a></li>
+          <li><a href="/login">Login</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Tools</h4>
+        <ul>
+          <li><a href="/check">Mail-Health-Check</a></li>
+          <li><a href="/dkim-check">DKIM Inspector</a></li>
+          <li><a href="/dmarc-generator">DMARC Generator</a></li>
+          <li><a href="/spf-generator">SPF Generator</a></li>
+          <li><a href="/report-viewer">XML Report Viewer</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kontakt</h4>
+        <ul>
+          <li><a href="/kontakt">📅 Anfragen</a></li>
+          <li><a href="/demo">🎯 Live-Demo</a></li>
+          <li><a href="mailto:service@dmarc-geeks.ch">service@dmarc-geeks.ch</a></li>
+          <li><a href="tel:+41779503152">+41 77 950 31 52</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Rechtliches</h4>
+        <ul>
+          <li><a href="/impressum">Impressum</a></li>
+          <li><a href="/datenschutz">Datenschutz</a></li>
+          <li><a href="/compliance">Compliance</a></li>
+          <li><a href="/kontakt?topic=dpa">DPA / AVV</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="muted small">
+        © 2026 <strong>DMARC Geeks</strong> &middot; ein Service von Nils Lappenbusch
+        &middot; Baumackerstrasse 11, 8107 Buchs ZH, Schweiz
+      </p>
+      <p class="muted small">
+        <a href="/impressum">Impressum</a>
+        &middot; <a href="/datenschutz">Datenschutz</a>
+        &middot; <a href="/compliance">Compliance</a>
+        &middot; <a href="/kontakt">Kontakt</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .mkt-footer { padding: 56px 0 32px; margin-top: 80px; border-top: 1px solid var(--border, #e2e8f0); background: var(--card, #fafbfd); }
+  .mkt-footer .container-mkt { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  .mkt-footer .footer-cols { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 32px; }
+  @media (max-width: 920px) { .mkt-footer .footer-cols { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 540px) { .mkt-footer .footer-cols { grid-template-columns: 1fr; } }
+  .mkt-footer h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #64748b); margin: 0 0 10px; }
+  .mkt-footer ul { list-style: none; margin: 0; padding: 0; }
+  .mkt-footer ul li { margin-bottom: 6px; }
+  .mkt-footer ul a, .mkt-footer .muted a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border, #cbd5e1); }
+  .mkt-footer ul a:hover, .mkt-footer .muted a:hover { color: var(--brand, #2563eb); border-bottom-color: var(--brand, #2563eb); }
+  .mkt-footer .footer-bottom { margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .mkt-footer .footer-bottom p { margin: 0; font-size: 12.5px; }
+</style>

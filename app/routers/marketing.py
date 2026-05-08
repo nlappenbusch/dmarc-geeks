@@ -315,6 +315,16 @@ def wissen(request: Request):
     return render(request, "wissen.html", user=None, tenant=None, active=None)
 
 
+@router.get("/impressum")
+def impressum(request: Request):
+    return render(request, "impressum.html", user=None, tenant=None, active=None)
+
+
+@router.get("/datenschutz")
+def datenschutz(request: Request):
+    return render(request, "datenschutz.html", user=None, tenant=None, active=None)
+
+
 @router.get("/dkim-check")
 def dkim_check_tool(request: Request, domain: str = "", selector: str = ""):
     """Free DKIM-Inspector tool — public, no auth."""
