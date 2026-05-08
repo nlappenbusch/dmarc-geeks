@@ -414,6 +414,11 @@ async def system_save(request: Request, user: User = Depends(require_superadmin)
     # Felder, die niemals leer geschrieben werden dürfen (sonst crashed die App).
     no_empty_keys = {"DATABASE_URL", "SECRET_KEY", "FERNET_KEY", "SUPERADMIN_EMAIL"}
 
+    # Field-Kind-Map: brauche ich um "leere Numbers" zu erkennen.
+    kind_by_key = {f["key"]: f["kind"] for f in EDITABLE_FIELDS}
+    # Felder, deren Leerwert die App beim Reload zerschiesst (pydantic-Validation).
+    typed_keys = {k for k, kind in kind_by_key.items() if kind in ("number", "url", "email")}
+
     for k in valid_keys:
         if k in bool_keys:
             updates[k] = "true" if form.get(k) in ("on", "true", "1") else "false"
@@ -422,11 +427,14 @@ async def system_save(request: Request, user: User = Depends(require_superadmin)
             if v is None:
                 continue
             v = str(v).strip()
-            # Sensitive Felder: leer = "alten Wert behalten" (in .env bleibt der bestehende Eintrag)
+            # Sensitive Felder: leer = "alten Wert behalten"
             if not v and is_sensitive(k):
                 continue
-            # Kritische Felder: leer ablehnen — sonst killt's den App-Start
+            # Kritische Felder: leer ablehnen
             if not v and k in no_empty_keys:
+                continue
+            # Number/URL/Email: leer skippen (sonst pydantic-Crash beim Reload)
+            if not v and k in typed_keys:
                 continue
             updates[k] = v
 
