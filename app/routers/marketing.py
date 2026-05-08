@@ -240,6 +240,22 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
     # Operator-Mail ist die "Pflicht-Sendung" -- wenn die scheitert, Fehler zeigen.
     sent = op_sent
 
+    if not sent:
+        # SMTP nicht konfiguriert oder fehlgeschlagen -- ehrliche Fallback-Antwort
+        return render(
+            request, "kontakt.html",
+            user=None, tenant=None, active=None,
+            topic=topic, topic_label=_topic_label(topic),
+            prefill_domain="", topics=_TOPIC_LABELS,
+            sent=False,
+            error="Mail-Versand temporaer nicht moeglich. Bitte schreib uns direkt an "
+                  + op_recipients[0] + " - wir melden uns innerhalb 24h.",
+            posted_name=name, posted_email=email,
+            posted_company=company, posted_phone=phone, posted_message=message,
+        )
+
+    return RedirectResponse(f"/kontakt?sent=1&topic={topic}", status_code=303)
+
 
 # ============================================================================
 # Lead-Notify bei Domain-Eingabe in oeffentlichen Tools (Mail-Check, DKIM Insp.)
@@ -308,24 +324,6 @@ def notify_domain_check(request: Request, tool: str, domain: str) -> None:
         # Lead-Notification darf NIE den User-Request crashen
         import logging
         logging.getLogger(__name__).warning("notify_domain_check failed", exc_info=True)
-
-    if not sent:
-        # SMTP nicht konfiguriert oder fehlgeschlagen -> wir loggen's, zeigen aber
-        # dem User keinen 500er, sondern eine ehrliche "wir konnten gerade nicht
-        # zustellen" Antwort. Audit-Trail im Log.
-        return render(
-            request, "kontakt.html",
-            user=None, tenant=None, active=None,
-            topic=topic, topic_label=_topic_label(topic),
-            prefill_domain="", topics=_TOPIC_LABELS,
-            sent=False,
-            error="Mail-Versand temporaer nicht moeglich. Bitte schreib uns direkt an "
-                  + op_recipient + " — wir melden uns innerhalb 24h.",
-            posted_name=name, posted_email=email,
-            posted_company=company, posted_phone=phone, posted_message=message,
-        )
-
-    return RedirectResponse(f"/kontakt?sent=1&topic={topic}", status_code=303)
 
 
 @router.get("/")

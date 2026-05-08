@@ -68,6 +68,22 @@
 </footer>
 
 <style>
+  /* Prominent Mail-Check link in alle Marketing-Navs (Footer-Partial wird ueberall geladen) */
+  .mkt-nav .nav-mailcheck {
+    background: linear-gradient(135deg, rgba(37,99,235,0.10), rgba(124,58,237,0.10));
+    border: 1px solid rgba(37,99,235,0.25);
+    color: var(--brand, #2563eb) !important;
+    font-weight: 600;
+    padding: 6px 12px !important;
+    border-radius: 999px;
+    transition: background .15s, border-color .15s, transform .15s;
+  }
+  .mkt-nav .nav-mailcheck:hover {
+    background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(124,58,237,0.18));
+    border-color: rgba(37,99,235,0.45);
+    transform: translateY(-1px);
+  }
+
   .mkt-footer { padding: 56px 0 32px; margin-top: 80px; border-top: 1px solid var(--border, #e2e8f0); background: var(--card, #fafbfd); }
   .mkt-footer .container-mkt { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
   .mkt-footer .footer-cols { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 32px; }
