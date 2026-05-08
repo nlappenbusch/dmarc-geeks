@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Tenant {{ target.name }} · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Tenants</a> · {{ target.name }}</div>
+<h1>{{ target.name }} <span class="muted small">slug: {{ target.slug }} · plan: {{ profile.plan }}</span></h1>
+
+<section class="card">
+  <h2>Tenant betreten</h2>
+  <p class="muted small">Springe als Superadmin in diese Tenant-Sicht. Alle Dashboards/Reports/Domains zeigen dann deren Daten. Kommt zurück über den orangefarbenen Banner oben.</p>
+  <form method="post" action="/admin/tenants/{{ target.id }}/enter" style="display:inline">
+    <button type="submit" class="btn-primary">Tenant betreten →</button>
+  </form>
+</section>
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">User</div><div class="kpi-value">{{ target.users|length }}</div></div>
+  <div class="kpi"><div class="kpi-label">Domains</div><div class="kpi-value">{{ target.domains|length }}</div></div>
+  <div class="kpi"><div class="kpi-label">Reports</div><div class="kpi-value">{{ n_reports|num }}</div></div>
+  <div class="kpi"><div class="kpi-label">Plan</div><div class="kpi-value" style="font-size:18px;">{{ profile.plan }}</div></div>
+</section>
+
+<section class="card">
+  <h2>Kundendaten</h2>
+  <table class="data">
+    <tbody>
+      <tr><td>Firmenname</td><td>{{ profile.company_name or '—' }}</td></tr>
+      <tr><td>Ansprechpartner</td><td>{{ profile.contact_name or '—' }}</td></tr>
+      <tr><td>E-Mail</td><td>{{ profile.contact_email or '—' }}</td></tr>
+      <tr><td>Telefon</td><td>{{ profile.contact_phone or '—' }}</td></tr>
+      <tr><td>Adresse</td><td>{{ profile.street or '' }}{% if profile.postal_code or profile.city %}, {{ profile.postal_code }} {{ profile.city }}{% endif %}{% if profile.country %}, {{ profile.country }}{% endif %}</td></tr>
+      <tr><td>USt-ID</td><td>{{ profile.vat_id or '—' }}</td></tr>
+      <tr><td>Notiz</td><td>{{ profile.notes or '—' }}</td></tr>
+      <tr><td>Letzte Änderung</td><td>{{ profile.updated_at|dt }}</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">Editierbar als Superadmin nur, wenn du den Tenant <strong>betrittst</strong> und dann unter Settings änderst — schützt vor versehentlicher Datenmanipulation.</p>
+</section>
+
+<section class="card">
+  <h2>Users im Tenant</h2>
+  <table class="data">
+    <thead><tr><th>E-Mail</th><th>Rolle</th><th>Erstellt</th></tr></thead>
+    <tbody>
+    {% for u in target.users %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.is_superadmin %}<span class="badge ok">Superadmin</span>{% endif %}
+          {% if u.is_admin %}<span class="badge">Admin</span>{% else %}<span class="badge">Member</span>{% endif %}
+        </td>
+        <td>{{ u.created_at|dt }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Domains im Tenant</h2>
+  {% if target.domains %}
+  <table class="data">
+    <thead><tr><th>Domain</th><th>Status</th><th>Erstellt</th></tr></thead>
+    <tbody>
+    {% for d in target.domains %}
+      <tr>
+        <td>{{ d.name }}</td>
+        <td>{% if d.verified_at %}<span class="badge ok">verifiziert</span>{% else %}<span class="badge warn">offen</span>{% endif %}</td>
+        <td>{{ d.created_at|dt }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Keine Domains.</p>{% endif %}
+</section>
+{% endblock %}

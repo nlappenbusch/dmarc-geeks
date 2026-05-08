@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p class="muted">
+  {% if selected_domain %}
+    Übersicht für <strong>{{ selected_domain.name }}</strong> · letzte {{ days }} Tage ·
+    <a href="/dashboard">alle Domains anzeigen →</a>
+  {% else %}
+    Übersicht über alle Domains von <strong>{{ tenant.name }}</strong> · letzte {{ days }} Tage
+  {% endif %}
+</p>
+
+{% if all_domains %}
+<form method="get" action="/dashboard" class="filterbar card" style="margin-bottom:14px;">
+  <label>Domain
+    <select name="domain_id" onchange="this.form.submit()">
+      <option value="">— alle ({{ all_domains|length }}) —</option>
+      {% for d in all_domains %}
+        <option value="{{ d.id }}" {% if selected_domain and selected_domain.id == d.id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Zeitraum
+    <select name="days" onchange="this.form.submit()">
+      {% for d, lab in [(7,'7 Tage'),(30,'30 Tage'),(90,'90 Tage'),(365,'1 Jahr')] %}
+      <option value="{{ d }}" {% if days==d %}selected{% endif %}>{{ lab }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if selected_domain or days != 30 %}
+  <a href="/dashboard" class="btn-link">Filter zurücksetzen</a>
+  {% endif %}
+</form>
+{% endif %}
+
+{% if not checklist.all_done %}
+<section class="onboarding">
+  <div class="onboarding-head">
+    <div style="flex:1">
+      <h2>Erste Schritte</h2>
+      <p class="muted small">{{ checklist.done_count }} von {{ checklist.required_count }} erledigt</p>
+    </div>
+    <div class="progress-bar" style="width: 200px;">
+      <div class="progress-fill" style="width: {{ checklist.percent }}%"></div>
+    </div>
+    <div class="progress-text">{{ checklist.percent }} %</div>
+  </div>
+  <ol class="steps">
+    {% for item in checklist.items %}
+    <li class="{{ 'done' if item.done else '' }}">
+      <span class="step-check" aria-hidden="true">{% if item.done %}✓{% else %}{{ loop.index }}{% endif %}</span>
+      <div>
+        <h3>{{ item.title }}{% if item.optional %} <span class="badge optional">optional</span>{% endif %}</h3>
+        <p>{{ item.hint }}</p>
+      </div>
+      {% if not item.done %}
+      <a href="{{ item.cta_href }}" class="btn-primary">{{ item.cta_label }}</a>
+      {% else %}
+      <span class="badge ok">erledigt</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% if summaries %}
+{% set rep_q = '?days=' ~ days ~ ('&domain_id=' ~ domain_id if domain_id else '') %}
+<section class="kpi-row">
+  <a class="kpi clickable" href="/reports{{ rep_q }}"><div class="kpi-label">Nachrichten</div><div class="kpi-value">{{ totals.total|num }}</div><div class="kpi-sub">→ alle Reports</div></a>
+  <a class="kpi pass clickable" href="/reports{{ rep_q }}&status=pass"><div class="kpi-label">DMARC pass</div><div class="kpi-value">{{ totals.pass_count|num }}</div><div class="kpi-sub">{{ totals.pass_rate }} %</div></a>
+  <a class="kpi fail clickable" href="/reports{{ rep_q }}&status=fail"><div class="kpi-label">DMARC fail</div><div class="kpi-value">{{ totals.fail_count|num }}</div><div class="kpi-sub">→ Fail-Records</div></a>
+  <div class="kpi warn"><div class="kpi-label">Quarantine</div><div class="kpi-value">{{ totals.quarantine_count|num }}</div></div>
+  <div class="kpi danger"><div class="kpi-label">Reject</div><div class="kpi-value">{{ totals.reject_count|num }}</div></div>
+</section>
+
+<section class="card">
+  <h2>Verlauf (täglich)</h2>
+  <canvas id="dailyChart" height="80"></canvas>
+</section>
+
+{% if heatmap.max > 0 %}
+<section class="card">
+  <h2>Aktivitäts-Kalender <span class="muted small">— letzte 12 Wochen</span></h2>
+  <div class="cal-heatmap" role="img" aria-label="Aktivitätskalender">
+    <div class="cal-weekdays">
+      <div></div><div>Mo</div><div></div><div>Mi</div><div></div><div>Fr</div><div></div>
+    </div>
+    <div class="cal-grid">
+    {% set ns = namespace(prev_weekday=-1) %}
+    {# pad start so the grid begins at Monday of the first week #}
+    {% if heatmap.days %}
+      {% for _ in range(heatmap.days[0].weekday) %}<div class="cal-day pad"></div>{% endfor %}
+    {% endif %}
+    {% for d in heatmap.days %}
+      <div class="cal-day lvl-{{ d.intensity }}"
+           title="{{ d.date }} · {{ d.total }} Nachrichten{% if d.pass_rate is not none %} · {{ d.pass_rate }} % pass{% endif %}"></div>
+    {% endfor %}
+    </div>
+  </div>
+  <div class="cal-legend">
+    <span class="muted small">weniger</span>
+    <span class="cal-day lvl-0"></span>
+    <span class="cal-day lvl-1"></span>
+    <span class="cal-day lvl-2"></span>
+    <span class="cal-day lvl-3"></span>
+    <span class="cal-day lvl-4"></span>
+    <span class="muted small">mehr</span>
+  </div>
+</section>
+{% endif %}
+
+<div class="grid-2-50">
+  <section class="card">
+    <h2>Sender-Mix</h2>
+    <p class="muted small">Wer sendet in deinem Namen — und wie sauber?</p>
+    <canvas id="senderDonut" height="200"></canvas>
+    {% if senders %}
+    <table class="data" style="margin-top:8px;">
+      <thead><tr><th></th><th>Sender</th><th>Volumen</th><th>Pass-Rate</th></tr></thead>
+      <tbody>
+      {% for s in senders %}
+        <tr style="cursor:pointer;" onclick="window.location.href='/reports{{ rep_q }}&q={{ s.label|urlencode }}'">
+          <td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:{{ s.color }};"></span></td>
+          <td>{{ s.label }}</td>
+          <td>{{ s.total|num }}</td>
+          <td class="{{ 'ok' if s.pass_rate >= 99 else 'bad' if s.pass_rate < 90 else '' }}">{{ s.pass_rate }} %</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Volumen pro Sender (täglich)</h2>
+    <p class="muted small">Wer sendet wie viel — und wann ändert sich das?</p>
+    <canvas id="senderStack" height="200"></canvas>
+  </section>
+</div>
+
+{% if sankey %}
+<section class="card">
+  <h2>Mail-Flow: Sender → Alignment → Disposition</h2>
+  <p class="muted small">Folge dem Strom: woher kommen die Mails, ob sie SPF/DKIM passend ausrichten, und was die Empfänger damit machen.</p>
+  <canvas id="sankeyChart" height="120"></canvas>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Domains</h2>
+  <table class="data">
+    <thead><tr><th>Domain</th><th>Nachrichten</th><th>Pass</th><th>Fail</th><th>Pass-Rate</th><th>Trend</th><th>Letzter Report</th><th></th></tr></thead>
+    <tbody>
+    {% for s in summaries %}
+      <tr>
+        <td><a href="/domains/{{ s.domain.id }}">{{ s.domain.name }}</a>
+            {% if s.domain.verified_at %}<span class="badge ok">verifiziert</span>{% else %}<span class="badge warn">nicht verifiziert</span>{% endif %}
+        </td>
+        <td>{{ s.total|num }}</td>
+        <td class="ok">{{ s.pass|num }}</td>
+        <td class="bad">{{ s.fail|num }}</td>
+        <td>{{ s.pass_rate }} %</td>
+        <td><canvas class="sparkline" data-spark="{{ s.sparkline | tojson }}" width="80" height="24"></canvas></td>
+        <td>{{ s.last_report|dt }}</td>
+        <td><a href="/reports?domain_id={{ s.domain.id }}">Reports →</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Top Quellen</h2>
+  {% if sources %}
+  <table class="data">
+    <thead><tr><th>IP</th><th>Hostname</th><th>Volumen</th><th>Pass</th><th>Fail</th><th>Pass-Rate</th></tr></thead>
+    <tbody>
+    {% for s in sources %}
+      <tr><td><a href="/sources/{{ s.ip }}">{{ s.ip }}</a></td><td>{{ s.host or '—' }}</td><td>{{ s.total|num }}</td>
+          <td class="ok">{{ s.pass|num }}</td><td class="bad">{{ s.fail|num }}</td><td>{{ s.pass_rate }} %</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Noch keine Daten.</p>{% endif %}
+</section>
+
+<script>
+window.addEventListener('load', () => {
+  const isDark = document.documentElement.classList.contains('dark');
+  const tickColor = isDark ? '#94a3b8' : '#6b7280';
+  const gridColor = isDark ? '#1f2937' : '#e3e7ec';
+  Chart.defaults.color = tickColor;
+  Chart.defaults.borderColor = gridColor;
+
+  // 1) Daily pass/fail
+  const data = {{ series | tojson }};
+  if (data.length) {
+    new Chart(document.getElementById('dailyChart'), {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.day),
+        datasets: [
+          { label: 'Pass', data: data.map(d => d.pass), backgroundColor: '#16a34a' },
+          { label: 'Fail', data: data.map(d => d.fail), backgroundColor: '#dc2626' },
+        ],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+                 scales: { x: { stacked: true }, y: { stacked: true } } }
+    });
+  }
+
+  // 2) Sender donut
+  const senders = {{ senders | tojson }};
+  if (senders.length) {
+    new Chart(document.getElementById('senderDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: senders.map(s => s.label),
+        datasets: [{
+          data: senders.map(s => s.total),
+          backgroundColor: senders.map(s => s.color),
+          borderWidth: 0,
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } },
+                 cutout: '66%' }
+    });
+  }
+
+  // 3) Sender stacked area
+  const stack = {{ sender_stack | tojson }};
+  if (stack.labels && stack.labels.length) {
+    new Chart(document.getElementById('senderStack'), {
+      type: 'line',
+      data: {
+        labels: stack.labels,
+        datasets: stack.datasets.map(ds => ({ ...ds, fill: true, tension: 0.25,
+                                              pointRadius: 0, borderWidth: 1 }))
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+                 interaction: { mode: 'index', intersect: false },
+                 scales: { y: { stacked: true } } }
+    });
+  }
+
+  // 4) Sankey flow
+  const sankey = {{ sankey | tojson }};
+  if (sankey.length && Chart.registry.controllers.get('sankey')) {
+    new Chart(document.getElementById('sankeyChart'), {
+      type: 'sankey',
+      data: {
+        datasets: [{
+          data: sankey,
+          colorFrom: c => {
+            const lab = c.dataset.data[c.dataIndex].from;
+            if (lab === 'Aligned') return '#16a34a';
+            if (lab === 'Not aligned') return '#dc2626';
+            return '#2563eb';
+          },
+          colorTo: c => {
+            const lab = c.dataset.data[c.dataIndex].to;
+            if (lab === 'Aligned' || lab === 'Delivered') return '#16a34a';
+            if (lab === 'Not aligned' || lab === 'Rejected') return '#dc2626';
+            if (lab === 'Quarantined') return '#d97706';
+            return '#2563eb';
+          },
+          colorMode: 'gradient',
+          alpha: 0.6,
+        }]
+      },
+      options: { responsive: true }
+    });
+  }
+
+  // 5) Sparklines per domain row
+  document.querySelectorAll('canvas.sparkline').forEach(el => {
+    let arr = [];
+    try { arr = JSON.parse(el.dataset.spark); } catch {}
+    if (!arr.length) return;
+    new Chart(el, {
+      type: 'line',
+      data: {
+        labels: arr.map((_, i) => i),
+        datasets: [{ data: arr, borderColor: 'var(--brand)', borderWidth: 1.5,
+                     pointRadius: 0, tension: 0.3, fill: false }]
+      },
+      options: {
+        responsive: false, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+        elements: { line: { borderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand') } }
+      }
+    });
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

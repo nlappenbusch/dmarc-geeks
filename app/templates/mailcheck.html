@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if result %}Mail-Health: {{ query_domain }} · {% endif %}Mail-Security Check · DMARC Aggregator</title>
+  <meta name="description" content="Kostenloser Mail-Security-Check für deine Domain. Wir prüfen DMARC, SPF, DKIM, MX, MTA-STS, BIMI in 5 Sekunden.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check" class="active-mkt">Domain prüfen</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<!-- ============== HERO + INPUT ============== -->
+<section class="check-hero {% if result %}check-hero-compact{% endif %}">
+  <div class="hero-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="container-mkt" style="position:relative; z-index:1;">
+    {% if not result %}
+    <div style="text-align:center;">
+      <span class="eyebrow" style="margin: 0 auto 24px;">
+        <span class="dot-live"></span>
+        Kostenlos · keine Anmeldung · 5 Sekunden
+      </span>
+      <h1 class="check-h1">Wie sicher ist deine <span class="grad-text">Mail-Domain</span>?</h1>
+      <p class="lede" style="max-width:680px; margin: 0 auto 32px;">Wir prüfen <strong>DMARC, SPF, DKIM, MX, MTA-STS, TLS-RPT und BIMI</strong> für deine Domain — und zeigen dir auf einen Blick was passt und was nicht.</p>
+    </div>
+    {% endif %}
+
+    <form class="check-form" method="get" action="/check" data-mailcheck-form>
+      <div class="check-form-inner">
+        <input type="text" name="domain" value="{{ query_domain or '' }}" placeholder="meinefirma.ch" required pattern="^[A-Za-z0-9.\-]+$" autocomplete="off" autofocus aria-label="Domain prüfen">
+        <button type="submit" class="btn-primary big">Jetzt prüfen →</button>
+      </div>
+      <div class="check-form-hint muted small">Tipp: ohne <code>www.</code> oder <code>https://</code> davor — einfach <code>deine-firma.ch</code></div>
+    </form>
+  </div>
+</section>
+
+{% if result %}
+<!-- ============== RESULT ============== -->
+<section class="check-result">
+  <div class="container-mkt">
+
+    <!-- Toolbar -->
+    <div class="check-toolbar">
+      <div>
+        <div class="muted small">Geprüfte Domain</div>
+        <h2 class="check-domain">{{ query_domain }}</h2>
+      </div>
+      <div class="check-actions">
+        <a href="/check?domain={{ query_domain }}&print=1" target="_blank" class="btn">📄 Als PDF exportieren</a>
+        <button type="button" class="btn" onclick="navigator.clipboard.writeText(window.location.href).then(() => this.textContent = '✓ Link kopiert')">🔗 Link teilen</button>
+      </div>
+    </div>
+
+    <!-- Score Hero -->
+    <div class="score-hero score-grade-{{ score.grade|lower }}">
+      <div class="score-circle">
+        <svg viewBox="0 0 120 120" width="160" height="160" aria-hidden="true">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="10"/>
+          <circle cx="60" cy="60" r="54" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"
+                  stroke-dasharray="{{ (score.total / 100 * 339)|round(1) }} 339"
+                  transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="score-circle-inner">
+          <div class="score-grade">{{ score.grade }}</div>
+          <div class="score-num">{{ score.total }} <span>/ 100</span></div>
+        </div>
+      </div>
+      <div class="score-meta">
+        <div class="score-label">{{ score.grade_label }}</div>
+        <h3>
+          {% if score.grade in ('A', 'B') %}
+            Dein Setup ist solide.
+          {% elif score.grade == 'C' %}
+            Es gibt Lücken — handlebar.
+          {% elif score.grade == 'D' %}
+            Riskant — Spoofing-Angriffe möglich.
+          {% else %}
+            Akut handlungsbedürftig.
+          {% endif %}
+        </h3>
+        <ul class="score-actions">
+          {% for action in score.actions %}
+          <li>{{ action }}</li>
+          {% endfor %}
+        </ul>
+        {% if score.grade not in ('A',) %}
+        <div class="score-cta">
+          <a href="/services/dmarc" class="btn btn-on-dark">→ DMARC-Service</a>
+          <a href="mailto:hello@example.com?subject=Mail-Check%20{{ query_domain }}" class="btn btn-on-dark">Erstgespräch buchen</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Detailed checks -->
+    <div class="check-grid">
+
+      <!-- MX -->
+      <div class="check-card check-status-{{ score.checks.mx.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">📬</div>
+          <div>
+            <div class="check-card-tag">MX-Records <a href="/wissen#mail-reise" class="check-wiki-link" title="Mail-Reise verstehen">?</a></div>
+            <h3>Wer empfängt die Mails?</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.mx.status }}">
+            {% if score.checks.mx.status == 'ok' %}✓ OK
+            {% elif score.checks.mx.status == 'warn' %}! Warnung
+            {% elif score.checks.mx.status == 'fail' %}✕ Fehlt
+            {% else %}∘ Optional{% endif %}
+          </span>
+        </div>
+        {% if result.mx.present %}
+          {% if result.mx.provider %}
+          <p class="check-card-sum">
+            Mails landen bei <strong>{{ result.mx.provider }}</strong>
+            <span class="cat-badge cat-{{ result.mx.category }}">{{ {'cloud':'Cloud-Provider','selfhost':'Self-hosted','marketing':'Marketing-Mailer','small':'Kleiner Anbieter'}.get(result.mx.category, result.mx.category) }}</span>
+          </p>
+          {% endif %}
+          <table class="check-table">
+            <thead><tr><th>Priorität</th><th>Hostname</th></tr></thead>
+            <tbody>
+              {% for r in result.mx.records %}
+              <tr><td><code>{{ r.priority }}</code></td><td><code>{{ r.host }}</code></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="check-card-sum">Keine MX-Records gefunden — diese Domain empfängt aktuell <strong>keine Mails</strong>.</p>
+        {% endif %}
+      </div>
+
+      <!-- DMARC -->
+      <div class="check-card check-status-{{ score.checks.dmarc.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">🛡️</div>
+          <div>
+            <div class="check-card-tag">DMARC-Policy <a href="/wissen#dmarc" class="check-wiki-link" title="Was ist DMARC?">?</a></div>
+            <h3>Schutz gegen Spoofing</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.dmarc.status }}">
+            {% if score.checks.dmarc.status == 'ok' %}✓ OK
+            {% elif score.checks.dmarc.status == 'warn' %}! Warnung
+            {% else %}✕ Fehlt{% endif %}
+          </span>
+        </div>
+        {% if result.dmarc.present %}
+          <p class="check-card-sum">
+            Policy: <strong><code>p={{ result.dmarc.policy or 'none' }}</code></strong>
+            {% if result.dmarc.rua %} · <strong>{{ result.dmarc.rua|length }}</strong> Report-Empfänger{% else %} · <span style="color:var(--bad)">keine Reports</span>{% endif %}
+          </p>
+          <details class="check-raw">
+            <summary>Aktueller Record</summary>
+            <pre class="code">_dmarc.{{ result.domain }}.   IN TXT  "{{ result.dmarc.raw }}"</pre>
+          </details>
+          {% if result.dmarc.issues %}
+          <ul class="check-issues">
+            {% for i in result.dmarc.issues %}<li>{{ i }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        {% else %}
+          <p class="check-card-sum">
+            Keine DMARC-Policy. <strong>Jeder kann unter deinem Namen senden</strong>, ohne dass Empfänger es bemerken.
+          </p>
+          <a href="/dmarc-generator?domain={{ result.domain }}" class="check-fix-link">→ Mit dem Generator anlegen</a>
+        {% endif %}
+      </div>
+
+      <!-- SPF -->
+      <div class="check-card check-status-{{ score.checks.spf.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">📜</div>
+          <div>
+            <div class="check-card-tag">SPF-Record <a href="/wissen#spf" class="check-wiki-link" title="Was ist SPF?">?</a></div>
+            <h3>Welche Server dürfen senden?</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.spf.status }}">
+            {% if score.checks.spf.status == 'ok' %}✓ OK
+            {% elif score.checks.spf.status == 'warn' %}! Warnung
+            {% else %}✕ Fehlt{% endif %}
+          </span>
+        </div>
+        {% if result.spf.present %}
+          <details class="check-raw" open>
+            <summary>Aktueller Record</summary>
+            <pre class="code">{{ result.spf.raw }}</pre>
+          </details>
+          {% if result.spf.issues %}
+          <ul class="check-issues">
+            {% for i in result.spf.issues %}<li>{{ i }}</li>{% endfor %}
+          </ul>
+          {% else %}
+          <p class="check-card-sum check-success">✓ Sauber konfiguriert.</p>
+          {% endif %}
+        {% else %}
+          <p class="check-card-sum">Kein SPF-Record. Voraussetzung für DMARC-Schutz fehlt.</p>
+        {% endif %}
+      </div>
+
+      <!-- DKIM -->
+      <div class="check-card check-status-{{ score.checks.dkim.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">🔑</div>
+          <div>
+            <div class="check-card-tag">DKIM-Selektoren <a href="/wissen#dkim" class="check-wiki-link" title="Was ist DKIM?">?</a></div>
+            <h3>Mail-Signatur prüfbar</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.dkim.status }}">
+            {% if score.checks.dkim.status == 'ok' %}✓ OK
+            {% else %}✕ Fehlt{% endif %}
+          </span>
+        </div>
+        {% if result.dkim %}
+          <p class="check-card-sum">
+            <strong>{{ result.dkim|length }}</strong> aktive Selektor{% if result.dkim|length != 1 %}en{% endif %} gefunden:
+          </p>
+          <div class="dkim-selectors">
+            {% for d in result.dkim %}
+            <span class="dkim-pill">{{ d.selector }}._domainkey</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="check-card-sum">
+            Keine DKIM-Selektoren bei den gängigen Namen gefunden.
+            <span class="muted small">(Wir haben {{ 60 }} bekannte Selektor-Namen probiert. Wenn dein Provider einen exotischen Namen verwendet, kann es trotzdem da sein.)</span>
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- MTA-STS -->
+      <div class="check-card check-status-{{ score.checks.mta_sts.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">🔒</div>
+          <div>
+            <div class="check-card-tag">MTA-STS <a href="/wissen#mta-sts" class="check-wiki-link" title="Was ist MTA-STS?">?</a></div>
+            <h3>TLS-Pflicht für Inbound</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.mta_sts.status }}">
+            {% if score.checks.mta_sts.status == 'ok' %}✓ Aktiv
+            {% else %}∘ Optional{% endif %}
+          </span>
+        </div>
+        {% if result.mta_sts.present %}
+          <p class="check-card-sum">MTA-STS gesetzt — Empfänger können verifizieren, dass Verbindungen verschlüsselt sind.</p>
+        {% else %}
+          <p class="check-card-sum">Nicht gesetzt. Optional, aber empfohlen für höhere Sicherheits-Standards (FINMA, ISO 27001).</p>
+        {% endif %}
+      </div>
+
+      <!-- TLS-RPT -->
+      <div class="check-card check-status-{{ score.checks.tls_rpt.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">📊</div>
+          <div>
+            <div class="check-card-tag">TLS-RPT <a href="/wissen#mta-sts" class="check-wiki-link" title="Was ist TLS-RPT?">?</a></div>
+            <h3>TLS-Fehler-Berichte</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.tls_rpt.status }}">
+            {% if score.checks.tls_rpt.status == 'ok' %}✓ Aktiv
+            {% else %}∘ Optional{% endif %}
+          </span>
+        </div>
+        {% if result.tls_rpt.present %}
+          <p class="check-card-sum">TLS-RPT konfiguriert — du erhältst Berichte über fehlgeschlagene TLS-Verbindungen.</p>
+        {% else %}
+          <p class="check-card-sum">Nicht gesetzt. Optionale Ergänzung zu MTA-STS.</p>
+        {% endif %}
+      </div>
+
+      <!-- BIMI -->
+      <div class="check-card check-status-{{ score.checks.bimi.status }}">
+        <div class="check-card-head">
+          <div class="check-card-ico">🎨</div>
+          <div>
+            <div class="check-card-tag">BIMI <a href="/wissen#bimi" class="check-wiki-link" title="Was ist BIMI?">?</a></div>
+            <h3>Logo neben deinen Mails</h3>
+          </div>
+          <span class="check-status-pill check-status-{{ score.checks.bimi.status }}">
+            {% if score.checks.bimi.status == 'ok' %}✓ Aktiv
+            {% else %}∘ Optional{% endif %}
+          </span>
+        </div>
+        {% if result.bimi.present %}
+          <p class="check-card-sum">BIMI gesetzt — dein Logo erscheint in Gmail/Yahoo/Apple neben deinen Mails.</p>
+        {% else %}
+          <p class="check-card-sum">Nicht gesetzt. Erst sinnvoll, wenn DMARC mind. <code>p=quarantine</code> ist.</p>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Big CTA -->
+    <div class="check-cta-block">
+      {% if score.grade in ('A',) %}
+        <h2>Dein Setup ist top.</h2>
+        <p>Du bist im obersten Perzentil. Wenn du das gleichzeitig für viele Domains überwachen willst — der Aggregator macht's automatisch.</p>
+        <div class="cta-buttons">
+          <a href="/signup" class="btn-primary big">DMARC Aggregator starten</a>
+          <a href="/services" class="btn big">Services ansehen</a>
+        </div>
+      {% else %}
+        <h2>Brauchst du Hilfe beim Aufräumen?</h2>
+        <p>Wir machen genau das: DMARC, SPF, DKIM, Mailcow, M365-EOP — Festpreis-Pakete oder als Workshop. Erstgespräch ist gratis.</p>
+        <div class="cta-buttons">
+          <a href="/services/dmarc" class="btn-primary big">→ DMARC-Service ab CHF 690</a>
+          <a href="mailto:hello@example.com?subject=Mail-Check%20{{ query_domain }}" class="btn big">Erstgespräch buchen</a>
+          <a href="/signup" class="btn big">DMARC-Tool gratis starten</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Service-Suggestions -->
+    <div class="container-mkt svc-related" style="padding: 0;">
+      <h2 style="font-size: 18px; margin-top: 24px;">Passende Services</h2>
+      <div class="svc-related-grid">
+        <a href="/services/dmarc" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#2563eb;">📨</div>
+            <h3>DMARC, SPF &amp; DKIM</h3>
+          </div>
+          <p>Genau das, was dieser Check abdeckt — sauber implementiert. 6-12 Wochen Begleitung. Festpreise ab CHF 690.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+        <a href="/services/m365" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#0078d4;">M</div>
+            <h3>M365 Threat-Hardening</h3>
+          </div>
+          <p>{% if result.mx and 'microsoft' in (result.mx.provider or '')|lower %}Du nutzt M365 — wir bringen EOP / Defender auf Strict-Preset-Niveau.{% else %}Wenn du M365 nutzt: EOP &amp; Defender auf Strict-Preset-Niveau hardenen.{% endif %} Festpreis CHF 1'990.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+        <a href="/services/seppmail" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#dc2626;">🔐</div>
+            <h3>SeppMail Mail-Encryption</h3>
+          </div>
+          <p>Falls du in einer regulierten Branche bist (Banking, Recht, Behörden, Health): Schweizer Mail-Verschlüsselung auf Bank-Niveau.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% else %}
+<!-- ============== EXPLAINER (no result yet) ============== -->
+<section class="container-mkt" style="padding-top:32px;">
+  <div class="check-explain-grid">
+    <div class="check-explain">
+      <div class="check-explain-ico">🛡️</div>
+      <h3>DMARC</h3>
+      <p>Schutz vor Spoofing — wer darf in deinem Namen senden?</p>
+    </div>
+    <div class="check-explain">
+      <div class="check-explain-ico">📜</div>
+      <h3>SPF</h3>
+      <p>Welche IP-Adressen dürfen für deine Domain senden?</p>
+    </div>
+    <div class="check-explain">
+      <div class="check-explain-ico">🔑</div>
+      <h3>DKIM</h3>
+      <p>Sind deine Mails kryptografisch signiert?</p>
+    </div>
+    <div class="check-explain">
+      <div class="check-explain-ico">📬</div>
+      <h3>MX</h3>
+      <p>Wo landen die Mails an deine Domain überhaupt?</p>
+    </div>
+    <div class="check-explain">
+      <div class="check-explain-ico">🔒</div>
+      <h3>MTA-STS</h3>
+      <p>Wird Inbound-Traffic gegen TLS-Downgrades geschützt?</p>
+    </div>
+    <div class="check-explain">
+      <div class="check-explain-ico">🎨</div>
+      <h3>BIMI</h3>
+      <p>Wird dein Logo neben Mails in Gmail/Yahoo angezeigt?</p>
+    </div>
+  </div>
+
+  <div class="check-quick-examples">
+    <span class="muted small">Beispiele zum Anschauen:</span>
+    <a class="check-example-pill" href="/check?domain=google.com">google.com</a>
+    <a class="check-example-pill" href="/check?domain=microsoft.com">microsoft.com</a>
+    <a class="check-example-pill" href="/check?domain=admin.ch">admin.ch</a>
+    <a class="check-example-pill" href="/check?domain=ubs.com">ubs.com</a>
+  </div>
+</section>
+{% endif %}
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/services">Services</a> · <a href="/about#impressum">Impressum</a> · <a href="/about#datenschutz">Datenschutz</a> · <a href="/">Startseite</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

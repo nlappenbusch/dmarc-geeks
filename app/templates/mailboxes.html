@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Mailboxen · DMARC Aggregator{% endblock %}
+{% block content %}
+{% if polling_ids %}<meta http-equiv="refresh" content="6">{% endif %}
+<h1>IMAP-Mailboxen</h1>
+<p class="muted">Diese Mailbox ist die Adresse, an die ISPs DMARC-Reports schicken (<code>rua=…</code> in deinem DMARC-DNS-Record). Der Aggregator pollt sie alle paar Minuten und importiert Anhänge mit <code>.xml</code>, <code>.xml.gz</code> oder <code>.zip</code>.</p>
+
+<section class="card">
+  <h2>Neue Mailbox</h2>
+
+  <div class="presets">
+    <span class="muted small">Anbieter-Preset:</span>
+    <button type="button" class="btn-link" onclick="applyPreset('gmail')">Gmail</button>
+    <button type="button" class="btn-link" onclick="applyPreset('m365')">Microsoft 365</button>
+    <button type="button" class="btn-link" onclick="applyPreset('mailbox')">mailbox.org</button>
+    <button type="button" class="btn-link" onclick="applyPreset('strato')">Strato</button>
+    <button type="button" class="btn-link" onclick="applyPreset('ionos')">IONOS</button>
+  </div>
+
+  <div id="provider-hint" style="display:none;"></div>
+
+  <form id="mb-form" method="post" action="/mailboxes" class="grid-form">
+    <label>Bezeichnung
+      <input name="label" required placeholder="z.B. dmarc@meinedomain.de">
+      <span class="hint">Nur für dich — was siehst du gerne in der Liste?</span>
+    </label>
+    <label>Host
+      <input name="host" required placeholder="imap.example.com">
+      <span class="hint">IMAP-Server deines Anbieters.</span>
+    </label>
+    <label>Port
+      <input name="port" type="number" value="993" required>
+      <span class="hint"><code>993</code> = SSL/TLS · <code>143</code> = ohne SSL (selten).</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="use_ssl" value="true" checked> SSL/TLS
+      <span class="hint">Praktisch immer an.</span>
+    </label>
+    <label>Username
+      <input name="username" required>
+      <span class="hint">Meist die volle E-Mail-Adresse.</span>
+    </label>
+    <label>Passwort
+      <input name="password" type="password" required>
+      <span class="hint">Bei Gmail/Microsoft 365: <strong>App-Passwort</strong>. Wird verschlüsselt gespeichert.</span>
+    </label>
+    <label>Folder
+      <input name="folder" value="INBOX">
+      <span class="hint">Wo Reports liegen. Meist <code>INBOX</code>.</span>
+    </label>
+    <label>Verschieben nach (optional)
+      <input name="move_to_folder" placeholder="Processed">
+      <span class="hint">Verarbeitete Mails landen hier. Leer = bleiben in INBOX.</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="enabled" value="true">
+      Aktiv
+      <span class="hint">Erst ankreuzen, wenn du sicher bist.</span>
+    </label>
+    <button type="submit" class="btn-primary">Anlegen</button>
+  </form>
+  <p class="muted small">Nicht sicher, was reingehört? <a href="/help#mailbox">Felder erklärt &amp; Anbieter-Hinweise</a></p>
+</section>
+
+<script>
+const PRESETS = {
+  gmail:   { host: 'imap.gmail.com',         port: 993, ssl: true,
+             hint: 'warn',
+             title: 'Gmail benötigt ein App-Passwort',
+             body: 'Normale Passwörter funktionieren bei Gmail nicht mehr. So legst du ein App-Passwort an: <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener">Anleitung von Google</a>. Du brauchst zwingend 2FA aktiviert.' },
+  m365:    { host: 'outlook.office365.com',  port: 993, ssl: true,
+             hint: 'warn',
+             title: 'Microsoft 365: App-Passwort + Basic-Auth-Toggle',
+             body: 'Standard-Login per Basic-Auth ist bei den meisten M365-Tenants deaktiviert. Du brauchst entweder ein App-Passwort (mit MFA) oder dein M365-Admin muss IMAP-Auth in der Mailbox-Policy freischalten.' },
+  mailbox: { host: 'imap.mailbox.org',       port: 993, ssl: true,
+             hint: 'tip',
+             title: 'mailbox.org',
+             body: 'Normales Passwort funktioniert. Falls 2FA aktiv: in den Web-Einstellungen "Anwendungs-spezifisches Passwort" erzeugen.' },
+  strato:  { host: 'imap.strato.de',         port: 993, ssl: true,
+             hint: 'tip',
+             title: 'Strato',
+             body: 'Normales Mailbox-Passwort. Bei manchen Strato-Tarifen ist IMAP standardmäßig nicht aktiviert — im Communication-Center prüfen.' },
+  ionos:   { host: 'imap.ionos.de',          port: 993, ssl: true,
+             hint: 'tip',
+             title: 'IONOS / 1&1',
+             body: 'Normales Postfach-Passwort. Unter <em>Mein E-Mail</em> → Postfach-Einstellungen kannst du IMAP-Zugriff aktivieren.' },
+};
+function applyPreset(key) {
+  const p = PRESETS[key]; if (!p) return;
+  const f = document.getElementById('mb-form');
+  f.host.value = p.host;
+  f.port.value = p.port;
+  f.use_ssl.checked = p.ssl;
+  const hint = document.getElementById('provider-hint');
+  hint.style.display = 'block';
+  hint.innerHTML = `<div class="callout ${p.hint}"><strong>${p.title}:</strong> ${p.body}</div>`;
+}
+</script>
+
+<section class="card">
+  <h2>Konfigurierte Mailboxen</h2>
+  {% if mailboxes %}
+  <table class="data">
+    <thead><tr><th>Label</th><th>Host</th><th>User</th><th>Folder</th><th>Letzter Poll</th><th>Status</th><th>Aktionen</th></tr></thead>
+    <tbody>
+    {% for m in mailboxes %}
+      <tr>
+        <td>{{ m.label }}</td>
+        <td>{{ m.host }}:{{ m.port }} {% if m.use_ssl %}<span class="badge ok small">SSL</span>{% endif %}</td>
+        <td>{{ m.username }}</td>
+        <td>{{ m.folder }}{% if m.move_to_folder %} → {{ m.move_to_folder }}{% endif %}</td>
+        <td>{{ m.last_polled_at|dt }}</td>
+        <td>
+          {% if m.id in polling_ids %}<span class="badge brand"><span class="dot-spin"></span> läuft …</span>{% endif %}
+          {% if m.enabled %}<span class="badge ok">aktiv</span>{% else %}<span class="badge warn">pausiert</span>{% endif %}
+          {% if m.last_error %}
+            <details class="mb-error">
+              <summary><span class="badge danger small">Fehler</span></summary>
+              <div class="mb-error-body">{{ m.last_error }}</div>
+            </details>
+          {% endif %}
+        </td>
+        <td>
+          <form method="post" action="/mailboxes/{{ m.id }}/toggle" style="display:inline"><button class="btn-link">{% if m.enabled %}pausieren{% else %}aktivieren{% endif %}</button></form>
+          <form method="post" action="/mailboxes/{{ m.id }}/poll" style="display:inline"><button class="btn-link" title="Holt nur ungelesene Mails">jetzt prüfen</button></form>
+          <form method="post" action="/mailboxes/{{ m.id }}/rescan" style="display:inline-flex; gap:4px; align-items:center;" onsubmit="return confirm('Bestand neu einlesen? Liest auch bereits gelesene Mails. Dauert je nach Bestand 1-2 Minuten.');">
+            <select name="days" style="padding:2px 4px; font-size:12px;">
+              <option value="7">7 Tage</option>
+              <option value="30">30 Tage</option>
+              <option value="90" selected>90 Tage</option>
+              <option value="365">1 Jahr</option>
+            </select>
+            <button class="btn-link" title="Liest auch gelesene Mails — für Initial-Import">Bestand einlesen</button>
+          </form>
+          <form method="post" action="/mailboxes/{{ m.id }}/delete" style="display:inline" onsubmit="return confirm('Mailbox löschen?');"><button class="btn-link danger">löschen</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine Mailboxen konfiguriert.</p>
+    <p class="muted small">Lege oben deine erste IMAP-Verbindung an. Tipp: erst nur speichern (ohne &bdquo;Aktiv&ldquo;) und dann <strong>jetzt prüfen</strong> klicken — du siehst sofort, ob die Zugangsdaten passen.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

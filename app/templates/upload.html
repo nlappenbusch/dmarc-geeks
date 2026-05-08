@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Upload · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Reports hochladen</h1>
+<p class="muted">Akzeptiert: <code>.xml</code>, <code>.xml.gz</code>, <code>.zip</code> (z.B. von Google, Microsoft, Yahoo).</p>
+
+<section class="card">
+  <form method="post" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="files" multiple required accept=".xml,.gz,.zip,.xml.gz,application/xml,application/gzip,application/zip">
+    <button type="submit" class="btn-primary">Hochladen</button>
+  </form>
+</section>
+
+{% if results is not none %}
+<section class="card">
+  <h2>Ergebnis</h2>
+  {% if results %}
+  <table class="data">
+    <thead><tr><th>Datei</th><th>Status</th><th>Meldung</th><th>Report</th></tr></thead>
+    <tbody>
+    {% for r in results %}
+      <tr>
+        <td>{{ r.filename }}</td>
+        <td>
+          {% if r.status == 'ok' %}<span class="badge ok">{{ r.status }}</span>
+          {% elif r.status == 'dup' %}<span class="badge">{{ r.status }}</span>
+          {% elif r.status == 'ignored' %}<span class="badge warn">{{ r.status }}</span>
+          {% else %}<span class="badge danger">{{ r.status }}</span>{% endif %}
+        </td>
+        <td class="small">{{ r.message }}</td>
+        <td>{% if r.report_id %}<a href="/reports/{{ r.report_id }}">#{{ r.report_id }}</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Keine Datei hochgeladen.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

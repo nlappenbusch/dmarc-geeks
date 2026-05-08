@@ -1,0 +1,1046 @@
+{% extends "base.html" %}
+{% block title %}{{ domain.name }} · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/domains">Domains</a> · {{ domain.name }}</div>
+<h1>{{ domain.name }}</h1>
+
+{% if domain_tags %}
+<div class="tag-row" style="margin-bottom:8px;">
+  {% for t in domain_tags %}
+    <span class="tag" style="border-color:{{ t.color }}; color:{{ t.color }};"><span class="dot" style="background:{{ t.color }}"></span>{{ t.name }}</span>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if advice %}
+<section class="card">
+  <h2>Empfehlungen</h2>
+  <div class="advisor">
+    {% for a in advice %}
+    <div class="advisor-item {{ a.level }}">
+      <span class="advisor-icon {{ a.level }}">
+        {% if a.level == 'ok' %}✓{% elif a.level == 'warn' %}!{% elif a.level == 'danger' %}✕{% else %}i{% endif %}
+      </span>
+      <div>
+        <h4>{{ a.headline }}</h4>
+        <p>{{ a.body }}</p>
+      </div>
+      {% if a.cta_url %}<a href="{{ a.cta_url }}" class="btn">{{ a.cta_text or 'Mehr' }}</a>{% else %}<span></span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% set initial_mode = 'managed' if (hetzner_configured and domain.managed_dmarc) else 'self' %}
+
+<!-- ============== MODUS-AUSWAHL ============== -->
+<section class="card mode-card" data-initial-mode="{{ initial_mode }}">
+  <h2 style="margin-top: 0;">Wie willst du DMARC für <code>{{ domain.name }}</code> einrichten?</h2>
+  <p class="muted small" style="margin: 0 0 16px 0;">Zwei Wege, gleiches Ergebnis. Du kannst jederzeit umschalten.</p>
+
+  <div class="mode-grid">
+    {% if hetzner_configured %}
+    <label class="mode-option {% if initial_mode == 'managed' %}mode-active{% endif %}">
+      <input type="radio" name="dmarc-mode" value="managed" {% if initial_mode == 'managed' %}checked{% endif %}>
+      <div class="mode-option-content">
+        <div class="mode-option-head">
+          <strong>🛡️ Managed durch uns</strong>
+          <span class="badge ok">★ Empfohlen</span>
+        </div>
+        <p>Der Kunde setzt <strong>einen einzigen CNAME</strong> in seinem DNS — alles andere pflegen wir in unserer Zone <code>{{ hetzner_zone }}</code>. Policy-Änderungen (z.B. <code>p=none</code> → <code>p=reject</code>) wirken sofort, ohne dass der Kunde sein DNS nochmal anfasst.</p>
+        <ul class="mode-bullets">
+          <li>1 DNS-Eintrag beim Kunden</li>
+          <li>Policy-Änderungen ohne Kunden-Aktion</li>
+          <li>Reports kommen automatisch zu uns</li>
+        </ul>
+      </div>
+    </label>
+    {% endif %}
+
+    <label class="mode-option {% if initial_mode == 'self' %}mode-active{% endif %}">
+      <input type="radio" name="dmarc-mode" value="self" {% if initial_mode == 'self' %}checked{% endif %}>
+      <div class="mode-option-content">
+        <div class="mode-option-head">
+          <strong>🔧 Selbst pflegen</strong>
+          {% if not hetzner_configured %}<span class="badge">Standard</span>{% endif %}
+        </div>
+        <p>Du setzt zwei TXT-Records direkt im DNS deiner Domain. Volle Kontrolle, jeder Record wandert durch deine Hände — Policy-Änderungen erfordern aber jedes Mal eine DNS-Anpassung.</p>
+        <ul class="mode-bullets">
+          <li>2 TXT-Records im Domain-DNS</li>
+          <li>Kein externer Service nötig</li>
+          <li>Policy-Änderungen via DNS-Eingriff</li>
+        </ul>
+      </div>
+    </label>
+  </div>
+</section>
+
+<!-- ============== POLICY-WIZARD (gemeinsam für beide Modi) ============== -->
+<section class="card cfg-wizard">
+  <h2 style="margin-top: 0;">DMARC-Policy konfigurieren</h2>
+  <p class="muted small" style="margin: 0 0 16px 0;">Klick zusammen wie streng DMARC sein soll — der Live-Record unten aktualisiert sich automatisch. <a href="/wissen#dmarc">Was bedeuten die Optionen? →</a></p>
+
+  <!-- Schritt 1: Policy-Stärke -->
+  <h3 class="cfg-h">Schritt 1 · Wie streng soll DMARC sein?</h3>
+  <div class="cfg-policy-cards">
+    <button type="button" class="cfg-policy-card cfg-policy-active" data-policy="none">
+      <div class="cfg-policy-pin">★ Empfohlen für den Start</div>
+      <div class="cfg-policy-ico">👁️</div>
+      <h4>Erst nur beobachten</h4>
+      <div class="cfg-policy-tech">p=none</div>
+      <p>Empfänger machen nichts mit verdächtigen Mails — du sammelst aber Berichte. <strong>Null Risiko</strong>, dass legitime Mails rausfliegen.</p>
+      <div class="cfg-policy-when">2-4 Wochen so laufen lassen.</div>
+    </button>
+
+    <button type="button" class="cfg-policy-card" data-policy="quarantine">
+      <div class="cfg-policy-ico">🛡️</div>
+      <h4>Verdächtige in den Spam</h4>
+      <div class="cfg-policy-tech">p=quarantine</div>
+      <p>Verdächtige Mails landen im Spam-Ordner. Empfänger sieht sie noch, kann zurückholen.</p>
+      <div class="cfg-policy-when">Nach Beobachtung, wenn keine Probleme mehr.</div>
+    </button>
+
+    <button type="button" class="cfg-policy-card" data-policy="reject">
+      <div class="cfg-policy-ico">🚫</div>
+      <h4>Verdächtige ablehnen</h4>
+      <div class="cfg-policy-tech">p=reject</div>
+      <p>Verdächtige Mails werden komplett blockiert. Maximaler Schutz — wenn dein Setup falsch ist, fliegen aber auch echte Mails raus.</p>
+      <div class="cfg-policy-when">Nur wenn Pass-Rate stabil &gt; 99 %.</div>
+    </button>
+  </div>
+
+  <!-- Schritt 2: Reports-Mailbox -->
+  <h3 class="cfg-h">Schritt 2 · Wohin sollen die Berichte?</h3>
+  <p class="muted small" style="margin: 0 0 8px 0;">Diese Mailbox bekommt täglich die XML-Reports von Google, Microsoft &amp; Co.</p>
+  <div class="cfg-rua-wrap">
+    <input type="email" id="cfg-rua" class="cfg-input" value="dmarc@{{ domain.name }}" data-self-default="dmarc@{{ domain.name }}" data-managed-default="dmarc@{{ hetzner_zone or '' }}" autocomplete="off">
+    <span class="cfg-rua-lock" id="cfg-rua-lock" style="display:none;">🔒 fixiert im Managed-Modus</span>
+  </div>
+  <p class="muted small" id="cfg-rua-hint" style="margin: 6px 0 16px 0;">
+    Im <strong>Self-Modus</strong> nimmst du die Mailbox die du in <a href="/mailboxes">Mailboxen</a> angelegt hast.
+  </p>
+
+  <!-- Erweitert -->
+  <details class="cfg-advanced">
+    <summary>⚙️ Erweiterte Einstellungen <span class="muted small">— meist kann man's so lassen</span></summary>
+    <div class="cfg-advanced-body">
+      <div class="cfg-grid">
+        <label>Anteil der gefilterten Mails: <strong id="cfg-pct-label">100</strong> %  <code>pct</code>
+          <input type="range" id="cfg-pct" min="0" max="100" value="100" step="5">
+          <span class="hint">Bei <em>„Erst nur beobachten"</em> egal. Sonst klassischer Pfad: 10 → 25 → 50 → 100.</span>
+        </label>
+        <label>Subdomain-Policy <code>sp</code>
+          <select id="cfg-sp">
+            <option value="">Genauso wie Hauptdomain (empfohlen)</option>
+            <option value="none">Subdomains nur beobachten</option>
+            <option value="quarantine">Subdomain-Spoofing in den Spam</option>
+            <option value="reject">Subdomain-Spoofing ablehnen</option>
+          </select>
+        </label>
+        <label>DKIM-Genauigkeit <code>adkim</code>
+          <select id="cfg-adkim">
+            <option value="r">Locker — Subdomains erlaubt (empfohlen)</option>
+            <option value="s">Streng — exakte Domain</option>
+          </select>
+        </label>
+        <label>SPF-Genauigkeit <code>aspf</code>
+          <select id="cfg-aspf">
+            <option value="r">Locker — Subdomains erlaubt (empfohlen)</option>
+            <option value="s">Streng — exakte Domain</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <!-- Live-Preview -->
+  <div class="cfg-preview">
+    <div class="cfg-preview-head">
+      <strong>Live-Vorschau</strong>
+      <span class="muted small">aktualisiert beim Klicken</span>
+    </div>
+    <pre class="code" id="cfg-record">_dmarc.{{ domain.name }}.   IN TXT  "v=DMARC1; p=none; rua=mailto:dmarc@{{ domain.name }}; pct=100"</pre>
+    <div id="cfg-warnings" class="cfg-warnings"></div>
+  </div>
+</section>
+
+<!-- ============== SELF-MANAGED SETUP (nur wenn Modus = self) ============== -->
+<section class="card setup-block" data-mode="self">
+  <h2>🔧 Selbst pflegen — Records bei deinem DNS-Anbieter setzen</h2>
+
+  <div class="dns-step">
+    <div class="step-num">1</div>
+    <div>
+      <h3>DMARC-Policy-Record</h3>
+      <p class="muted small">Setze diesen TXT-Record auf <code>_dmarc.{{ domain.name }}</code>:</p>
+      <div class="copy-row">
+        <pre class="code" id="dmarc-rec">_dmarc.{{ domain.name }}.   IN TXT  "v=DMARC1; p=none; rua=mailto:dmarc@{{ domain.name }}; pct=100"</pre>
+        <button class="btn" type="button" onclick="copyText('dmarc-rec', this)">kopieren</button>
+      </div>
+      <p class="muted small mt-8">Anleitung pro DNS-Anbieter: <a href="/dmarc-generator?domain={{ domain.name }}#schritt-5">Provider-Tabs im Generator →</a></p>
+    </div>
+  </div>
+
+  <div class="dns-step">
+    <div class="step-num">2</div>
+    <div>
+      <h3>Verifikation <span class="muted small">(optional)</span></h3>
+      <p class="muted small">Damit wir nachweisen können dass die Domain dir gehört:</p>
+      <div class="copy-row">
+        <pre class="code" id="verify-rec">{{ domain.name }}.   IN TXT  "dmarc-aggregator-verify={{ domain.verification_token }}"</pre>
+        <button class="btn" type="button" onclick="copyText('verify-rec', this)">kopieren</button>
+      </div>
+      <div id="verifyResult" class="mt-8">
+        {% if domain.verified_at %}<span class="badge ok">verifiziert am {{ domain.verified_at|dt }}</span>{% else %}<span class="badge warn">nicht verifiziert</span>{% endif %}
+      </div>
+      {% if user.is_admin or user.is_superadmin %}
+      <button hx-post="/domains/{{ domain.id }}/verify" hx-target="#verifyResult" class="btn">DNS jetzt prüfen</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if user.is_admin or user.is_superadmin %}
+  <div class="actions" style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border);">
+    <form method="post" action="/domains/{{ domain.id }}/delete" onsubmit="return confirm('Domain wirklich löschen?');">
+      <button type="submit" class="btn-danger">Domain löschen</button>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ============== MANAGED SETUP (nur wenn Modus = managed UND Hetzner) ============== -->
+{% if hetzner_configured %}
+{% set md_active = domain.managed_dmarc or domain.auth_record_managed %}
+{% set md_full = domain.managed_dmarc and domain.auth_record_managed %}
+<section class="card setup-block" data-mode="managed">
+  <div class="md-head-bar">
+    <div>
+      <span class="md-eyebrow">🛡️ Managed-DMARC</span>
+      <h2 style="margin: 2px 0 0 0;">
+        Wir managen DMARC für <code>{{ domain.name }}</code>
+        {% if md_full %}<span class="badge ok">✓ aktiv</span>{% endif %}
+      </h2>
+    </div>
+  </div>
+  <p class="muted small" style="margin-top: 8px;">In unserer Zone <code>{{ hetzner_zone }}</code> hosten wir Authorization-Record + Policy-Record. Beim Kunden braucht's nur einen CNAME, der das verbindet.</p>
+
+  {% if not md_full %}
+  <!-- ZUSTAND A: noch nicht (oder nur teilweise) eingerichtet → Apply-Button mit Wizard-Policy -->
+  <div class="md-wizard">
+    <p class="md-wizard-intro">
+      <strong>So läuft's:</strong> wir legen mit einem Klick zwei TXT-Records in unserer Zone <code>{{ hetzner_zone }}</code> an —
+      <strong>Authorization-Record</strong> (damit Empfänger Reports an uns schicken dürfen) und
+      <strong>Policy-Record</strong> mit der Policy die du oben im Wizard konfiguriert hast.
+      Danach gibst du nur noch <strong>einen CNAME-Eintrag</strong> an deinen Kunden weiter.
+    </p>
+
+    <form method="post" action="/domains/{{ domain.id }}/managed-dmarc/delegation-with-auth" class="md-wizard-form" id="md-apply-form">
+      <input type="hidden" name="policy" id="md-apply-policy" value="">
+      <button type="submit" class="btn-primary md-cta" id="md-apply-btn">
+        ✨ In unserer Zone speichern (Authorization + Policy)
+      </button>
+      <span class="muted small">
+        legt an: <code>{{ domain.name }}._report._dmarc</code> &amp; <code>{{ delegation_record_name(domain.name, hetzner_zone) }}</code>
+      </span>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if md_full %}
+  <!-- ZUSTAND B: Setup ist fertig → Status-Card mit Live-DNS-Check für CNAME -->
+  <div class="md-status">
+    <div class="md-status-grid">
+      <div class="md-status-item md-status-ok">
+        <span class="md-status-ico">✓</span>
+        <div>
+          <strong>Authorization aktiv</strong>
+          <span class="muted small">Empfänger dürfen Reports an dmarc@{{ hetzner_zone }} schicken</span>
+        </div>
+      </div>
+      <div class="md-status-item md-status-ok">
+        <span class="md-status-ico">✓</span>
+        <div>
+          <strong>Policy in unserer Zone</strong>
+          <span class="muted small">aktuell: <code>{{ (domain.managed_policy or '')[:80] }}{% if (domain.managed_policy or '')|length > 80 %}…{% endif %}</code></span>
+        </div>
+      </div>
+      <div class="md-status-item" id="md-cname-status">
+        <span class="md-status-ico">⏳</span>
+        <div style="flex: 1;">
+          <strong>CNAME beim Kunden</strong>
+          <span class="muted small">prüfe DNS …</span>
+        </div>
+        <button type="button" class="md-cname-refresh" onclick="checkCname(true)" title="Jetzt prüfen (DNS-Cache umgehen)">
+          <span class="md-cname-refresh-ico">↻</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="md-customer-step">
+      <div class="md-customer-head">
+        <strong>📋 Das muss der Kunde einmalig in seinem DNS setzen:</strong>
+      </div>
+      <div class="md-copy-row">
+        <pre class="code md-cname-code">_dmarc.{{ domain.name }}.   IN CNAME   {{ delegation_target }}.</pre>
+        <button type="button" class="btn" onclick="copyCnameRow(this)">📋 kopieren</button>
+      </div>
+      <p class="muted small" style="margin: 8px 0 0 0;">
+        Wir prüfen alle 30 Sekunden ob der Eintrag da ist. Sobald er propagiert ist, wird der Status oben grün.
+      </p>
+    </div>
+
+    <div class="md-policy-control" id="md-policy-control">
+      <!-- Default-State: nichts geändert → nur die aktive Policy als Info -->
+      <div class="md-policy-state md-policy-state-clean" id="md-policy-state-clean">
+        <span class="md-policy-state-ico">✓</span>
+        <div>
+          <strong>Policy in unserer Zone ist aktuell</strong>
+          <span class="muted small">Konfigurator oben spiegelt was hier aktiv ist. Ändere etwas im Konfigurator, um eine neue Policy zu pushen.</span>
+        </div>
+      </div>
+
+      <!-- Pending-State: User hat im Konfigurator was geändert → CTA -->
+      <div class="md-policy-state md-policy-state-pending" id="md-policy-state-pending" style="display:none;">
+        <span class="md-policy-state-ico">⚡</span>
+        <div style="flex:1; min-width: 0;">
+          <strong>Neue Policy bereit zum Pushen</strong>
+          <div class="md-policy-diff">
+            <div class="md-policy-diff-row">
+              <span class="muted small">aktuell</span>
+              <code class="md-policy-diff-val">{{ domain.managed_policy or '—' }}</code>
+            </div>
+            <div class="md-policy-diff-row md-policy-diff-new">
+              <span class="muted small">neu</span>
+              <code class="md-policy-diff-val" id="md-policy-pending-val"></code>
+            </div>
+          </div>
+          <form method="post" action="/domains/{{ domain.id }}/managed-dmarc/delegation" style="margin-top: 10px;">
+            <input type="hidden" name="policy" id="md-update-policy" value="">
+            <button type="submit" class="btn-primary">💾 Neue Policy in unserer Zone speichern</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <details class="md-danger">
+      <summary class="muted small">Managed-DMARC komplett deaktivieren …</summary>
+      <div class="md-danger-body">
+        <p class="muted small">Löscht beide Records (Authorization + Policy) in unserer Zone <code>{{ hetzner_zone }}</code>. Mails vom Kunden werden danach ohne DMARC-Policy verschickt, bis der Kunde seinen CNAME selbst entfernt oder du das Setup neu anlegst.</p>
+        <form method="post" action="/domains/{{ domain.id }}/managed-dmarc/delegation" style="display:inline; margin-right: 8px;">
+          <input type="hidden" name="policy" value="">
+          <button type="submit" class="btn-link" onclick="return confirm('Policy-Hosting deaktivieren?')">🗑 Policy entfernen</button>
+        </form>
+        <form method="post" action="/domains/{{ domain.id }}/managed-dmarc/auth-record/remove" style="display:inline;">
+          <button type="submit" class="btn-link" onclick="return confirm('Authorization entfernen?')">🗑 Authorization entfernen</button>
+        </form>
+      </div>
+    </details>
+  </div>
+
+  <script>
+  // Live-DNS-Check für CNAME
+  async function checkCname(force) {
+    const node = document.getElementById('md-cname-status');
+    if (!node) return;
+    const btn = node.querySelector('.md-cname-refresh');
+    if (force && btn) btn.classList.add('md-cname-refresh-spinning');
+    if (force) {
+      const sub = node.querySelector('.muted');
+      if (sub) sub.textContent = 'prüfe DNS …';
+    }
+    try {
+      // Cache-buster, damit der Browser nicht unsere Antwort cached
+      const url = '/domains/{{ domain.id }}/managed-dmarc/check-cname' + (force ? '?_=' + Date.now() : '');
+      const r = await fetch(url, { cache: 'no-store' });
+      const data = await r.json();
+      const ico = node.querySelector('.md-status-ico');
+      const txt = node.querySelector('strong');
+      const sub = node.querySelector('.muted');
+      if (data.ok) {
+        node.classList.add('md-status-ok'); node.classList.remove('md-status-warn');
+        ico.textContent = '✓'; txt.textContent = 'CNAME beim Kunden aktiv';
+        sub.textContent = data.msg;
+      } else {
+        node.classList.add('md-status-warn'); node.classList.remove('md-status-ok');
+        ico.textContent = '⚠';
+        if (data.status === 'missing') { txt.textContent = 'CNAME beim Kunden fehlt'; sub.textContent = 'Der Kunde muss den CNAME-Eintrag (siehe unten) noch setzen.'; }
+        else if (data.status === 'mismatch') { txt.textContent = 'CNAME zeigt falsch'; sub.textContent = data.msg; }
+        else if (data.status === 'txt_instead') { txt.textContent = 'Alter TXT-Record blockiert'; sub.textContent = data.msg; }
+        else { txt.textContent = 'CNAME-Check fehlgeschlagen'; sub.textContent = data.msg || ''; }
+      }
+    } catch (e) { /* network — silently retry */ }
+    if (btn) {
+      // mindestens 400ms Spin damit User es sieht
+      setTimeout(() => btn.classList.remove('md-cname-refresh-spinning'), 400);
+    }
+  }
+  // global verfügbar für Refresh-Button
+  window.checkCname = checkCname;
+  checkCname(false);
+  setInterval(() => checkCname(false), 30000);
+
+  function copyCnameRow(btn) {
+    const code = document.querySelector('.md-cname-code');
+    const text = code ? code.textContent.trim() : '';
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ kopiert';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+  </script>
+  {% endif %}
+
+  <style>
+  /* Konfigurator-Wizard */
+  .cfg-wizard { background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 3%, var(--bg-elev)), var(--bg-elev)); }
+  .cfg-h { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 10px 0; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .cfg-h:first-of-type { padding-top: 0; border-top: 0; margin-top: 0; }
+
+  .cfg-policy-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 6px; }
+  .cfg-policy-card { background: var(--bg-elev); border: 2px solid var(--border); border-radius: 12px; padding: 16px 16px 14px 16px; cursor: pointer; text-align: left; font: inherit; color: var(--text); transition: border-color .12s, transform .08s, box-shadow .15s; position: relative; display: flex; flex-direction: column; gap: 6px; }
+  .cfg-policy-card:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--border)); transform: translateY(-1px); }
+  .cfg-policy-active { border-color: var(--brand) !important; box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--brand) 30%, transparent); background: color-mix(in srgb, var(--brand) 6%, var(--bg-elev)); }
+  .cfg-policy-pin { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .cfg-policy-ico { font-size: 22px; line-height: 1; }
+  .cfg-policy-card h4 { margin: 0; font-size: 14.5px; font-weight: 700; }
+  .cfg-policy-tech { font-size: 11px; font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, transparent); padding: 2px 7px; border-radius: 4px; align-self: flex-start; }
+  .cfg-policy-card p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-soft); }
+  .cfg-policy-when { font-size: 11.5px; color: var(--muted); padding-top: 4px; border-top: 1px dashed var(--border); margin-top: 2px; }
+
+  .cfg-input { width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 14px; }
+  .cfg-rua-wrap { position: relative; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cfg-rua-wrap .cfg-input { flex: 1; min-width: 220px; }
+  .cfg-input-locked { background: var(--surface-soft); color: var(--muted); cursor: not-allowed; }
+  .cfg-input-locked:focus { outline: none; box-shadow: none; }
+  .cfg-rua-lock { font-size: 12px; color: var(--brand); font-weight: 600; padding: 4px 10px; background: color-mix(in srgb, var(--brand) 12%, transparent); border-radius: 999px; white-space: nowrap; }
+  .cfg-advanced { margin: 12px 0; padding: 10px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+  .cfg-advanced summary { cursor: pointer; font-weight: 600; padding: 4px 0; list-style: none; }
+  .cfg-advanced summary::-webkit-details-marker { display: none; }
+  .cfg-advanced summary::before { content: "▸ "; font-family: ui-monospace, monospace; }
+  .cfg-advanced[open] summary::before { content: "▾ "; }
+  .cfg-advanced-body { padding-top: 12px; }
+  .cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cfg-grid label { display: block; font-size: 13px; font-weight: 600; }
+  .cfg-grid label code { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .cfg-grid input, .cfg-grid select { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 6px 10px; font-size: 13px; }
+  .cfg-grid input[type=range] { padding: 0; }
+  .cfg-grid .hint { display: block; font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+
+  .cfg-preview { background: var(--bg-elev); border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 14px; }
+  .cfg-preview-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .cfg-preview pre.code { margin: 0; padding: 10px 12px; word-break: break-all; white-space: pre-wrap; font-size: 12.5px; }
+  .cfg-warnings { display: grid; gap: 6px; margin-top: 8px; }
+  .cfg-warnings .warn-line { padding: 7px 11px; border-radius: var(--radius-sm); font-size: 12.5px;
+    background: color-mix(in srgb, var(--warn) 14%, transparent); border-left: 3px solid var(--warn); }
+  .cfg-warnings .warn-line.danger { background: color-mix(in srgb, var(--bad) 14%, transparent); border-left-color: var(--bad); }
+  .cfg-warnings .warn-line.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); border-left-color: var(--ok); }
+
+  @media (max-width: 760px) {
+    .cfg-policy-cards { grid-template-columns: 1fr; }
+    .cfg-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Mode-Toggle (Self vs Managed) */
+  .mode-card { background: linear-gradient(180deg, var(--surface-soft), var(--bg-elev)); }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mode-option { display: block; cursor: pointer; padding: 16px 18px; background: var(--bg-elev); border: 2px solid var(--border); border-radius: 12px; transition: border-color .12s, transform .08s, box-shadow .15s; user-select: none; }
+  .mode-option:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--border)); transform: translateY(-1px); }
+  .mode-option input[type=radio] { position: absolute; opacity: 0; pointer-events: none; }
+  .mode-option.mode-active { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, var(--bg-elev)); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .mode-option-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mode-option-head strong { font-size: 16px; font-weight: 700; }
+  .mode-option p { font-size: 13.5px; line-height: 1.55; color: var(--text-soft); margin: 0 0 10px 0; }
+  .mode-option p strong { color: var(--text); font-weight: 600; }
+  .mode-bullets { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+  .mode-bullets li { padding-left: 18px; position: relative; line-height: 1.4; }
+  .mode-bullets li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--ok); font-weight: 800; }
+
+  /* Setup-Blocks toggle visibility based on body class */
+  body.dmarc-mode-managed [data-mode="self"] { display: none; }
+  body.dmarc-mode-self [data-mode="managed"] { display: none; }
+
+  .md-head-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .md-eyebrow { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: .08em; }
+  .md-head-bar h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .md-head-bar h2 code { font-size: 16px; }
+
+  @media (max-width: 760px) {
+    .mode-grid { grid-template-columns: 1fr; }
+  }
+  .md-section[open] .md-summary::before { content: "▾ "; }
+  .md-summary-eyebrow { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: .08em; }
+  .md-summary-title { font-size: 17px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .md-summary-hint { display: block; line-height: 1.6; max-width: 760px; margin-top: 4px; font-size: 13.5px; }
+  .md-summary-hint strong { color: var(--text); }
+
+  /* Wizard (initial state) */
+  .md-wizard { background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 6%, var(--bg-elev)), var(--bg-elev)); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin: 16px 0 8px 0; }
+  .md-wizard-intro { font-size: 14px; line-height: 1.65; margin: 0 0 16px 0; color: var(--text); }
+  .md-wizard-intro strong { font-weight: 700; }
+  .md-wizard-form { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+  .md-cta { font-size: 15px !important; padding: 12px 20px !important; font-weight: 700 !important; box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--brand) 40%, transparent); }
+  .md-wizard-form .muted { font-size: 12px; }
+
+  .md-diy-toggle { margin-top: 14px; }
+  .md-diy-toggle summary { cursor: pointer; padding: 6px 0; font-size: 13px; color: var(--muted); list-style: none; }
+  .md-diy-toggle summary::-webkit-details-marker { display: none; }
+  .md-diy-toggle summary::before { content: "▸ "; font-family: ui-monospace, monospace; }
+  .md-diy-toggle[open] summary::before { content: "▾ "; }
+  .md-diy-toggle summary:hover { color: var(--text); }
+  .md-diy-body { padding: 12px 0 0 0; }
+  .md-diy-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+
+  /* Status (active state) */
+  .md-status { background: var(--bg-elev); border: 1px solid color-mix(in srgb, var(--ok) 30%, var(--border)); border-radius: 14px; padding: 22px 24px; margin: 16px 0 8px 0; }
+  .md-status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+  .md-status-item { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 12px 14px; background: var(--surface-soft); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 8px; transition: border-color .15s; }
+  .md-status-item.md-status-ok { border-left-color: var(--ok); background: color-mix(in srgb, var(--ok) 5%, var(--surface-soft)); }
+  .md-status-item.md-status-warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 5%, var(--surface-soft)); }
+  .md-status-item .md-status-ico { font-size: 22px; line-height: 1; font-weight: 800; }
+  .md-status-ok .md-status-ico { color: var(--ok); }
+  .md-status-warn .md-status-ico { color: var(--warn); }
+  .md-status-item strong { display: block; font-size: 13.5px; font-weight: 700; }
+  .md-status-item .muted { display: block; font-size: 11.5px; line-height: 1.4; margin-top: 2px; }
+  .md-status-item code { font-size: 11px; }
+
+  /* Customer copy step */
+  .md-cname-refresh { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; transition: border-color .12s, color .12s, background .12s; flex-shrink: 0; }
+  .md-cname-refresh:hover { border-color: var(--brand); color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, var(--bg-elev)); }
+  .md-cname-refresh-ico { display: inline-block; transition: transform .15s; }
+  .md-cname-refresh-spinning .md-cname-refresh-ico { animation: cnameSpin .8s linear infinite; }
+  @keyframes cnameSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  .md-customer-step { background: color-mix(in srgb, var(--brand) 7%, transparent); border: 1px dashed color-mix(in srgb, var(--brand) 35%, var(--border)); border-radius: 10px; padding: 14px 16px; margin: 16px 0; }
+  .md-customer-head { margin-bottom: 8px; font-size: 14px; }
+  .md-copy-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .md-copy-row pre.code { flex: 1; min-width: 280px; padding: 10px 12px; margin: 0; font-size: 12.5px; word-break: break-all; white-space: pre-wrap; background: var(--bg-elev); }
+
+  /* Policy editor in active state */
+  .md-policy-control { padding-top: 16px; border-top: 1px dashed var(--border); }
+  .md-policy-state { display: flex; gap: 12px; padding: 14px 16px; border-radius: 10px; align-items: flex-start; }
+  .md-policy-state-clean { background: color-mix(in srgb, var(--ok) 8%, transparent); border-left: 3px solid var(--ok); }
+  .md-policy-state-pending { background: color-mix(in srgb, var(--warn) 10%, transparent); border-left: 3px solid var(--warn); }
+  .md-policy-state-ico { font-size: 22px; line-height: 1; font-weight: 800; flex-shrink: 0; }
+  .md-policy-state-clean .md-policy-state-ico { color: var(--ok); }
+  .md-policy-state-pending .md-policy-state-ico { color: var(--warn); }
+  .md-policy-state strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .md-policy-state .muted { display: block; font-size: 12px; line-height: 1.45; }
+  .md-policy-diff { margin-top: 10px; display: grid; gap: 4px; }
+  .md-policy-diff-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: center; padding: 6px 10px; background: var(--bg-elev); border-radius: 6px; }
+  .md-policy-diff-row .muted { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  .md-policy-diff-val { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; word-break: break-all; }
+  .md-policy-diff-new { background: color-mix(in srgb, var(--brand) 10%, var(--bg-elev)); border-left: 2px solid var(--brand); }
+  .md-policy-form { margin-top: 8px; }
+  .md-policy-form textarea { width: 100%; box-sizing: border-box; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; padding: 10px 12px; }
+  .md-policy-presets { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 8px 0; padding: 8px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+  .md-preset { font-size: 12px !important; padding: 4px 10px !important; background: var(--surface-soft); border-radius: 5px; }
+  .md-preset:hover { background: var(--bg-elev); }
+  .md-policy-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+
+  .md-danger { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .md-danger summary { cursor: pointer; list-style: none; padding: 4px 0; }
+  .md-danger summary::-webkit-details-marker { display: none; }
+  .md-danger summary::before { content: "▸ "; font-family: ui-monospace, monospace; }
+  .md-danger[open] summary::before { content: "▾ "; }
+  .md-danger-body { padding: 8px 0 0 0; }
+
+  @media (max-width: 760px) {
+    .md-status-grid { grid-template-columns: 1fr; }
+    .md-wizard-form { flex-direction: column; align-items: stretch; }
+    .md-cta { width: 100%; }
+  }
+  </style>
+  <script>
+  document.querySelectorAll('.md-preset').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const ta = btn.closest('form').querySelector('textarea[name="policy"]');
+      ta.value = btn.dataset.policy;
+      ta.focus();
+    });
+  });
+  </script>
+
+</section>
+{% endif %}
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">Nachrichten</div><div class="kpi-value">{{ totals.total|num }}</div></div>
+  <div class="kpi pass"><div class="kpi-label">DMARC pass</div><div class="kpi-value">{{ totals.pass_count|num }}</div><div class="kpi-sub">{{ totals.pass_rate }} %</div></div>
+  <div class="kpi fail"><div class="kpi-label">DMARC fail</div><div class="kpi-value">{{ totals.fail_count|num }}</div></div>
+  <div class="kpi warn"><div class="kpi-label">Quarantine</div><div class="kpi-value">{{ totals.quarantine_count|num }}</div></div>
+  <div class="kpi danger"><div class="kpi-label">Reject</div><div class="kpi-value">{{ totals.reject_count|num }}</div></div>
+</section>
+
+<section class="card">
+  <h2>Verlauf</h2>
+  <canvas id="dailyChart" height="80"></canvas>
+</section>
+
+<div class="grid-2-50">
+  <section class="card">
+    <h2>Sender-Mix</h2>
+    <canvas id="senderDonut" height="200"></canvas>
+    {% if senders %}
+    <table class="data" style="margin-top:8px;">
+      <thead><tr><th></th><th>Sender</th><th>Volumen</th><th>Pass-Rate</th></tr></thead>
+      <tbody>
+      {% for s in senders %}
+        <tr>
+          <td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:{{ s.color }};"></span></td>
+          <td>{{ s.label }}</td>
+          <td>{{ s.total|num }}</td>
+          <td class="{{ 'ok' if s.pass_rate >= 99 else 'bad' if s.pass_rate < 90 else '' }}">{{ s.pass_rate }} %</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Volumen pro Sender (täglich)</h2>
+    <canvas id="senderStack" height="200"></canvas>
+  </section>
+</div>
+
+{% if sankey %}
+<section class="card">
+  <h2>Mail-Flow: Sender → Alignment → Disposition</h2>
+  <canvas id="sankeyChart" height="120"></canvas>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Sender-Inventory (30 Tage)
+    <span class="muted small" style="font-weight: 400; margin-left: 8px;">automatisch klassifiziert</span>
+  </h2>
+  <p class="muted small">Pro Quell-IP erkennen wir den Provider (Mailchimp, Microsoft, eigener Mailserver, &hellip;) und klassifizieren ob's ein vertrauenswürdiger Sender ist oder eher verdächtig.</p>
+  {% if sources %}
+  <table class="data">
+    <thead><tr><th>IP / Provider</th><th>Volumen</th><th>Pass / Fail</th><th>Pass-Rate</th><th></th></tr></thead>
+    <tbody>
+    {% for s in sources %}
+      {% set c = s.classification %}
+      <tr>
+        <td>
+          <div class="src-cell">
+            <span class="src-pill src-pill-{{ c.category }}" title="{{ c.confidence }} confidence">
+              <span>{{ c.meta.icon }}</span>
+              <span class="src-pill-cat">{{ c.meta.label }}</span>
+            </span>
+            <div class="src-id">
+              <strong>{{ c.label }}</strong>
+              <span class="muted small"><a href="/sources/{{ s.ip }}">{{ s.ip }}</a>
+                {% if s.host %} · {{ s.host }}{% endif %}
+                {% if s.ip in allowed_ips %} · <span class="badge ok small">in allowlist</span>{% endif %}
+                {% for f in c.flags %}<span class="src-flag">{{ f }}</span>{% endfor %}
+              </span>
+            </div>
+          </div>
+        </td>
+        <td><strong>{{ s.total|num }}</strong></td>
+        <td><span class="ok">{{ s.pass|num }}</span> / <span class="bad">{{ s.fail|num }}</span></td>
+        <td class="{{ 'ok' if s.pass_rate >= 99 else 'bad' if s.pass_rate < 90 else 'warn' }}">{{ s.pass_rate }} %</td>
+        <td>
+          {% if (user.is_admin or user.is_superadmin) and s.ip not in allowed_ips %}
+          <form method="post" action="/domains/{{ domain.id }}/allowlist" style="display:inline">
+            <input type="hidden" name="ip_or_cidr" value="{{ s.ip }}">
+            <input type="hidden" name="label" value="{{ c.provider or s.host or '' }}">
+            <button class="btn-link" title="Diese IP als legitim markieren">+ Allowlist</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <style>
+  .src-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .src-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 999px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .src-pill-cat { font-weight: 700; }
+  .src-pill-own { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 35%, transparent); color: var(--ok); }
+  .src-pill-mailbox { background: color-mix(in srgb, var(--brand) 14%, transparent); border-color: color-mix(in srgb, var(--brand) 35%, transparent); color: var(--brand); }
+  .src-pill-marketing { background: color-mix(in srgb, #d97706 14%, transparent); border-color: color-mix(in srgb, #d97706 35%, transparent); color: #d97706; }
+  .src-pill-crm { background: color-mix(in srgb, #7c3aed 14%, transparent); border-color: color-mix(in srgb, #7c3aed 35%, transparent); color: #7c3aed; }
+  .src-pill-gateway { background: color-mix(in srgb, #0891b2 14%, transparent); border-color: color-mix(in srgb, #0891b2 35%, transparent); color: #0891b2; }
+  .src-pill-ch_special { background: color-mix(in srgb, #dc2626 14%, transparent); border-color: color-mix(in srgb, #dc2626 35%, transparent); color: #dc2626; }
+  .src-pill-forwarder { background: var(--surface-soft); color: var(--muted); }
+  .src-pill-spoofer { background: color-mix(in srgb, var(--bad) 14%, transparent); border-color: color-mix(in srgb, var(--bad) 35%, transparent); color: var(--bad); }
+  .src-pill-unknown { background: var(--surface-soft); color: var(--muted); border-style: dashed; }
+  .src-id { min-width: 0; }
+  .src-id strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); }
+  .src-id .muted { display: block; font-size: 11.5px; }
+  .src-flag { display: inline-block; padding: 1px 6px; margin-left: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 3px; font-size: 10px; color: var(--muted); font-weight: 500; }
+  </style>
+  {% else %}<p class="muted">Noch keine Daten.</p>{% endif %}
+</section>
+
+<section class="card" id="blacklist">
+  <h2>Blacklist-Status (DNSBL)
+    <span class="muted small" style="font-weight: 400; margin-left: 8px;">automatischer Tages-Check · {{ blacklist_checks|length }} IP{{ '' if blacklist_checks|length == 1 else 's' }}</span>
+  </h2>
+  <p class="muted small">MX-Hosts und Top-Sender-IPs werden gegen ~12 wichtige DNSBLs (Spamhaus, SpamCop, Barracuda, SORBS, …) geprüft. Bei neuer Listung kommt automatisch eine Mail.</p>
+  {% if blacklist_checks %}
+  <table class="data">
+    <thead><tr><th>IP</th><th>Rolle</th><th>Status</th><th>Listen</th><th>geprüft</th><th>Delisting</th></tr></thead>
+    <tbody>
+    {% for c in blacklist_checks %}
+      {% set hits = c.hits_json|from_json %}
+      <tr>
+        <td><code>{{ c.ip }}</code></td>
+        <td><span class="muted small">{{ c.role }}</span></td>
+        <td>
+          {% if c.severity == 0 %}<span class="badge ok">✓ clean</span>
+          {% elif c.severity == 1 %}<span class="badge">info</span>
+          {% elif c.severity == 2 %}<span class="badge warn">! gelistet</span>
+          {% else %}<span class="badge danger">✕ kritisch</span>{% endif %}
+        </td>
+        <td class="small">{{ c.summary or '—' }}</td>
+        <td class="small muted">{{ c.checked_at|dt }}</td>
+        <td class="small">
+          {% if hits %}
+            <details class="bl-delist-details">
+              <summary>{{ hits|length }} Liste{{ '' if hits|length == 1 else 'n' }} → Delisting</summary>
+              <ul class="bl-delist-list">
+                {% for h in hits %}
+                  <li>
+                    <span class="bl-delist-name">{{ h.name }}</span>
+                    <a href="{{ bl_delist(h.zone, c.ip, 'remove') }}" target="_blank" rel="noopener" class="bl-delist-btn">📤 Delisting</a>
+                    <a href="{{ bl_delist(h.zone, c.ip, 'lookup') }}" target="_blank" rel="noopener" class="bl-delist-btn bl-delist-btn-secondary">🔍 prüfen</a>
+                  </li>
+                {% endfor %}
+              </ul>
+              <p class="muted small bl-delist-foot">
+                Sammel-Lookup:
+                <a href="https://multirbl.valli.org/lookup/{{ c.ip }}.html" target="_blank" rel="noopener">multirbl.valli.org</a>
+              </p>
+            </details>
+          {% elif c.severity == 0 %}
+            <span class="muted small">—</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <style>
+  /* Delisting-Links — gleiches Styling wie auf der Blacklist-Overview-Page */
+  .bl-delist-details summary { cursor: pointer; color: var(--brand); font-weight: 600; padding: 4px 0; list-style: none; }
+  .bl-delist-details summary::-webkit-details-marker { display: none; }
+  .bl-delist-details summary::before { content: "▸ "; font-family: ui-monospace, monospace; display: inline-block; }
+  .bl-delist-details[open] summary::before { content: "▾ "; }
+  .bl-delist-details summary:hover { text-decoration: underline; }
+  .bl-delist-list { list-style: none; padding: 8px 0 4px 0; margin: 6px 0 0 0; display: grid; gap: 6px; border-top: 1px dashed var(--border); }
+  .bl-delist-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .bl-delist-name { font-weight: 600; min-width: 120px; font-size: 12.5px; }
+  .bl-delist-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; padding: 3px 9px; border-radius: 5px; background: color-mix(in srgb, var(--bad) 12%, transparent); border: 1px solid color-mix(in srgb, var(--bad) 25%, transparent); color: var(--bad); text-decoration: none; font-weight: 600; }
+  .bl-delist-btn:hover { background: color-mix(in srgb, var(--bad) 22%, transparent); text-decoration: none; }
+  .bl-delist-btn-secondary { background: var(--surface-soft); border-color: var(--border); color: var(--muted); }
+  .bl-delist-btn-secondary:hover { background: var(--bg-elev); color: var(--text); }
+  .bl-delist-foot { margin: 8px 0 0 0; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .bl-delist-foot a { color: var(--brand); }
+  </style>
+  {% else %}
+  <p class="muted">Noch kein Blacklist-Check für diese Domain durchgelaufen. Klick auf „Jetzt prüfen" oder warte bis der Tages-Job läuft (06:00 UTC).</p>
+  {% endif %}
+  {% if user.is_admin or user.is_superadmin %}
+  <form method="post" action="/domains/{{ domain.id }}/blacklist-check" style="margin-top: 12px;">
+    <button type="submit" class="btn">🔎 Jetzt prüfen</button>
+    <span class="muted small" style="margin-left: 8px;">Dauert 5-15 Sekunden pro IP — die Page wird beim Klick blockieren.</span>
+  </form>
+  {% endif %}
+</section>
+
+<section class="card" id="allowlist">
+  <h2>Allowlist <span class="badge">{{ allowlist|length }}</span></h2>
+  <p class="muted small">Markiere bekannte legitime Quellen — dann sind sie als <em>allow</em> in der Top-Quellen-Tabelle erkennbar (informell, ohne Effekt auf den Empfang).</p>
+  {% if user.is_admin or user.is_superadmin %}
+  <form method="post" action="/domains/{{ domain.id }}/allowlist" class="row">
+    <label>IP oder CIDR<input type="text" name="ip_or_cidr" placeholder="203.0.113.10 oder 203.0.113.0/24" required></label>
+    <label>Beschreibung<input type="text" name="label" placeholder="z.B. Mailchimp"></label>
+    <button class="btn-primary" type="submit">Eintragen</button>
+  </form>
+  {% endif %}
+  {% if allowlist %}
+  <table class="data" style="margin-top:12px;">
+    <thead><tr><th>IP / CIDR</th><th>Beschreibung</th><th>Eingetragen</th><th></th></tr></thead>
+    <tbody>
+    {% for a in allowlist %}
+    <tr>
+      <td><code>{{ a.ip_or_cidr }}</code></td>
+      <td>{{ a.label or '—' }}</td>
+      <td>{{ a.created_at|dt }}</td>
+      <td>{% if user.is_admin or user.is_superadmin %}
+        <form method="post" action="/domains/{{ domain.id }}/allowlist/{{ a.id }}/delete" style="display:inline" onsubmit="return confirm('Aus Allowlist entfernen?');"><button class="btn-link danger">entfernen</button></form>
+      {% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+{% if all_tags %}
+<section class="card">
+  <h2>Tags</h2>
+  <p class="muted small">Klicken zum An-/Abwählen.</p>
+  <div class="tag-row">
+    {% set assigned_ids = domain_tags | map(attribute='id') | list %}
+    {% for t in all_tags %}
+      <form method="post" action="/domains/{{ domain.id }}/tag/{{ t.id }}/toggle" style="display:inline">
+        <button type="submit" class="tag" style="cursor:pointer; {% if t.id in assigned_ids %}border-color:{{ t.color }}; color:{{ t.color }};{% else %}opacity:.55;{% endif %}">
+          <span class="dot" style="background:{{ t.color }}"></span>{{ t.name }}
+        </button>
+      </form>
+    {% endfor %}
+  </div>
+  <p class="muted small mt-8"><a href="/tags">Tags verwalten →</a></p>
+</section>
+{% endif %}
+
+<p>
+  <a href="/reports?domain_id={{ domain.id }}">Alle Reports für diese Domain →</a>
+  &nbsp;·&nbsp;
+  <a href="/domains/{{ domain.id }}/report" target="_blank">📄 PDF-Report generieren →</a>
+</p>
+
+<script>
+function copyText(elId, btn) {
+  navigator.clipboard.writeText(document.getElementById(elId).innerText).then(() => {
+    const orig = btn.innerText; btn.innerText = 'kopiert ✓';
+    setTimeout(() => btn.innerText = orig, 1200);
+  });
+}
+window.addEventListener('load', () => {
+  const isDark = document.documentElement.classList.contains('dark');
+  Chart.defaults.color = isDark ? '#94a3b8' : '#6b7280';
+  Chart.defaults.borderColor = isDark ? '#1f2937' : '#e3e7ec';
+
+  const data = {{ series | tojson }};
+  if (data.length) {
+    new Chart(document.getElementById('dailyChart'), {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.day),
+        datasets: [
+          { label: 'Pass', data: data.map(d => d.pass), backgroundColor: '#16a34a' },
+          { label: 'Fail', data: data.map(d => d.fail), backgroundColor: '#dc2626' },
+        ],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+                 scales: { x: { stacked: true }, y: { stacked: true } } }
+    });
+  }
+
+  const senders = {{ senders | tojson }};
+  if (senders.length) {
+    new Chart(document.getElementById('senderDonut'), {
+      type: 'doughnut',
+      data: { labels: senders.map(s => s.label),
+              datasets: [{ data: senders.map(s => s.total),
+                            backgroundColor: senders.map(s => s.color), borderWidth: 0 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, cutout: '66%' }
+    });
+  }
+
+  const stack = {{ sender_stack | tojson }};
+  if (stack.labels && stack.labels.length) {
+    new Chart(document.getElementById('senderStack'), {
+      type: 'line',
+      data: { labels: stack.labels,
+              datasets: stack.datasets.map(ds => ({ ...ds, fill: true, tension: 0.25,
+                                                     pointRadius: 0, borderWidth: 1 })) },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+                 interaction: { mode: 'index', intersect: false },
+                 scales: { y: { stacked: true } } }
+    });
+  }
+
+  const sankey = {{ sankey | tojson }};
+  if (sankey.length && Chart.registry.controllers.get('sankey')) {
+    new Chart(document.getElementById('sankeyChart'), {
+      type: 'sankey',
+      data: { datasets: [{
+        data: sankey,
+        colorFrom: c => {
+          const lab = c.dataset.data[c.dataIndex].from;
+          if (lab === 'Aligned') return '#16a34a';
+          if (lab === 'Not aligned') return '#dc2626';
+          return '#2563eb';
+        },
+        colorTo: c => {
+          const lab = c.dataset.data[c.dataIndex].to;
+          if (lab === 'Aligned' || lab === 'Delivered') return '#16a34a';
+          if (lab === 'Not aligned' || lab === 'Rejected') return '#dc2626';
+          if (lab === 'Quarantined') return '#d97706';
+          return '#2563eb';
+        },
+        colorMode: 'gradient', alpha: 0.6,
+      }] },
+      options: { responsive: true }
+    });
+  }
+});
+
+// Mode-Toggle: switch between Self-Managed / Managed setup blocks
+(function() {
+  function applyModeToRua(mode) {
+    const ruaInput = document.getElementById('cfg-rua');
+    const lockBadge = document.getElementById('cfg-rua-lock');
+    const hint = document.getElementById('cfg-rua-hint');
+    if (!ruaInput) return;
+    if (mode === 'managed') {
+      const managedDefault = ruaInput.dataset.managedDefault || '';
+      if (managedDefault) ruaInput.value = managedDefault;
+      ruaInput.readOnly = true;
+      ruaInput.classList.add('cfg-input-locked');
+      if (lockBadge) lockBadge.style.display = '';
+      if (hint) hint.innerHTML = '🛡️ Im <strong>Managed-Modus</strong> ist die Reports-Mailbox fest auf unsere Zone gesetzt — wir sammeln die XML-Reports und liefern dir die Auswertung im Tool.';
+    } else {
+      const selfDefault = ruaInput.dataset.selfDefault || '';
+      // Setze Self-Default nur wenn der Wert aktuell der Managed-Default ist
+      if (ruaInput.value === ruaInput.dataset.managedDefault && selfDefault) {
+        ruaInput.value = selfDefault;
+      }
+      ruaInput.readOnly = false;
+      ruaInput.classList.remove('cfg-input-locked');
+      if (lockBadge) lockBadge.style.display = 'none';
+      if (hint) hint.innerHTML = 'Im <strong>Self-Modus</strong> nimmst du die Mailbox die du in <a href="/mailboxes">Mailboxen</a> angelegt hast.';
+    }
+    if (typeof rebuildPolicy === 'function') rebuildPolicy();
+  }
+  window.applyModeToRua = applyModeToRua;
+
+  const card = document.querySelector('.mode-card');
+  if (!card) return;
+  const initial = card.dataset.initialMode || 'self';
+  document.body.classList.add('dmarc-mode-' + initial);
+  applyModeToRua(initial);
+
+  document.querySelectorAll('input[name="dmarc-mode"]').forEach(input => {
+    input.addEventListener('change', () => {
+      const mode = input.value;
+      document.body.classList.remove('dmarc-mode-self', 'dmarc-mode-managed');
+      document.body.classList.add('dmarc-mode-' + mode);
+      document.querySelectorAll('.mode-option').forEach(opt => {
+        opt.classList.toggle('mode-active', opt.querySelector('input').checked);
+      });
+      applyModeToRua(mode);
+    });
+  });
+})();
+
+// Konfigurator-Wizard: Live-Preview des DMARC-Records
+(function() {
+  const $$ = id => document.getElementById(id);
+  let activePolicy = 'none';
+
+  function policyToken() { return activePolicy; }
+
+  function rebuildPolicy() {
+    const dom = '{{ domain.name }}';
+    const rua = ($$('cfg-rua').value || '').trim();
+    const pct = parseInt($$('cfg-pct').value, 10);
+    const sp  = $$('cfg-sp').value;
+    const adkim = $$('cfg-adkim').value;
+    const aspf  = $$('cfg-aspf').value;
+
+    const parts = ['v=DMARC1', `p=${policyToken()}`];
+    if (sp) parts.push(`sp=${sp}`);
+    if (rua) {
+      const list = rua.split(',').map(s => s.trim()).filter(Boolean)
+        .map(s => s.startsWith('mailto:') ? s : 'mailto:' + s).join(',');
+      parts.push(`rua=${list}`);
+    }
+    if (!Number.isNaN(pct)) parts.push(`pct=${pct}`);
+    if (adkim && adkim !== 'r') parts.push(`adkim=${adkim}`);
+    if (aspf  && aspf  !== 'r') parts.push(`aspf=${aspf}`);
+
+    const record = parts.join('; ');
+    const fullRow = `_dmarc.${dom}.   IN TXT  "${record}"`;
+
+    // Update preview + downstream blocks
+    $$('cfg-record').textContent = fullRow;
+    const selfRec = $$('dmarc-rec');
+    if (selfRec) selfRec.textContent = fullRow;
+    const mdHidden = $$('md-apply-policy');
+    if (mdHidden) mdHidden.value = record;
+    const mdUpdate = $$('md-update-policy');
+    if (mdUpdate) mdUpdate.value = record;
+
+    // Clean vs Pending state — vergleich Wizard-Policy mit aktiv gespeicherter
+    const cleanEl = $$('md-policy-state-clean');
+    const pendingEl = $$('md-policy-state-pending');
+    const pendingVal = $$('md-policy-pending-val');
+    if (cleanEl && pendingEl) {
+      // Aktuelle Policy aus dem ersten "aktuell"-Code-Block
+      const currentVal = (pendingEl.querySelector('.md-policy-diff-row:not(.md-policy-diff-new) .md-policy-diff-val').textContent || '').trim();
+      const same = (currentVal === record);
+      cleanEl.style.display = same ? '' : 'none';
+      pendingEl.style.display = same ? 'none' : '';
+      if (!same && pendingVal) pendingVal.textContent = record;
+    }
+
+    // PCT-label
+    const pctLabel = $$('cfg-pct-label');
+    if (pctLabel) pctLabel.textContent = pct;
+
+    // Warnings
+    const w = [];
+    if (!rua) w.push({k:'warn', t:'Reports-Mailbox fehlt — du bekommst keine Berichte.'});
+    if (policyToken() === 'reject' && pct < 100) w.push({k:'warn', t:'<code>p=reject</code> mit weniger als 100 % ist ungewöhnlich. Wenn du schrittweise hochziehen willst, nutze <code>p=quarantine</code>.'});
+    if (policyToken() === 'reject' && !rua) w.push({k:'danger', t:'<strong>Riskant:</strong> Ablehnen ohne Berichte — du siehst nicht, ob legitime Mails wegfliegen.'});
+    if (record.length > 255) w.push({k:'danger', t:`Record ist <strong>${record.length} Zeichen</strong> lang — DNS-TXT &gt; 255 muss gesplittet werden.`});
+    if (!w.length) w.push({k:'ok', t:'✓ Sieht gut aus.'});
+    $$('cfg-warnings').innerHTML = w.map(x => `<div class="warn-line ${x.k}">${x.t}</div>`).join('');
+  }
+
+  // Make rebuildPolicy globally callable for the mode-toggle
+  window.rebuildPolicy = rebuildPolicy;
+
+  // Policy-Card-Click
+  document.querySelectorAll('.cfg-policy-card').forEach(card => {
+    card.addEventListener('click', e => {
+      e.preventDefault();
+      activePolicy = card.dataset.policy;
+      document.querySelectorAll('.cfg-policy-card').forEach(c => c.classList.remove('cfg-policy-active'));
+      card.classList.add('cfg-policy-active');
+      rebuildPolicy();
+    });
+  });
+
+  // Live-update on every input
+  ['cfg-rua', 'cfg-pct', 'cfg-sp', 'cfg-adkim', 'cfg-aspf'].forEach(id => {
+    const el = $$(id);
+    if (el) el.addEventListener('input', rebuildPolicy);
+  });
+
+  // Init from existing managed policy if available
+  const existingPolicy = `{{ (domain.managed_policy or '')|replace("'", "\\'") }}`;
+  if (existingPolicy) {
+    // Parse out p=<value>
+    const m = existingPolicy.match(/p=(\w+)/);
+    if (m && m[1]) {
+      activePolicy = m[1];
+      document.querySelectorAll('.cfg-policy-card').forEach(c =>
+        c.classList.toggle('cfg-policy-active', c.dataset.policy === activePolicy));
+    }
+    const ruaM = existingPolicy.match(/rua=mailto:([^;]+)/);
+    // RUA nur überschreiben wenn das Feld nicht read-only ist (im managed-Mode locked)
+    if (ruaM && $$('cfg-rua') && !$$('cfg-rua').readOnly) $$('cfg-rua').value = ruaM[1].trim();
+    const pctM = existingPolicy.match(/pct=(\d+)/);
+    if (pctM) { $$('cfg-pct').value = parseInt(pctM[1], 10); }
+    const spM = existingPolicy.match(/sp=(\w+)/);
+    if (spM) $$('cfg-sp').value = spM[1];
+    const adkimM = existingPolicy.match(/adkim=(\w)/);
+    if (adkimM) $$('cfg-adkim').value = adkimM[1];
+    const aspfM = existingPolicy.match(/aspf=(\w)/);
+    if (aspfM) $$('cfg-aspf').value = aspfM[1];
+  }
+
+  rebuildPolicy();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% if has_token %}
+  <span class="badge ok">DNS-Token gefunden — Domain verifiziert{% if domain.verified_at %} ({{ domain.verified_at|dt }}){% endif %}</span>
+{% else %}
+  <span class="badge warn">DNS-Token nicht gefunden</span>
+{% endif %}
+{% if has_dmarc %}<span class="badge ok">DMARC-Record vorhanden</span>{% else %}<span class="badge warn">Kein DMARC-Record bei <code>_dmarc.{{ domain.name }}</code></span>{% endif %}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DMARC Aggregator{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>:root { --brand: {{ brand_color(tenant) }}; }</style>
+  <script>
+    (function() {
+      const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@0.12.1/dist/chartjs-chart-sankey.min.js" defer></script>
+</head>
+<body>
+{% if user and request.session.get('acting_as_tenant_id') and user.is_superadmin and request.session.get('acting_as_tenant_id')|int != user.tenant_id %}
+<div class="impersonation-banner">
+  <span>👁 Du betrittst Tenant <strong>{{ tenant.name }}</strong> als Superadmin — alle Ansichten zeigen dessen Daten.</span>
+  <form method="post" action="/admin/tenants/exit" style="display:inline; margin-left:auto;">
+    <button class="btn-impersonation-exit">Verlassen ←</button>
+  </form>
+</div>
+{% endif %}
+{% if user %}
+<header class="topbar">
+  <a class="brand" href="/dashboard">
+    {% if brand_logo_url(tenant) %}
+      <img src="{{ brand_logo_url(tenant) }}" alt="Logo" style="height:24px; vertical-align:middle;">
+    {% else %}
+      {{ brand_app_name(tenant) }}
+    {% endif %}
+  </a>
+  <button class="nav-toggle" type="button" aria-label="Navigation umschalten" onclick="document.querySelector('.topbar nav').classList.toggle('open')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    Menü
+  </button>
+  <nav>
+    <a href="/dashboard" class="{{ 'active' if active=='dashboard' else '' }}">Dashboard</a>
+    <a href="/domains" class="{{ 'active' if active=='domains' else '' }}">Domains</a>
+    <a href="/reports" class="{{ 'active' if active=='reports' else '' }}">Reports</a>
+    <a href="/domains/blacklist" class="{{ 'active' if active=='blacklist' else '' }}">🚦 Blacklist</a>
+    <a href="/upload" class="{{ 'active' if active=='upload' else '' }}">Upload</a>
+    {% if user.is_admin or user.is_superadmin %}
+      <a href="/mailboxes" class="{{ 'active' if active=='mailboxes' else '' }}">Mailboxen</a>
+      <a href="/api-keys" class="{{ 'active' if active=='api-keys' else '' }}">API-Keys</a>
+      <a href="/webhooks" class="{{ 'active' if active=='webhooks' else '' }}">Webhooks</a>
+      <a href="/users" class="{{ 'active' if active=='users' else '' }}">Users</a>
+      <a href="/settings" class="{{ 'active' if active=='settings' else '' }}">Settings</a>
+    {% endif %}
+    {% if user.is_reseller_admin or user.is_superadmin %}
+      <a href="/reseller" class="{{ 'active' if active=='reseller' else '' }}">Reseller</a>
+    {% endif %}
+    {% if user.is_superadmin %}
+      <a href="/admin/tenants" class="{{ 'active' if active=='admin' else '' }}">Tenants</a>
+      <a href="/admin/system" class="{{ 'active' if active=='admin-system' else '' }}">System</a>
+    {% endif %}
+    <div class="nav-dropdown push-right {{ 'active' if active=='generator' else '' }}">
+      <button type="button" class="nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+        🛠 Generator
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5l3 3 3-3"/></svg>
+      </button>
+      <div class="nav-dropdown-menu" role="menu">
+        <a href="/dmarc-generator" role="menuitem">
+          <strong>🛡️ DMARC-Record</strong>
+          <span class="muted small">Schutz vor Spoofing</span>
+        </a>
+        <a href="/spf-generator" role="menuitem">
+          <strong>📜 SPF-Record</strong>
+          <span class="muted small">Wer darf in deinem Namen senden</span>
+        </a>
+        <div class="nav-dropdown-sep"></div>
+        <a href="/dns-check" role="menuitem">
+          <strong>🔍 DNS-Check</strong>
+          <span class="muted small">Aktuellen Stand prüfen</span>
+        </a>
+      </div>
+    </div>
+    <a href="/help" class="{{ 'active' if active=='help' else '' }}">Hilfe</a>
+  </nav>
+  <div class="userbox">
+    <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Hell/Dunkel">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/users/me" class="muted user-link">{{ tenant.name }} · {{ user.email }}</a>
+    <form method="post" action="/logout"><button type="submit" class="btn-link">Logout</button></form>
+  </div>
+</header>
+{% endif %}
+<main class="container">
+  {% if request.session.get('flash') %}
+    {% set _flash = request.session.pop('flash') %}
+    <div class="toast-static {{ _flash.kind }}">{{ _flash.text }}</div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<div id="toast-host" aria-live="polite"></div>
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    const isDark = root.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
+  function showToast(text, kind) {
+    const host = document.getElementById('toast-host');
+    const el = document.createElement('div');
+    el.className = 'toast ' + (kind || 'info');
+    el.textContent = text;
+    host.appendChild(el);
+    setTimeout(() => el.classList.add('show'), 10);
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3500);
+  }
+  // Auto-pair every color input with a hex text input so users can type/paste hex codes
+  document.querySelectorAll('input[type="color"]').forEach(picker => {
+    if (picker.dataset.paired) return;
+    picker.dataset.paired = '1';
+    const wrap = document.createElement('div');
+    wrap.className = 'color-pair';
+    picker.parentNode.insertBefore(wrap, picker);
+    wrap.appendChild(picker);
+    const text = document.createElement('input');
+    text.type = 'text'; text.value = picker.value;
+    text.placeholder = '#0081ad';
+    text.pattern = '^#[0-9a-fA-F]{6}$';
+    text.maxLength = 7;
+    text.spellcheck = false;
+    text.autocomplete = 'off';
+    // The original 'name' goes onto the text input so submitted values come from there
+    if (picker.name) { text.name = picker.name; picker.removeAttribute('name'); }
+    wrap.appendChild(text);
+    picker.addEventListener('input', () => { text.value = picker.value; });
+    text.addEventListener('input', () => {
+      let v = text.value.trim();
+      if (!v.startsWith('#')) v = '#' + v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v.toLowerCase();
+    });
+  });
+  document.body.addEventListener('htmx:afterRequest', (e) => {
+    const t = e.detail.xhr.getResponseHeader('X-Toast');
+    if (t) {
+      try { const o = JSON.parse(t); showToast(o.text, o.kind || 'info'); }
+      catch { showToast(t, 'info'); }
+    }
+  });
+</script>
+</body>
+</html>

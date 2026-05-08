@@ -1,0 +1,11 @@
+{% extends "email/_base.html" %}
+{% block body %}
+<h1 style="font-size:18px; margin:0 0 12px 0; color:#1f2937;">Passwort zurücksetzen</h1>
+<p>Hallo,</p>
+<p>jemand (hoffentlich du) hat einen Reset für deinen DMARC-Aggregator-Account angefragt. Klick auf den Link, um ein neues Passwort zu setzen:</p>
+<p style="margin:24px 0;">
+  <a href="{{ link }}" style="background:{{ brand_color }}; color:white; text-decoration:none; padding:10px 18px; border-radius:6px; font-weight:500; display:inline-block;">Passwort zurücksetzen</a>
+</p>
+<p style="color:#6b7280; font-size:13px;">Der Link ist 2 Stunden gültig.</p>
+<p style="color:#6b7280; font-size:13px;">Falls du keine Anfrage gestellt hast, ignoriere diese Mail.</p>
+{% endblock %}

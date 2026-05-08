@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Ingest-Log · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Tenants</a> · Ingest-Log</div>
+<h1>Ingest-Log <span class="muted small">(letzte 200)</span></h1>
+<section class="card">
+  <table class="data">
+    <thead><tr><th>Zeit</th><th>Tenant</th><th>Quelle</th><th>Datei</th><th>Status</th><th>Meldung</th><th>Report</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.created_at|dt }}</td>
+        <td>{{ r.tenant_id or '—' }}</td>
+        <td>{{ r.source }}</td>
+        <td>{{ r.filename or '—' }}</td>
+        <td>
+          {% if r.status == 'ok' %}<span class="badge ok">{{ r.status }}</span>
+          {% elif r.status == 'dup' %}<span class="badge">{{ r.status }}</span>
+          {% elif r.status == 'ignored' %}<span class="badge warn">{{ r.status }}</span>
+          {% else %}<span class="badge danger">{{ r.status }}</span>{% endif %}
+        </td>
+        <td class="small">{{ r.message or '' }}</td>
+        <td>{% if r.report_id %}<a href="/reports/{{ r.report_id }}">#{{ r.report_id }}</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

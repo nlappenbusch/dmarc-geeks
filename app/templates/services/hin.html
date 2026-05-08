@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HIN — Health Info Net Setup für Spitäler &amp; Praxen · DMARC Aggregator</title>
+  <meta name="description" content="HIN-Mail- und Telematikdienste-Setup für Spitäler, Arztpraxen, Apotheken. KIS/PIS-Integration, EPD-Vorbereitung, Compliance-Doku. Schweizer Gesundheits-Stack.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check">Domain prüfen</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services" class="active-mkt">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="svc-hero">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph" style="background:color-mix(in srgb,#0891b2 14%,transparent);color:#0891b2;">⚕️</span> Service · CH-Gesundheitssektor</span>
+    <h1 class="svc-h1">HIN — sicher kommunizieren<br><span class="grad-text">im Gesundheitswesen.</span></h1>
+    <p class="lede">HIN (Health Info Net) ist <strong>die de-facto Pflicht-Plattform</strong> für Spitäler, Arztpraxen, Apotheken und Versicherer in der Schweiz — sichere Mail, gesicherter Patientendaten-Austausch, Telematikdienste, EPD-Anbindung. Wir setzen HIN sauber gegen deine bestehende Mail-Infrastruktur auf, integrieren KIS/PIS/PRAX und kümmern uns um die Compliance-Doku.</p>
+    <div class="svc-hero-cta">
+      <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="#integrationen" class="btn-ghost-arrow">KIS/PIS-Anbindung <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg> <strong>FMH-konform</strong></span>
+      <span class="sep">·</span>
+      <span>EPD-Vorbereitung</span>
+      <span class="sep">·</span>
+      <span>KVG &amp; revDSG-Doku</span>
+      <span class="sep">·</span>
+      <span>DE / FR / IT auf Anfrage</span>
+    </div>
+
+    <!-- STATS-STRIP -->
+    <div class="svc-stats-strip">
+      <div class="svc-stat">
+        <span class="svc-stat-num">3-12</span>
+        <span class="svc-stat-label">Wochen je nach Größe</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">10+</span>
+        <span class="svc-stat-label">KIS/PIS/PRAX-Systeme integriert</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">6</span>
+        <span class="svc-stat-label">Compliance-Frameworks abgedeckt</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">EPD</span>
+        <span class="svc-stat-label">Vorbereitung inklusive</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANCHOR-NAV -->
+<nav class="svc-anchor-nav" aria-label="Auf dieser Seite">
+  <div class="container-mkt svc-anchor-nav-inner">
+    <span class="svc-anchor-nav-label">Auf dieser Seite</span>
+    <a href="#wer">Für wen</a>
+    <a href="#features">Was wir aufsetzen</a>
+    <a href="#compliance">Compliance</a>
+    <a href="#prozess">Prozess</a>
+    <a href="#scope">Was inklusive</a>
+    <a href="#stimme">Stimme</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<!-- WER -->
+<section class="container-mkt" id="wer">
+  <h2 class="section-h">Für wen ist HIN Pflicht?</h2>
+  <p class="section-sub">Praktisch jeder im CH-Gesundheitssektor — und alle die mit dem Sektor zusammenarbeiten.</p>
+
+  <div class="svc-pain-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🏥</div>
+      <h3>Spitäler &amp; Kliniken</h3>
+      <p>Patientenüberweisungen, Befund-Austausch mit niedergelassenen Ärzten, Versicherer-Kommunikation. HIN ist der etablierte Kanal — alle größeren Spitäler nutzen es.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">👨‍⚕️</div>
+      <h3>Arztpraxen &amp; Gemeinschaftspraxen</h3>
+      <p>Überweisungen an Spezialisten, Laborbefunde, Apotheken-Rezepte. Ohne HIN kein moderner Praxis-Workflow — und keine FMH-Compliance bei Patienten-Datenweitergabe.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">💊</div>
+      <h3>Apotheken</h3>
+      <p>Elektronische Rezepte, Krankenkassen-Direktabrechnung, Kommunikation mit verschreibenden Ärzten. Mit eRezept-Pflicht 2026 noch wichtiger.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🩺</div>
+      <h3>Therapeuten &amp; Spitex</h3>
+      <p>Physiotherapie-Anordnungen, Spitex-Pflege-Berichte, Krankenkassen-Garantieanträge. HIN-Anschluss ist seit 2022 gefordert für Direktabrechnung mit den meisten Versicherern.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WAS WIR MACHEN -->
+<section class="band" id="features">
+  <div class="container-mkt">
+    <h2 class="section-h">Was wir konkret aufsetzen</h2>
+
+    <div class="svc-feature-list">
+      <div class="svc-feature-row">
+        <h3>📨 HIN-Mail-Setup</h3>
+        <p>Anschluss an dein bestehendes Postfach (M365, Exchange, Mailcow, IMAP). Routing für <code>@hin.ch</code>-Adressen. HIN-Mail Global für die Mitarbeitenden. Wir konfigurieren die Connectors so, dass beides nebeneinander läuft — interne Mails normal, HIN-Mails verschlüsselt durch's HIN-Netz.</p>
+      </div>
+      <div class="svc-feature-row">
+        <h3>📱 HIN Client &amp; Mobile-Setup</h3>
+        <p>HIN-Client-Installation auf allen Mitarbeitenden-Workstations (oder Citrix/RDS-Profil). Mobile-Setup für iOS/Android — Single-Sign-On wo möglich (HIN Access mit SAML-Federation gegen Azure AD).</p>
+      </div>
+      <div class="svc-feature-row">
+        <h3>🔐 HIN Sign &amp; HIN Encrypt</h3>
+        <p>Signieren und Verschlüsseln innerhalb des HIN-Netzes (automatisch) und nach außerhalb (gegen externe Empfänger mit S/MIME). Schlüssel-Lifecycle-Management, automatische Erneuerung, Backup-Strategie.</p>
+      </div>
+      <div class="svc-feature-row">
+        <h3 id="integrationen">🏥 KIS/PIS/PRAX-Integration</h3>
+        <p>Anbindung an dein Klinik-/Praxis-Informationssystem. Wir haben Erfahrung mit:</p>
+        <ul style="margin: 6px 0 0 22px; line-height: 1.7;">
+          <li><strong>Sumex:</strong> Tarifmedizinische Abrechnungs-Software</li>
+          <li><strong>Triamun</strong> (Schwerpunkt Spitex/ambulant)</li>
+          <li><strong>Vitomed:</strong> Praxis-Software für Ärzte/Therapeuten</li>
+          <li><strong>MediWin Pro:</strong> Praxis-Software</li>
+          <li><strong>Klinik-Stack:</strong> KISIM, Phoenix, Polypoint, Nexus</li>
+          <li><strong>Apotheken:</strong> Triapharm, Pharmacy21, ProPharm</li>
+        </ul>
+      </div>
+      <div class="svc-feature-row">
+        <h3>📋 EPD-Vorbereitung</h3>
+        <p>Elektronisches Patientendossier — Anschluss an deine Stammgemeinschaft (eHealth Suisse, axsana, AD Swiss, &hellip;). Wir prüfen welche Stammgemeinschaft für dich passt und bereiten den Anschluss vor (Identifikation, Zertifikate, Doku).</p>
+      </div>
+      <div class="svc-feature-row">
+        <h3>📑 Compliance-Doku</h3>
+        <p>KVG-Konformität, Datenschutzgesetz Gesundheitsbereich (DSG-GB), FMH-Anforderungen, revDSG. Wir liefern den schriftlichen Nachweis — Auditor-tauglich, mit Verantwortungsmatrix, Schlüssel-Backup-Konzept, Notfall-Plan.</p>
+      </div>
+      <div class="svc-feature-row">
+        <h3>🔄 Übergänge zu SeppMail sauber regeln</h3>
+        <p>HIN für intern, SeppMail für extern (Patienten, Krankenkassen außerhalb HIN, IT-Dienstleister). Die Übergänge sind das Kunst-Stück — wir sorgen, dass nichts kaputt geht. <a href="/services/seppmail">→ SeppMail-Service ansehen</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLIANCE -->
+<section class="container-mkt" id="compliance">
+  <h2 class="section-h">Compliance-Frameworks die HIN abdeckt</h2>
+  <p class="section-sub">Mit korrektem HIN-Setup hast du diese Häkchen direkt abgehakt:</p>
+
+  <div class="svc-blueprint" style="margin-top: 16px;">
+    <div class="svc-blueprint-grid">
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#dc2626;">📋</div>
+        <strong>KVG Art. 84a</strong>
+        <span class="muted small">Datenschutz bei der Bearbeitung von Personendaten — verschlüsselte Übermittlung</span>
+      </div>
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#16a34a;">⚕️</div>
+        <strong>FMH Standesregeln</strong>
+        <span class="muted small">Berufsgeheimnis, Datenschutz bei Patientenkommunikation</span>
+      </div>
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#0078d4;">🇨🇭</div>
+        <strong>revDSG (CH)</strong>
+        <span class="muted small">Besonders schützenswerte Personendaten — Verschlüsselungs-Pflicht</span>
+      </div>
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#7c3aed;">🇪🇺</div>
+        <strong>DSGVO Art. 32</strong>
+        <span class="muted small">Technisch-organisatorische Maßnahmen für Gesundheitsdaten</span>
+      </div>
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#06b6d4;">📂</div>
+        <strong>EPDG (CH)</strong>
+        <span class="muted small">Bundesgesetz Elektronisches Patientendossier — Anschluss-Pflicht für Spitäler</span>
+      </div>
+      <div class="svc-blueprint-tile">
+        <div class="svc-blueprint-tile-ico" style="--c:#f59e0b;">🔒</div>
+        <strong>ISO 27001</strong>
+        <span class="muted small">Communication Security (A.13) — verschlüsselte Mail-Kommunikation</span>
+      </div>
+    </div>
+  </div>
+  <p class="muted small" style="text-align:center; margin-top: 18px;">
+    Mehr zur Compliance-Übersicht: <a href="/compliance">Standards-Mapping →</a>
+  </p>
+</section>
+
+<!-- PROCESS -->
+<section class="band" id="prozess">
+  <div class="container-mkt">
+    <h2 class="section-h">Setup-Prozess</h2>
+    <p class="section-sub">Typisch 3-5 Wochen für eine Praxis, 6-12 Wochen für ein Spital.</p>
+
+    <div class="svc-phase-grid">
+      <div class="svc-phase">
+        <div class="svc-phase-num">1</div>
+        <h3>Bestandsaufnahme</h3>
+        <ul>
+          <li>HIN-Account-Status (vorhanden/neu)</li>
+          <li>Bestehender Mail-Stack (M365, Exchange, anderes)</li>
+          <li>KIS/PIS in Verwendung</li>
+          <li>Anzahl Mitarbeitende, Praxis-Standorte</li>
+        </ul>
+      </div>
+      <div class="svc-phase">
+        <div class="svc-phase-num">2</div>
+        <h3>HIN-Account &amp; Mail-Routing</h3>
+        <ul>
+          <li>HIN-Account beantragen (falls noch nicht vorhanden)</li>
+          <li>HIN-Mail-Connector zum bestehenden Server</li>
+          <li>Test-Mails Pilot-Phase mit 2-3 Pilot-Usern</li>
+          <li>Doku der Mail-Flows</li>
+        </ul>
+      </div>
+      <div class="svc-phase">
+        <div class="svc-phase-num">3</div>
+        <h3>KIS/PIS-Anbindung</h3>
+        <ul>
+          <li>Software-Hersteller-Coordination (oft Sumex/Triamun-Support)</li>
+          <li>Testdaten-Austausch mit Partner-Systemen</li>
+          <li>Direktabrechnungs-Setup mit Krankenkassen</li>
+        </ul>
+      </div>
+      <div class="svc-phase">
+        <div class="svc-phase-num">4</div>
+        <h3>Roll-out &amp; Schulung</h3>
+        <ul>
+          <li>Stufenweise Roll-out (Pilot → Abteilung → alle)</li>
+          <li>1h-Schulung pro User-Gruppe</li>
+          <li>Helpdesk-Briefing für interne IT</li>
+          <li>Compliance-Doku &amp; Übergabe</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCOPE -->
+<section class="container-mkt" id="scope">
+  <h2 class="section-h">Was wir liefern — und was nicht</h2>
+  <p class="section-sub">HIN-Lizenzen kommen direkt von HIN. Wir liefern Setup, Integration, Doku.</p>
+
+  <div class="svc-scope-grid">
+    <div class="svc-scope svc-scope-in">
+      <h3>✓ Im Setup-Auftrag dabei</h3>
+      <ul>
+        <li>Bestandsaufnahme + HIN-Account-Beantragung (falls neu)</li>
+        <li>HIN-Mail-Connector-Setup gegen bestehendes Postfach</li>
+        <li>HIN Client + Mobile + Single-Sign-On wo möglich</li>
+        <li>HIN Sign &amp; HIN Encrypt-Konfiguration</li>
+        <li>KIS/PIS/PRAX-Anbindung (Hersteller-Coordination)</li>
+        <li>EPD-Vorbereitung (Stammgemeinschafts-Wahl + Anschluss)</li>
+        <li>User-Schulung + Helpdesk-Briefing</li>
+        <li>Compliance-Doku-Set für Audit (KVG, FMH, revDSG, EPDG)</li>
+        <li>30 Tage Mail-Support nach Übergabe</li>
+      </ul>
+    </div>
+    <div class="svc-scope svc-scope-out">
+      <h3>— Nicht im Setup-Auftrag</h3>
+      <ul>
+        <li>HIN-Lizenz (Genossenschaft HIN, direkte Vereinbarung)</li>
+        <li>KIS/PIS-Lizenz (vom Software-Hersteller)</li>
+        <li>Hardware (Praxis-Server, Workstations)</li>
+        <li>SeppMail für externe Empfänger — siehe <a href="/services/seppmail">SeppMail</a></li>
+        <li>DMARC-/SPF-Setup für eure Domain — siehe <a href="/services/dmarc">DMARC</a></li>
+        <li>Laufender 24/7-Betrieb (optional als Retainer)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- COMBO -->
+<section class="container-mkt">
+  <div class="svc-combo-card">
+    <div>
+      <span class="eyebrow">Empfohlen für Spitäler &amp; größere Praxen</span>
+      <h2 style="margin: 4px 0 8px 0;">HIN + SeppMail + DMARC zusammen</h2>
+      <p style="font-size: 15px; line-height: 1.6;">HIN für interne CH-Gesundheits-Kommunikation. SeppMail für externe Empfänger ohne HIN-Anschluss (Patienten, Anwälte, internationale Versicherer). Plus DMARC für deine Domain-Authentifizierung — keine kompromittierten Patientendaten durch Phishing-Versuche unter eurem Namen.</p>
+      <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+        <a href="/services/seppmail" class="btn">→ SeppMail</a>
+        <a href="/services/dmarc" class="btn">→ DMARC</a>
+        <a href="mailto:hello@example.com?subject=Gesundheits-Stack-Komplett" class="btn-primary">Kombi-Angebot anfragen</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="container-mkt" id="stimme">
+  <span class="eyebrow" style="display:block; text-align:center; margin: 0 auto 14px; width:fit-content;">Stimme aus der Praxis</span>
+  <div class="svc-quote-card">
+    <p>„Wir haben vier Praxis-Standorte mit Vitomed integriert. HIN-Mail-Routing parallel zu M365, KIS-Anbindung über Sumex, Direktabrechnung mit den großen CH-Krankenkassen. Für uns war wichtig: ein Ansprechpartner für alles, der auch die Seppmail-Übergänge versteht. Genau das haben wir bekommen."</p>
+    <div class="svc-quote-meta">
+      <div class="svc-quote-avatar">DM</div>
+      <div>
+        <strong>Dr. M.</strong> · Inhaber Gemeinschaftspraxis (anonymisiert) · 4 Standorte, ~25 Mitarbeitende
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="container-mkt" id="faq">
+  <h2 class="section-h">Häufige Fragen.</h2>
+  <div class="faq" style="max-width: 820px; margin: 0 auto;">
+    <details>
+      <summary>Wir haben schon HIN — warum brauchen wir euch?</summary>
+      <p>Falls's bei euch läuft: super, nichts zu tun. Wir kommen ins Spiel wenn (a) ihr's neu aufsetzt, (b) Mail-Probleme habt (Mails kommen nicht an, doppelte Authentifizierung, etc.), (c) ihr KIS/PIS migrieren wollt, (d) EPD-Vorbereitung ansteht, oder (e) ein Audit ansteht.</p>
+    </details>
+    <details>
+      <summary>Was kostet HIN selbst?</summary>
+      <p>HIN-Lizenz hängt von Größe ab — typisch CHF 100-500 pro Mitarbeitendem pro Jahr. Plus initiale Setup-Gebühren. Wir machen ein konkretes Kostenmodell nach Erstgespräch — ehrlich.</p>
+    </details>
+    <details>
+      <summary>Brauchen wir EPD jetzt schon?</summary>
+      <p>Spitäler ja (seit 2022). Niedergelassene Ärzte: vorbereiten lohnt sich, ist aber noch nicht für alle Pflicht. Apotheken: kommt mit eRezept 2026.</p>
+    </details>
+    <details>
+      <summary>Funktioniert HIN mit Microsoft 365?</summary>
+      <p>Ja, mit Connector-Setup. Wir konfigurieren so, dass DMARC nicht bricht (häufiger Fehler bei naiver HIN-M365-Integration). <a href="/services/m365">M365-Hardening</a> kombinieren wir gern mit dem HIN-Setup.</p>
+    </details>
+    <details>
+      <summary>Was wenn ihr ausfallen würdet?</summary>
+      <p>Doku ist immer Teil des Setups — du kannst zu jedem anderen IT-Dienstleister wechseln. Plus: HIN selbst ist eine eigenständige Genossenschaft, läuft unabhängig von uns weiter.</p>
+    </details>
+    <details>
+      <summary>In welchen Sprachen?</summary>
+      <p>Schweizerdeutsch, Hochdeutsch, Französisch und Italienisch — wie's für deine Praxis / deinen Standort passt. Doku liefern wir standardmäßig auf Deutsch, andere Sprachen auf Anfrage.</p>
+    </details>
+  </div>
+</section>
+
+<!-- RELATED SERVICES -->
+<section class="container-mkt svc-related">
+  <h2>Verwandte Services</h2>
+  <div class="svc-related-grid">
+    <a href="/services/seppmail" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#dc2626;">🔐</div>
+        <h3>SeppMail Mail-Encryption</h3>
+      </div>
+      <p>Für externe Empfänger ohne HIN-Anschluss (Patienten, Krankenkassen außerhalb CH, IT-Dienstleister). Bank-Standard.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+    <a href="/services/dmarc" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#2563eb;">📨</div>
+        <h3>DMARC, SPF &amp; DKIM</h3>
+      </div>
+      <p>Damit niemand unter dem Namen deiner Praxis Phishing-Mails verschickt. 6-12 Wochen Begleitung. Ab CHF 690.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+    <a href="/services/m365" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#0078d4;">M</div>
+        <h3>M365 Threat-Hardening</h3>
+      </div>
+      <p>EOP &amp; Defender + HIN-Connector-Setup ohne Konflikte. Festpreis CHF 1'990.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+  </div>
+  <p class="muted small" style="text-align:center; margin-top: 18px;">
+    <a href="/services">→ Alle Services im Überblick</a> ·
+    <a href="/wissen">→ Wissens-Wiki</a> ·
+    <a href="/check">→ Domain-Check (gratis)</a>
+  </p>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="container-mkt">
+    <h2>30 Min Erstgespräch — gratis.</h2>
+    <p>Erzähl uns deine Praxis/Spital-Größe und IT-Stack. Wir sagen dir was zu tun ist und was es kosten wird. Schweizerdeutsch, Hochdeutsch oder Französisch — wie du willst.</p>
+    <div class="cta-buttons">
+      <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/services" class="btn big">Alle Services</a>
+    </div>
+  </div>
+</section>
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/services">Alle Services</a> · <a href="/wissen">Wissen</a> · <a href="/about#impressum">Impressum</a>
+    </p>
+  </div>
+</footer>
+
+<!-- STICKY-CTA -->
+<div class="svc-sticky-cta" id="stickyCta" role="region" aria-label="Schnellkontakt">
+  <span class="svc-sticky-cta-text">HIN-Setup für deine Praxis / dein Spital</span>
+  <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary">Erstgespräch →</a>
+</div>
+
+<script>
+(function(){
+  var cta = document.getElementById('stickyCta');
+  if(!cta) return;
+  var lastY = 0;
+  function onScroll(){
+    var y = window.scrollY || window.pageYOffset;
+    if(y > 600 && y > lastY) cta.classList.add('visible');
+    else if(y < 400) cta.classList.remove('visible');
+    lastY = y;
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+})();
+</script>
+
+</body>
+</html>

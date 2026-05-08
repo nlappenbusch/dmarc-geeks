@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrieren · DMARC Aggregator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+</head>
+<body class="centered">
+<form method="post" action="/signup" class="card login">
+  <h1>Account erstellen</h1>
+  {% if disabled %}
+    <div class="alert alert-error">Self-Service-Signup ist deaktiviert. Bitte einen Superadmin um Account-Anlage.</div>
+    <p class="muted small"><a href="/login">← zurück zum Login</a></p>
+  {% elif sent %}
+    {% if fallback_link %}
+      <div class="alert alert-error" style="text-align:left;">
+        <strong>Mail-Versand hat nicht geklappt.</strong><br>
+        Möglicherweise ist SMTP nicht konfiguriert oder der Provider hat die Zustellung abgelehnt (Server-Log prüfen).<br><br>
+        <strong>Workaround:</strong> Nutze diesen Direkt-Link, um den Account jetzt zu aktivieren:
+        <p style="margin: 10px 0 4px 0; word-break: break-all;"><a href="{{ fallback_link }}" class="btn-primary" style="display:inline-block; padding: 8px 14px; text-decoration: none; word-break: break-all;">→ Account aktivieren</a></p>
+        <p class="muted small" style="margin-top: 10px;">URL als Text: <code style="word-break: break-all; font-size: 11px;">{{ fallback_link }}</code></p>
+      </div>
+    {% else %}
+      <div class="alert alert-ok">Falls die E-Mail noch frei ist, ist ein Aktivierungs-Link unterwegs. Schau auch im Spam-Ordner nach.</div>
+    {% endif %}
+    <p class="muted small"><a href="/login">← zurück zum Login</a></p>
+  {% else %}
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <p class="muted small">Lege einen neuen Tenant + Admin-Account an.</p>
+    <label>Tenant-Name<input type="text" name="tenant_name" required placeholder="Meine Firma" autofocus></label>
+    <label>E-Mail<input type="email" name="email" required></label>
+    <button type="submit" class="btn-primary">Aktivierungs-Link schicken</button>
+    <p class="muted small mt-8" style="text-align:center;"><a href="/login">← zurück zum Login</a></p>
+  {% endif %}
+</form>
+</body></html>

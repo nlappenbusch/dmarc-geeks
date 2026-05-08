@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Reseller verwalten · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · Reseller</div>
+<h1>Reseller verwalten <span class="muted small">— Plattform-Superadmin</span></h1>
+<p class="muted">MSPs (Reseller) sind die Ebene über Tenants. Jeder MSP betreut mehrere Endkunden-Tenants und vererbt sein Branding (Logo, Farbe, App-Name) an alle.</p>
+
+<section class="card">
+  <h2>Neuen Reseller anlegen</h2>
+  <form method="post" action="/admin/resellers" class="grid-form">
+    <label>Name<input type="text" name="name" required placeholder="MSP Firma GmbH"></label>
+    <label>Plan
+      <select name="plan">
+        <option value="agency">Agency (199 €/Mo, 25 Endkunden)</option>
+        <option value="reseller">Reseller (499 €/Mo, 100 Endkunden)</option>
+        <option value="reseller_plus">Reseller+ / Enterprise (individuell)</option>
+      </select>
+    </label>
+    <label>Seat-Limit (Endkunden)<input type="number" name="seat_limit" value="25" min="1" max="10000"></label>
+    <button type="submit" class="btn-primary">Reseller anlegen</button>
+  </form>
+  <p class="muted small mt-8">Du landest danach auf der Detail-Seite und kannst Branding + Reseller-Admin-User vergeben.</p>
+</section>
+
+<section class="card">
+  <h2>Alle Reseller ({{ rows|length }})</h2>
+  <table class="data">
+    <thead><tr>
+      <th>Name</th>
+      <th>Slug</th>
+      <th>Plan</th>
+      <th>Seats (belegt / max)</th>
+      <th>Domains</th>
+      <th>Reports</th>
+      <th>Erstellt</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    {% for r, n_tenants, n_domains, n_reports in rows %}
+      <tr>
+        <td>
+          <a href="/admin/resellers/{{ r.id }}"><strong>{{ r.name }}</strong></a>
+          {% if r.is_platform %}<span class="badge brand small">Plattform</span>{% endif %}
+        </td>
+        <td><code>{{ r.slug }}</code></td>
+        <td><span class="badge">{{ r.plan }}</span></td>
+        <td>{{ n_tenants }} / {{ r.seat_limit }}</td>
+        <td>{{ n_domains }}</td>
+        <td>{{ n_reports|num }}</td>
+        <td class="small">{{ r.created_at|dt }}</td>
+        <td>
+          <a href="/admin/resellers/{{ r.id }}" class="btn-link">bearbeiten</a>
+          {% if not r.is_platform and n_tenants == 0 %}
+          <form method="post" action="/admin/resellers/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('Reseller löschen?');"><button class="btn-link danger">löschen</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

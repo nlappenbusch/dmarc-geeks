@@ -1,0 +1,1075 @@
+{% extends "base.html" %}
+{% block title %}DMARC-Generator · DMARC Aggregator{% endblock %}
+{% block content %}
+
+<div class="gen-intro">
+  <h1>DMARC-Record erstellen</h1>
+  <p class="muted">In drei Schritten kommst du zu einem fertigen DNS-Eintrag. Wir empfehlen dir den sichersten Default und du kannst später nachjustieren.</p>
+</div>
+
+<!-- Sticky Live-Vorschau -->
+<section class="gen-preview gen-sticky">
+  <div class="gen-preview-head">
+    <div>
+      <div class="gen-preview-label">Dein DMARC-Eintrag</div>
+      <div class="gen-preview-sublabel">aktualisiert sich live beim Tippen</div>
+    </div>
+    <button type="button" class="btn-primary" onclick="copyOutput(this)">📋 Kopieren</button>
+  </div>
+  <pre class="code" id="dmarc-output">_dmarc.example.com.   IN TXT  "v=DMARC1; p=none; rua=mailto:dmarc@example.com; pct=100"</pre>
+  <div class="gen-preview-fields">
+    <div><span>DNS-Type</span><strong>TXT</strong></div>
+    <div><span>Name / Host</span><strong id="prev-host">_dmarc</strong></div>
+    <div><span>TTL</span><strong>3600</strong></div>
+  </div>
+  <div id="warnings" class="gen-warnings"></div>
+</section>
+
+<!-- ============== SCHRITT 1: Domain ============== -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">1</span>
+    <div>
+      <h2>Welche Domain möchtest du schützen?</h2>
+      <p class="muted small">Die Hauptdomain, von der du Mails verschickst. <strong>Ohne</strong> <code>www.</code> oder <code>mail.</code> davor.</p>
+    </div>
+  </div>
+  <label class="gen-big-input">
+    <input type="text" id="domain" value="{{ prefill_domain or 'example.com' }}" required pattern="^[A-Za-z0-9.\-]+$" placeholder="z.B. meinefirma.ch" autocomplete="off">
+    <span class="hint">Beispiel: <code>meinefirma.ch</code> · der Eintrag landet später automatisch auf <code id="hint-host">_dmarc.meinefirma.ch</code></span>
+  </label>
+
+  <!-- Inline-Check: Bestandsaufnahme der Domain -->
+  <div class="gen-inline-check">
+    <div class="gen-inline-check-head">
+      <div>
+        <strong>📡 Was ist heute schon eingestellt?</strong>
+        <span class="muted small">Wir prüfen DMARC, SPF, DKIM, MX live in 5 Sekunden — bevor du was änderst.</span>
+      </div>
+      <button type="button" class="btn-primary" id="inline-check-btn" onclick="runInlineCheck()">Stand prüfen</button>
+    </div>
+    <div id="inline-check-result" class="gen-inline-result" hidden></div>
+  </div>
+</section>
+
+<!-- ============== SCHRITT 2: Report-Mailbox ============== -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">2</span>
+    <div>
+      <h2>Wohin sollen die Berichte geschickt werden?</h2>
+      <p class="muted small">DMARC funktioniert nur, wenn die großen Mail-Anbieter (Google, Microsoft, Yahoo &amp; Co.) dir <strong>tägliche Berichte</strong> schicken. Hier trägst du die E-Mail-Adresse ein, die diese Berichte empfangen soll.</p>
+    </div>
+  </div>
+  <label class="gen-big-input">
+    <input type="text" id="rua" placeholder="z.B. dmarc@meinefirma.ch" autocomplete="off">
+    <span class="hint">Empfehlung: lege eine eigene Adresse <code>dmarc@deine-domain</code> an. Diese Mailbox bindest du nachher in <a href="/mailboxes">Postfächer</a> ein, dann liest der Aggregator die Berichte automatisch aus und macht hübsche Auswertungen daraus.</span>
+  </label>
+  <div class="gen-tip">
+    <span class="gen-tip-ico">💡</span>
+    <div>
+      <strong>Du kannst auch mehrere Adressen eintragen</strong>, getrennt mit Komma. Z.B. wenn du selbst und ein externer Dienstleister Berichte mitlesen sollen.
+    </div>
+  </div>
+</section>
+
+<!-- ============== SCHRITT 3: Strenge ============== -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">3</span>
+    <div>
+      <h2>Wie streng soll DMARC am Anfang sein?</h2>
+      <p class="muted small">Die Frage: <em>was sollen Google &amp; Co. mit Mails machen, die vorgeben von dir zu kommen, es aber nicht sind?</em> Ignorieren? In den Spam? Komplett ablehnen?</p>
+    </div>
+  </div>
+  <div class="gen-policy-cards">
+    <button type="button" class="policy-card recommended" onclick="applyPreset('monitor', this)">
+      <div class="policy-card-pin">★ Empfohlen für den Start</div>
+      <div class="policy-card-ico">👁️</div>
+      <h3>Erst nur beobachten</h3>
+      <div class="policy-card-tech">p=none</div>
+      <p>Empfänger machen <strong>nichts</strong> mit verdächtigen Mails — du sammelst aber Berichte und lernst, wer alles in deinem Namen sendet (auch legitime Tools wie Mailchimp). <strong>Null Risiko</strong>, dass legitime Mails rausfliegen.</p>
+      <div class="policy-card-when">Sinnvoll: <strong>immer am Anfang</strong>. Mindestens 2-4 Wochen so laufen lassen.</div>
+    </button>
+
+    <button type="button" class="policy-card" onclick="applyPreset('partial', this)">
+      <div class="policy-card-ico">🛡️</div>
+      <h3>Verdächtige in den Spam</h3>
+      <div class="policy-card-tech">p=quarantine · pct=25</div>
+      <p>Bei <strong>einem Viertel</strong> der verdächtigen Mails landen sie im Spam-Ordner des Empfängers. Du siehst in den Berichten, ob alles legitime durchkommt — wenn ja, kannst du den Anteil später hochziehen.</p>
+      <div class="policy-card-when">Sinnvoll: <strong>nach 2-4 Wochen Beobachtung</strong>, wenn keine offenen Probleme mehr.</div>
+    </button>
+
+    <button type="button" class="policy-card" onclick="applyPreset('strict', this)">
+      <div class="policy-card-ico">🚫</div>
+      <h3>Verdächtige ablehnen</h3>
+      <div class="policy-card-tech">p=reject · pct=100</div>
+      <p>Verdächtige Mails werden <strong>komplett blockiert</strong>. Maximaler Schutz vor Phishing in deinem Namen — aber wenn dein Setup falsch ist, gehen <strong>auch echte Mails verloren</strong>.</p>
+      <div class="policy-card-when">Sinnvoll: <strong>nur wenn deine Pass-Rate 30 Tage stabil &gt; 99 %</strong> ist. Der <a href="/domains">Advisor</a> sagt dir's.</div>
+    </button>
+  </div>
+  <div class="gen-warning-box">
+    <span class="gen-warning-ico">⚠️</span>
+    <div>
+      <strong>Goldene Regel:</strong> Fang mit <em>"Erst nur beobachten"</em> an. Mindestens 2 Wochen. Dann erst schärfer stellen. Wer direkt mit <code>p=reject</code> startet, riskiert dass Rechnungs-Mails von Mailchimp im Nirvana landen.
+    </div>
+  </div>
+</section>
+
+<!-- ============== SCHRITT 4: DNS-Eintrag setzen ============== -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">4</span>
+    <div>
+      <h2>Wo trage ich den Eintrag ein?</h2>
+      <p class="muted small">Bei deinem <strong>DNS-Anbieter</strong> (dort wo deine Domain registriert ist oder wo die Nameserver liegen). Wähle deinen Anbieter für eine konkrete Anleitung.</p>
+    </div>
+  </div>
+  <div class="gen-provider-tabs gen-provider-tabs-grouped" role="tablist">
+    <span class="gen-prov-group">🇨🇭 Schweiz</span>
+    <button type="button" class="prov-tab active" data-prov="infomaniak" onclick="setProvider('infomaniak', this)">Infomaniak</button>
+    <button type="button" class="prov-tab" data-prov="hostpoint" onclick="setProvider('hostpoint', this)">Hostpoint</button>
+    <button type="button" class="prov-tab" data-prov="cyon" onclick="setProvider('cyon', this)">cyon</button>
+    <button type="button" class="prov-tab" data-prov="hostfactory" onclick="setProvider('hostfactory', this)">Hostfactory</button>
+    <button type="button" class="prov-tab" data-prov="metanet" onclick="setProvider('metanet', this)">Metanet</button>
+    <button type="button" class="prov-tab" data-prov="green" onclick="setProvider('green', this)">green.ch</button>
+    <button type="button" class="prov-tab" data-prov="swisscom" onclick="setProvider('swisscom', this)">Swisscom</button>
+    <span class="gen-prov-group">🌍 International</span>
+    <button type="button" class="prov-tab" data-prov="cloudflare" onclick="setProvider('cloudflare', this)">Cloudflare</button>
+    <button type="button" class="prov-tab" data-prov="hetzner" onclick="setProvider('hetzner', this)">Hetzner</button>
+    <button type="button" class="prov-tab" data-prov="ionos" onclick="setProvider('ionos', this)">IONOS / 1&amp;1</button>
+    <button type="button" class="prov-tab" data-prov="strato" onclick="setProvider('strato', this)">Strato</button>
+    <button type="button" class="prov-tab" data-prov="godaddy" onclick="setProvider('godaddy', this)">GoDaddy</button>
+    <button type="button" class="prov-tab" data-prov="route53" onclick="setProvider('route53', this)">AWS Route 53</button>
+    <button type="button" class="prov-tab" data-prov="generic" onclick="setProvider('generic', this)">Anderer / Allgemein</button>
+  </div>
+
+  <div class="prov-pane active" data-prov="infomaniak">
+    <ol class="gen-howto">
+      <li>Logge dich im <strong>Infomaniak Manager</strong> ein → <em>Domains</em> → deine Domain → <em>DNS-Zone</em>.</li>
+      <li>Klick <em>„Eintrag hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Quelle/Source</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Ziel/Target</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li><em>„Bestätigen"</em>. Greift in 1-5 Minuten.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="hostpoint">
+    <ol class="gen-howto">
+      <li>Login im <strong>Hostpoint Control Panel</strong> → <em>Domains</em> → deine Domain → <em>DNS</em>.</li>
+      <li>Klick <em>„DNS-Eintrag hinzufügen"</em> oder direkt das <em>+</em> in der TXT-Sektion.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Hostname</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code> (oder Standard)</td></tr>
+        </table>
+      </li>
+      <li>Speichern. Hostpoint propagiert in der Regel innert 5-10 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="cyon">
+    <ol class="gen-howto">
+      <li>Login im <strong>my.cyon</strong> Panel → <em>Domains &amp; DNS</em> → wähle die Domain.</li>
+      <li>Tab <em>„DNS-Einträge"</em> → unten <em>„Eintrag hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code> <span class="muted small">(cyon hängt die Anführungszeichen automatisch an)</span></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li><em>„Speichern"</em>. Aktiv in 1-5 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="hostfactory">
+    <ol class="gen-howto">
+      <li>Login im <strong>Hostfactory Customer Center</strong> → <em>Domains</em> → deine Domain wählen.</li>
+      <li>Tab <em>„DNS Records"</em> → <em>„Eintrag hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Inhalt</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="metanet">
+    <ol class="gen-howto">
+      <li>Login im <strong>Metanet Kundencenter</strong> → <em>Domain &amp; Hosting</em> → DNS-Verwaltung der Domain.</li>
+      <li>Wähle <em>„TXT-Records"</em> → <em>„Neuer TXT-Eintrag"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Subdomain</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern. Metanet braucht teilweise bis zu 60 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="green">
+    <ol class="gen-howto">
+      <li>Login bei <strong>green.ch Admin</strong> → <em>Domain &amp; Webhosting</em> → DNS-Manager der Domain.</li>
+      <li>Klick <em>„Record hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="swisscom">
+    <ol class="gen-howto">
+      <li>Login im <strong>Swisscom Hosting Control Panel</strong> (für Business-Kunden) → DNS-Verwaltung der Domain.</li>
+      <li>Bei <em>TXT-Einträgen</em> auf <em>„Neuer Eintrag"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Hostname</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern. <span class="muted small">(Bei Swisscom Endkunden-Hostings ist die DNS-Verwaltung teils eingeschränkt — dann den Support kontaktieren.)</span></li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="cloudflare">
+    <ol class="gen-howto">
+      <li>Logge dich bei <strong>Cloudflare</strong> ein, wähle deine Domain → <em>DNS · Records</em>.</li>
+      <li>Klick <em>„Add record"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code> <span class="muted small">(Cloudflare hängt deine Domain selbst an)</span></td></tr>
+          <tr><td>Content</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>Auto</code></td></tr>
+        </table>
+      </li>
+      <li>Klick <em>„Save"</em>. Fertig — Änderung greift in 1-5 Minuten.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="hetzner">
+    <ol class="gen-howto">
+      <li>Logge dich bei <strong>Hetzner DNS Console</strong> ein und öffne die Zone deiner Domain.</li>
+      <li>Klick <em>„Record hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Value</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code> <span class="muted small">(in Anführungszeichen einschließen ist OK, aber nicht nötig)</span></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li>Klick <em>„Speichern"</em>. Greift in der Regel in 1-2 Minuten.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="ionos">
+    <ol class="gen-howto">
+      <li>Logge dich bei <strong>IONOS</strong> ein → <em>Domains &amp; SSL</em> → deine Domain → <em>DNS</em>.</li>
+      <li>Klick <em>„Record hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Hostname</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>1 Stunde</code></td></tr>
+        </table>
+      </li>
+      <li>Klick <em>„Speichern"</em>. Bei IONOS dauert's manchmal bis zu 60 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="strato">
+    <ol class="gen-howto">
+      <li>Logge dich im <strong>Strato Kunden-Login</strong> ein → <em>Domainverwaltung</em> → deine Domain → <em>DNS-Verwaltung</em>.</li>
+      <li>Wähle <em>„TXT-Records verwalten"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Präfix</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern. Strato braucht oft <strong>1-4 Stunden</strong>.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="godaddy">
+    <ol class="gen-howto">
+      <li>Logge dich bei <strong>GoDaddy</strong> ein → <em>Mein Konto</em> → <em>Meine Produkte</em> → bei deiner Domain auf <em>DNS</em>.</li>
+      <li>Klick <em>„Add"</em> unter <em>Records</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Value</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>1 hour</code></td></tr>
+        </table>
+      </li>
+      <li>Klick <em>„Save"</em>.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="route53">
+    <ol class="gen-howto">
+      <li>Logge dich in der <strong>AWS Console</strong> ein → <em>Route 53</em> → <em>Hosted zones</em> → wähle deine Domain.</li>
+      <li>Klick <em>„Create record"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Record name</td><td><code>_dmarc</code></td></tr>
+          <tr><td>Record type</td><td><code>TXT</code></td></tr>
+          <tr><td>Value</td><td><code class="prov-record-inline">"v=DMARC1; p=none; …"</code> <span class="muted small">(Route 53 verlangt Anführungszeichen)</span></td></tr>
+          <tr><td>TTL</td><td><code>300</code></td></tr>
+        </table>
+      </li>
+      <li>Klick <em>„Create records"</em>.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane" data-prov="generic">
+    <ol class="gen-howto">
+      <li>Logge dich bei deinem <strong>DNS-Anbieter</strong> ein und finde die DNS-Verwaltung deiner Domain (Begriffe: „DNS-Records", „Zone-Editor", „Nameserver-Einträge").</li>
+      <li>Lege einen neuen <strong>TXT-Record</strong> an:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name / Host</td><td><code>_dmarc</code> <span class="muted small">(manche Anbieter wollen es als <code>_dmarc.deine-domain</code> komplett geschrieben — probier's notfalls beides)</span></td></tr>
+          <tr><td>Value / Wert</td><td><code class="prov-record-inline">v=DMARC1; p=none; …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code> oder <em>Auto/Default</em></td></tr>
+        </table>
+      </li>
+      <li>Speichern. Erste Auswirkungen meist nach Minuten, vollständig nach max. 24h.</li>
+    </ol>
+  </div>
+
+  <div class="gen-tip">
+    <span class="gen-tip-ico">✅</span>
+    <div>
+      <strong>Geprüft? Test mit:</strong>
+      <a href="/dns-check?domain={{ prefill_domain or 'example.com' }}" id="check-link">DNS-Health-Check öffnen →</a>
+      Da siehst du in 5 Sekunden, ob der Eintrag richtig veröffentlicht ist.
+    </div>
+  </div>
+</section>
+
+<!-- ============== ERWEITERT (eingeklappt) ============== -->
+<section class="card gen-advanced-card">
+  <details>
+    <summary>
+      <span>⚙️ Erweiterte Einstellungen</span>
+      <span class="muted small">— wirklich nur reinschauen, wenn was Spezielles nötig ist</span>
+    </summary>
+
+    <div class="gen-advanced-body">
+      <div class="gen-tip" style="margin-bottom: 24px;">
+        <span class="gen-tip-ico">🛡️</span>
+        <div><strong>Du kannst diesen ganzen Bereich überspringen.</strong> Die Default-Werte oben passen für 95% aller Domains. Hier drin geht's nur um Spezialfälle wie Subdomains, schrittweises Schärfen oder Mail-Listen-Forwarding.</div>
+      </div>
+
+      <!-- Group A: Subdomains -->
+      <div class="adv-group">
+        <h3 class="adv-group-h">🌳 Subdomains (z.B. <code>newsletter.firma.ch</code>)</h3>
+        <p class="adv-group-sub">Nur lesen, wenn deine Subdomains anders behandelt werden sollen als die Hauptdomain.</p>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="sp">Was passiert mit Mails von Subdomains?</label>
+            <span class="adv-field-tag">sp</span>
+          </div>
+          <select id="sp" class="adv-field-input">
+            <option value="">Genauso wie die Hauptdomain (das willst du in 99 % der Fälle)</option>
+            <option value="none">Subdomains nur beobachten — auch wenn Hauptdomain schon scharf ist</option>
+            <option value="quarantine">Subdomain-Spoofing in den Spam</option>
+            <option value="reject">Subdomain-Spoofing komplett ablehnen</option>
+          </select>
+          <p class="adv-field-explain">Beispiel-Szenario: deine Hauptdomain <code>firma.ch</code> ist schon auf <em>„komplett ablehnen"</em>, aber <code>marketing.firma.ch</code> nutzt einen externen Newsletter-Dienst dessen Setup wackelig ist. Dann hier <em>„Subdomains nur beobachten"</em> wählen, bis das auch sauber läuft.</p>
+        </div>
+      </div>
+
+      <!-- Group B: Schrittweises Schärfen -->
+      <div class="adv-group">
+        <h3 class="adv-group-h">📊 Schrittweises Schärfen (Anteil der Mails)</h3>
+        <p class="adv-group-sub">Nur wenn du in Schritt 3 <em>„Verdächtige in den Spam"</em> oder <em>„Verdächtige ablehnen"</em> gewählt hast und vorsichtig hochfahren willst.</p>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="pct">Auf wie viel Prozent der verdächtigen Mails soll die Strenge angewendet werden?</label>
+            <span class="adv-field-tag">pct</span>
+          </div>
+          <div class="adv-pct-wrap">
+            <input type="range" id="pct" min="0" max="100" value="100" step="5">
+            <div class="adv-pct-label-row">
+              <span class="adv-pct-current"><strong id="pct-label">100</strong> %</span>
+              <span class="muted small" id="pct-meaning">→ Strenge gilt für <strong>alle</strong> verdächtigen Mails.</span>
+            </div>
+            <div class="adv-pct-marks">
+              <button type="button" onclick="setPct(10)">10 %</button>
+              <button type="button" onclick="setPct(25)">25 %</button>
+              <button type="button" onclick="setPct(50)">50 %</button>
+              <button type="button" onclick="setPct(100)">100 %</button>
+            </div>
+          </div>
+          <p class="adv-field-explain">Beispiel: stellst du auf <strong>25 %</strong>, behandelt der Empfänger 1 von 4 verdächtigen Mails laut deiner Strenge — den Rest lässt er „nur beobachten" durch. So merkst du in den Berichten, ob legitime Mails fälschlich gefiltert würden, ohne dass gleich alles Schaden nimmt. Klassischer Pfad: <code>10 → 25 → 50 → 100</code> über mehrere Wochen.</p>
+        </div>
+      </div>
+
+      <!-- Group C: Genauigkeit -->
+      <div class="adv-group">
+        <h3 class="adv-group-h">🎯 Genauigkeit der Domain-Prüfung</h3>
+        <p class="adv-group-sub">Wie exakt müssen Mails zur Domain passen, damit sie als legitim zählen? <strong>Locker</strong> ist fast immer richtig.</p>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="adkim">DKIM-Übereinstimmung</label>
+            <span class="adv-field-tag">adkim</span>
+          </div>
+          <select id="adkim" class="adv-field-input">
+            <option value="r">Locker — Subdomains zählen mit (empfohlen)</option>
+            <option value="s">Streng — Domain muss exakt passen, kein Subdomain-Bonus</option>
+          </select>
+          <p class="adv-field-explain"><strong>Locker</strong>: Mail mit Absender <code>news@firma.ch</code> ist OK, auch wenn die DKIM-Signatur von <code>mailer.firma.ch</code> stammt. <strong>Streng</strong>: Signatur-Domain muss exakt <code>firma.ch</code> sein. Streng setzen nur, wenn du genau weißt warum.</p>
+        </div>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="aspf">SPF-Übereinstimmung</label>
+            <span class="adv-field-tag">aspf</span>
+          </div>
+          <select id="aspf" class="adv-field-input">
+            <option value="r">Locker — Subdomains zählen mit (empfohlen)</option>
+            <option value="s">Streng — Domain muss exakt passen</option>
+          </select>
+          <p class="adv-field-explain">Genau wie bei DKIM, aber für die SPF-Prüfung. Auch hier: <strong>Locker</strong> belassen.</p>
+        </div>
+      </div>
+
+      <!-- Group D: Reports-Frequenz -->
+      <div class="adv-group">
+        <h3 class="adv-group-h">⏱️ Wie oft kommen die Berichte?</h3>
+        <p class="adv-group-sub">In der Theorie kannst du das Intervall bestimmen. In der Praxis senden alle großen Anbieter eh 1× pro Tag.</p>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="ri">Berichts-Intervall</label>
+            <span class="adv-field-tag">ri</span>
+          </div>
+          <select id="ri" class="adv-field-input">
+            <option value="">Standard — 1× täglich (das willst du)</option>
+            <option value="3600">Stündlich (wird in der Praxis ignoriert)</option>
+            <option value="86400">Täglich (entspricht dem Standard)</option>
+            <option value="604800">Wöchentlich</option>
+          </select>
+          <p class="adv-field-explain">Egal was du wählst — Google, Microsoft &amp; Yahoo schicken Berichte 1× pro Tag. Dieses Feld ist eher symbolisch.</p>
+        </div>
+      </div>
+
+      <!-- Group E: Forensik-Berichte -->
+      <div class="adv-group adv-group-warn">
+        <h3 class="adv-group-h">⚠️ Forensik-Berichte (besser nicht aktivieren)</h3>
+        <p class="adv-group-sub"><strong>Empfehlung: lass diesen Bereich komplett leer.</strong> Forensik-Berichte sind technisch tot und DSGVO-heikel — wir zeigen die Felder nur, weil DMARC sie kennt.</p>
+
+        <details class="adv-group-collapse">
+          <summary>Trotzdem ansehen</summary>
+
+          <div class="adv-field">
+            <div class="adv-field-head">
+              <label class="adv-field-label" for="ruf">E-Mail-Adresse für Forensik-Berichte</label>
+              <span class="adv-field-tag">ruf</span>
+            </div>
+            <input type="text" id="ruf" placeholder="leer lassen" class="adv-field-input">
+            <p class="adv-field-explain">Eine zweite Mailbox, die für <em>jede einzelne</em> verdächtige Mail einen Bericht mit Original-Header bekommt. Klingt nützlich, aber: Google/Microsoft/Yahoo verschicken seit Jahren <strong>keine</strong> mehr. Was übrig bleibt, sind ein paar kleinere Anbieter mit datenschutzrechtlich heiklem Material (Empfänger-Adressen, manchmal Subject). Bei einer Phishing-Welle ertrinkst du in Reports.</p>
+          </div>
+
+          <div class="adv-field">
+            <div class="adv-field-head">
+              <label class="adv-field-label" for="fo">Wann genau einen Forensik-Bericht?</label>
+              <span class="adv-field-tag">fo</span>
+            </div>
+            <select id="fo" class="adv-field-input">
+              <option value="">Nicht setzen (sinnlos ohne Forensik-Adresse oben)</option>
+              <option value="0">Nur wenn beide Prüfungen (SPF + DKIM) durchfallen</option>
+              <option value="1">Wenn eine der beiden Prüfungen durchfällt — viele Reports!</option>
+              <option value="d">Nur bei DKIM-Fehlern</option>
+              <option value="s">Nur bei SPF-Fehlern</option>
+            </select>
+            <p class="adv-field-explain">Wirkt nur zusammen mit dem Forensik-Adressfeld oben. Sonst hat es keinen Effekt.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- Group F: Manuelle Policy-Override -->
+      <div class="adv-group">
+        <h3 class="adv-group-h">🔧 Manuelle Policy-Übersteuerung</h3>
+        <p class="adv-group-sub">Falls du Schritt 3 oben überschreiben willst — z.B. um eine bestimmte Reihenfolge im Record zu erzwingen.</p>
+
+        <div class="adv-field">
+          <div class="adv-field-head">
+            <label class="adv-field-label" for="p">Strenge der Hauptdomain</label>
+            <span class="adv-field-tag">p</span>
+          </div>
+          <select id="p" class="adv-field-input">
+            <option value="none">Erst nur beobachten (none)</option>
+            <option value="quarantine">In den Spam (quarantine)</option>
+            <option value="reject">Komplett ablehnen (reject)</option>
+          </select>
+          <p class="adv-field-explain">Identisch zur Wahl in Schritt 3. Änderst du hier, wird Schritt 3 ignoriert.</p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+</section>
+
+<!-- ============== GLOSSAR / FAQ ============== -->
+<section class="card">
+  <h2>Häufige Fragen &amp; Glossar</h2>
+  <details>
+    <summary><strong>Was ist eine „verdächtige Mail" aus DMARC-Sicht?</strong></summary>
+    <p class="muted small">Eine Mail, bei der weder SPF noch DKIM passend (<em>aligned</em>) durchgegangen sind. Beispiel: jemand schickt eine Phishing-Mail mit Absender <code>chef@deine-firma.ch</code>, hat aber gar keinen Zugriff auf deinen Mailserver — also fehlen SPF und DKIM. Aus Sicht von DMARC ist das verdächtig. <strong>Achtung:</strong> verdächtig &neq; immer böse — auch eigene Tools wie Mailchimp können „verdächtig" wirken, wenn sie nicht korrekt eingerichtet sind. Genau dafür ist die Beobachtungs-Phase da.</p>
+  </details>
+  <details>
+    <summary><strong>Was ist ein Forensik-Bericht (Failure Report / RUF)?</strong></summary>
+    <p class="muted small">Während der normale <em>Aggregate-Bericht</em> (RUA) eine Tages-Statistik ist (anonymisiert, eine Zeile pro Quell-IP), wäre ein <em>Forensik-Bericht</em> (RUF) ein <strong>einzelner Bericht für jede einzelne fehlgeschlagene Mail</strong>, inklusive Original-Header und teils Subject. Ist heute praktisch tot, weil:
+    <ul style="margin: 8px 0 0 20px; padding: 0;">
+      <li>Google, Microsoft, Yahoo schicken aus Datenschutz-Gründen schon Jahre keine RUF mehr</li>
+      <li>DSGVO-relevant — du bekommst personenbezogene Empfänger-Daten</li>
+      <li>Bei einer Phishing-Welle ertrinkst du in Reports</li>
+    </ul>
+    Lass das Feld einfach leer.</p>
+  </details>
+  <details>
+    <summary><strong>Was ist Alignment?</strong></summary>
+    <p class="muted small">DMARC verlangt, dass die Domain im sichtbaren <code>From:</code>-Header (was der Empfänger sieht) mit der Domain übereinstimmt, die SPF/DKIM authentifiziert haben. Sonst gilt die Mail als <em>nicht aligned</em>. Beispiel: SPF passt für <code>mailchimp.com</code>, sichtbarer Absender ist aber <code>news@deine-firma.ch</code> — ohne DKIM-Signatur deiner Domain ist die Mail nicht aligned.</p>
+  </details>
+  <details>
+    <summary><strong>Wann darf ich auf <code>p=reject</code>?</strong></summary>
+    <p class="muted small">Faustregel: 30 Tage stabile Pass-Rate &gt; 99 %, alle bekannten legitimen Quellen identifiziert und in SPF/DKIM aufgenommen. Der <a href="/domains">Domain-Detail-Advisor</a> sagt dir konkret, ob du soweit bist.</p>
+  </details>
+  <details>
+    <summary><strong>Brauche ich SPF und DKIM trotzdem?</strong></summary>
+    <p class="muted small">Ja. DMARC selbst authentifiziert nichts — es liest nur das Ergebnis von SPF und DKIM aus. Mindestens eines muss passen, damit eine Mail als legitim gilt. Wenn du noch keine SPF/DKIM-Records hast, fang da an, bevor du DMARC setzt.</p>
+  </details>
+  <details>
+    <summary><strong>Was ist der Unterschied zwischen <code>rua</code> und <code>ruf</code>?</strong></summary>
+    <p class="muted small"><strong>rua = Aggregate-Reports:</strong> tägliche XML-Sammelberichte, eine Zeile pro Quell-IP, anonym. <strong>Das willst du.</strong><br>
+    <strong>ruf = Failure-Reports:</strong> einzelne Forensik-Reports pro fehlgeschlagener Mail, inkl. Header. <strong>Das willst du nicht</strong> — DSGVO-heikel und kaum noch ausgeliefert.</p>
+  </details>
+</section>
+
+<style>
+/* ===== Generator UI ===== */
+.gen-intro { margin-bottom: 20px; }
+.gen-intro h1 { margin-bottom: 4px; }
+
+.gen-preview { background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--brand) 4%, var(--surface))); border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+.gen-sticky { position: sticky; top: 12px; z-index: 5; }
+.gen-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.gen-preview-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.gen-preview-sublabel { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.gen-preview pre.code { font-size: 13px; padding: 12px 14px; margin: 0; overflow-x: auto; word-break: break-all; white-space: pre-wrap; }
+.gen-preview-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.gen-preview-fields > div { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.gen-preview-fields span { display: block; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.gen-preview-fields strong { display: block; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; margin-top: 2px; word-break: break-all; }
+
+.gen-warnings { display: grid; gap: 6px; margin-top: 12px; }
+.gen-warnings .warn-line { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; background: color-mix(in srgb, var(--warn) 14%, transparent); border-left: 3px solid var(--warn); color: var(--text); }
+.gen-warnings .warn-line.danger { background: color-mix(in srgb, var(--bad) 14%, transparent); border-left-color: var(--bad); }
+.gen-warnings .warn-line.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); border-left-color: var(--ok); }
+
+/* Step-Cards */
+.gen-step { margin-bottom: 18px; }
+.gen-step-head { display: grid; grid-template-columns: auto 1fr; gap: 16px; margin-bottom: 18px; align-items: start; }
+.gen-step-num { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), color-mix(in srgb, var(--brand) 60%, #ec4899)); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--brand) 40%, transparent); }
+.gen-step h2 { font-size: 19px; margin: 4px 0 4px 0; font-weight: 700; letter-spacing: -0.015em; line-height: 1.3; }
+.gen-step h2 + p { margin: 0; }
+
+.gen-big-input { display: block; }
+.gen-big-input input { font-size: 16px; padding: 12px 14px; width: 100%; box-sizing: border-box; }
+.gen-big-input .hint { display: block; margin-top: 8px; }
+
+.gen-tip { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--brand) 8%, transparent); border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent); border-radius: var(--radius-sm); font-size: 13.5px; line-height: 1.55; margin-top: 14px; }
+.gen-tip-ico { font-size: 18px; line-height: 1; padding-top: 1px; }
+.gen-tip a { color: var(--brand); font-weight: 600; }
+
+.gen-warning-box { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 14px 16px; background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); border-radius: var(--radius-sm); font-size: 13.5px; line-height: 1.55; margin-top: 18px; }
+.gen-warning-ico { font-size: 18px; line-height: 1; padding-top: 1px; }
+
+/* Policy cards */
+.gen-policy-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.policy-card { background: var(--bg-elev); border: 2px solid var(--border); border-radius: 12px; padding: 22px 20px; cursor: pointer; text-align: left; font: inherit; color: var(--text); transition: border-color .15s, transform .12s, box-shadow .15s; position: relative; display: flex; flex-direction: column; gap: 8px; }
+.policy-card:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.policy-card.recommended { border-color: var(--brand); box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--brand) 30%, transparent); }
+.policy-card.active { border-color: var(--brand); border-width: 2px; background: color-mix(in srgb, var(--brand) 6%, var(--bg-elev)); }
+.policy-card-pin { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--brand); color: white; font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.policy-card-ico { font-size: 28px; line-height: 1; }
+.policy-card h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.policy-card-tech { font-size: 11.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, transparent); padding: 3px 8px; border-radius: 4px; align-self: flex-start; }
+.policy-card p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-soft); }
+.policy-card-when { font-size: 12px; color: var(--muted); padding-top: 6px; border-top: 1px dashed var(--border); margin-top: 4px; }
+.policy-card-when a { color: var(--brand); }
+
+/* Provider tabs */
+.gen-provider-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; padding: 8px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; align-items: center; }
+.gen-provider-tabs-grouped { row-gap: 6px; }
+.gen-prov-group { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 4px 8px; flex-basis: 100%; }
+.gen-prov-group + .prov-tab { margin-left: 0; }
+.prov-tab { padding: 8px 14px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); transition: background .12s, color .12s; }
+.prov-tab:hover { color: var(--text); background: var(--bg-elev); }
+.prov-tab.active { background: var(--bg-elev); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); padding: 7px 13px; }
+.prov-pane { display: none; }
+.prov-pane.active { display: block; animation: provFade .25s ease-out; }
+@keyframes provFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.gen-howto { margin: 0; padding-left: 24px; }
+.gen-howto > li { padding: 8px 0; line-height: 1.6; }
+.howto-table { width: 100%; max-width: 600px; margin: 8px 0; border-collapse: collapse; font-size: 13px; }
+.howto-table td { padding: 6px 12px 6px 0; vertical-align: top; }
+.howto-table td:first-child { color: var(--muted); font-weight: 500; width: 130px; white-space: nowrap; }
+.howto-table code { font-size: 12.5px; }
+
+.prov-record-inline { display: inline-block; max-width: 100%; word-break: break-all; }
+
+/* Advanced */
+.gen-advanced-card details { padding: 0; }
+.gen-advanced-card summary { cursor: pointer; padding: 6px 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.gen-advanced-card summary > span:first-child { font-size: 16px; }
+.gen-advanced-body { padding-top: 18px; }
+
+.adv-group { padding: 22px 22px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 18px; }
+.adv-group-warn { background: color-mix(in srgb, var(--warn) 6%, transparent); border-color: color-mix(in srgb, var(--warn) 22%, var(--border)); }
+.adv-group-h { font-size: 15px; font-weight: 700; margin: 0 0 4px 0; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.adv-group-h code { font-size: 12.5px; background: var(--bg-elev); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); font-weight: 500; }
+.adv-group-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px 0; line-height: 1.55; }
+.adv-group-sub strong { color: var(--text); }
+
+.adv-group-collapse { margin-top: 8px; }
+.adv-group-collapse summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--warn); padding: 6px 10px; background: var(--bg-elev); border: 1px dashed color-mix(in srgb, var(--warn) 35%, var(--border)); border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px; list-style: none; }
+.adv-group-collapse summary::before { content: "▸ "; font-family: ui-monospace, monospace; }
+.adv-group-collapse[open] summary::before { content: "▾ "; }
+.adv-group-collapse[open] summary { margin-bottom: 14px; }
+
+.adv-field { padding: 14px 0; border-bottom: 1px dashed var(--border); }
+.adv-field:last-child { border-bottom: 0; padding-bottom: 0; }
+.adv-field:first-child { padding-top: 0; }
+.adv-field-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.adv-field-label { font-size: 14px; font-weight: 600; color: var(--text); margin: 0; line-height: 1.4; }
+.adv-field-tag { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; background: var(--bg-elev); border: 1px solid var(--border); color: var(--muted); padding: 2px 8px; border-radius: 4px; font-weight: 500; flex-shrink: 0; }
+.adv-field-input { width: 100%; box-sizing: border-box; }
+.adv-field-explain { font-size: 12.5px; color: var(--muted); margin: 8px 0 0 0; line-height: 1.6; padding: 8px 12px; background: var(--bg-elev); border-radius: 6px; border-left: 2px solid color-mix(in srgb, var(--brand) 40%, var(--border)); }
+.adv-field-explain strong { color: var(--text); }
+.adv-field-explain code { font-size: 11.5px; padding: 1px 5px; }
+
+.adv-pct-wrap { padding: 4px 0; }
+.adv-pct-wrap input[type=range] { width: 100%; padding: 0; }
+.adv-pct-label-row { display: flex; align-items: baseline; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+.adv-pct-current { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--brand); font-variant-numeric: tabular-nums; }
+.adv-pct-marks { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.adv-pct-marks button { font: inherit; font-size: 12px; padding: 6px 14px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-soft); font-weight: 500; transition: border-color .12s, color .12s, background .12s; }
+.adv-pct-marks button:hover { border-color: var(--brand); color: var(--text); background: color-mix(in srgb, var(--brand) 6%, var(--bg-elev)); }
+
+/* Inline Check */
+.gen-inline-check { margin-top: 18px; padding: 14px 16px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
+/* Mail-Check-Loader (inline variant — Marketing-/Check-Page haben das in marketing.css) */
+.mc-loader-card.mc-loader-inline { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.mc-loader-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.mc-loader-spinner svg { display: block; }
+.mc-loader-spinner-arc { transform-origin: 25px 25px; animation: mcSpin 1s linear infinite; }
+@keyframes mcSpin { to { transform: rotate(360deg); } }
+.mc-loader-eyebrow { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.mc-loader-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+.mc-loader-title code { font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, transparent); padding: 1px 7px; border-radius: 4px; font-size: 14px; }
+.mc-loader-phases { list-style: none; padding: 0; margin: 0; display: grid; gap: 3px; }
+.mc-loader-phase { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 7px; opacity: 0.45; transition: background .15s, opacity .2s; }
+.mc-loader-phase-ico { font-size: 16px; line-height: 1; }
+.mc-loader-phase-text strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.mc-loader-phase-text .muted { display: block; font-size: 11px; margin-top: 1px; line-height: 1.4; }
+.mc-loader-phase-status { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 2px solid var(--border); background: var(--surface-soft); transition: background .2s, border-color .2s, color .2s; position: relative; }
+.mc-loader-phase-active { opacity: 1; background: color-mix(in srgb, var(--brand) 6%, transparent); }
+.mc-loader-phase-active .mc-loader-phase-status { border-color: var(--brand); background: var(--bg-elev); }
+.mc-loader-phase-active .mc-loader-phase-status::after { content: ""; position: absolute; inset: 1px; border: 2px solid var(--brand); border-top-color: transparent; border-radius: 50%; animation: mcSpin .9s linear infinite; }
+.mc-loader-phase-done { opacity: 0.85; }
+.mc-loader-phase-done .mc-loader-phase-status { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: var(--ok); color: var(--ok); }
+.mc-loader-phase-done .mc-loader-phase-status::before { content: "✓"; font-weight: 800; font-size: 12px; }
+.gen-inline-check-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.gen-inline-check-head strong { display: block; font-size: 14px; }
+.gen-inline-check-head .muted { display: block; margin-top: 2px; }
+.gen-inline-result { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.gen-inline-result[hidden] { display: none; }
+
+.gic-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 8px 0; }
+.gic-loading::before { content: ""; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: gicSpin .8s linear infinite; }
+@keyframes gicSpin { to { transform: rotate(360deg); } }
+
+.gic-summary { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 14px 16px; border-radius: 10px; color: white; margin-bottom: 12px; }
+.gic-summary.g-a { background: linear-gradient(135deg, #16a34a, #059669); }
+.gic-summary.g-b { background: linear-gradient(135deg, #16a34a, #65a30d); }
+.gic-summary.g-c { background: linear-gradient(135deg, #d97706, #ca8a04); }
+.gic-summary.g-d { background: linear-gradient(135deg, #dc2626, #d97706); }
+.gic-summary.g-f { background: linear-gradient(135deg, #991b1b, #dc2626); }
+.gic-grade { width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; flex-shrink: 0; }
+.gic-summary-text strong { display: block; font-size: 14px; line-height: 1.3; }
+.gic-summary-text span { display: block; font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+.gic-rows { display: grid; gap: 6px; }
+.gic-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 12px; background: var(--bg-elev); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+.gic-row.s-ok { border-left-color: var(--ok); }
+.gic-row.s-warn { border-left-color: var(--warn); }
+.gic-row.s-fail { border-left-color: var(--bad); }
+.gic-row.s-info { border-left-color: var(--brand); opacity: 0.85; }
+.gic-row-ico { font-size: 16px; line-height: 1; }
+.gic-row-detail { color: var(--text-soft); line-height: 1.45; }
+.gic-row-detail strong { color: var(--text); font-weight: 600; }
+.gic-row-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; letter-spacing: .04em; }
+.gic-row.s-ok .gic-row-status { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.gic-row.s-warn .gic-row-status { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
+.gic-row.s-fail .gic-row-status { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+.gic-row.s-info .gic-row-status { background: var(--surface-soft); color: var(--muted); }
+.gic-row code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; background: var(--surface-soft); padding: 1px 5px; border-radius: 3px; }
+
+.gic-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.gic-actions a { font-size: 12.5px; padding: 6px 12px; }
+
+input[type=range] { padding: 0; }
+
+/* Mobile */
+@media (max-width: 760px) {
+  .gen-policy-cards { grid-template-columns: 1fr; }
+  .gen-preview-fields { grid-template-columns: 1fr 1fr; }
+  .gen-sticky { position: relative; top: 0; }
+  .gen-step-head { grid-template-columns: 1fr; gap: 8px; }
+  .gen-step-num { width: 32px; height: 32px; font-size: 15px; }
+  .gen-provider-tabs { flex-direction: column; }
+}
+</style>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function buildRecord() {
+  const dom = ($('domain').value || 'example.com').trim().toLowerCase();
+  const p = $('p').value;
+  const sp = $('sp').value;
+  const pct = parseInt($('pct').value, 10);
+  const rua = $('rua').value.trim();
+  const ruf = $('ruf').value.trim();
+  const ri = $('ri').value;
+  const fo = $('fo').value;
+  const adkim = $('adkim').value;
+  const aspf = $('aspf').value;
+
+  const parts = [`v=DMARC1`, `p=${p}`];
+  if (sp) parts.push(`sp=${sp}`);
+  if (rua) {
+    const list = rua.split(',').map(s => s.trim()).filter(Boolean)
+      .map(s => s.startsWith('mailto:') ? s : 'mailto:' + s).join(',');
+    parts.push(`rua=${list}`);
+  }
+  if (ruf) {
+    const list = ruf.split(',').map(s => s.trim()).filter(Boolean)
+      .map(s => s.startsWith('mailto:') ? s : 'mailto:' + s).join(',');
+    parts.push(`ruf=${list}`);
+  }
+  if (!Number.isNaN(pct) && pct !== 100) parts.push(`pct=${pct}`);
+  else parts.push(`pct=100`);
+  if (adkim && adkim !== 'r') parts.push(`adkim=${adkim}`);
+  if (aspf && aspf !== 'r') parts.push(`aspf=${aspf}`);
+  if (ri) parts.push(`ri=${ri}`);
+  if (fo && ruf) parts.push(`fo=${fo}`);
+
+  const record = parts.join('; ');
+  $('dmarc-output').textContent = `_dmarc.${dom}.   IN TXT  "${record}"`;
+  $('prev-host').textContent = `_dmarc.${dom}`;
+  $('hint-host').textContent = `_dmarc.${dom}`;
+
+  // Update provider-pane inline previews
+  document.querySelectorAll('.prov-record-inline').forEach(el => { el.textContent = record; });
+
+  // Update DNS check link
+  const cl = $('check-link'); if (cl) cl.href = `/dns-check?domain=${encodeURIComponent(dom)}`;
+
+  // Warnings
+  const w = [];
+  if (!rua) w.push({k:'warn', t:'<strong>Reports-Mailbox fehlt:</strong> Ohne diese Adresse bekommst du nie Berichte. Trage in Schritt 2 mindestens eine E-Mail ein.'});
+  if (p === 'reject' && pct < 100) w.push({k:'warn', t:'<code>p=reject</code> mit weniger als 100% ist ungewöhnlich. Wenn du schrittweise hochziehen willst, ist <code>p=quarantine</code> der bessere Weg.'});
+  if (p === 'reject' && (!rua)) w.push({k:'danger', t:'<strong>Riskant:</strong> Mails komplett ablehnen ohne Berichte zu sehen — du bemerkst nicht, wenn legitime Mails abgewiesen werden. Erst Berichte aktivieren.'});
+  if (ruf) w.push({k:'warn', t:'<code>ruf=</code> ist gesetzt — denk an DSGVO. Wird heute kaum mehr ausgeliefert. Empfehlung: lass das Feld leer.'});
+  if (fo && !ruf) w.push({k:'warn', t:'<code>fo=</code> wirkt nur zusammen mit <code>ruf=</code> — sonst hat es keinen Effekt.'});
+  if (record.length > 255) w.push({k:'danger', t:`Record ist <strong>${record.length} Zeichen</strong> lang — DNS-TXT-Strings &gt; 255 müssen in mehrere Quoted-Strings gesplittet werden. Cloudflare/Hetzner machen das meist automatisch.`});
+  if (!w.length) w.push({k:'ok', t:'✓ Sieht gut aus — du kannst diesen Eintrag direkt bei deinem DNS-Anbieter setzen.'});
+  $('warnings').innerHTML = w.map(x => `<div class="warn-line ${x.k}">${x.t}</div>`).join('');
+}
+
+function applyPreset(kind, btn) {
+  const presets = {
+    monitor: { p:'none',       pct:100, ruf:'', fo:'' },
+    partial: { p:'quarantine', pct:25,  ruf:'', fo:'' },
+    strict:  { p:'reject',     pct:100, ruf:'', fo:'' },
+  };
+  const v = presets[kind];
+  if (!v) return;
+  $('p').value = v.p;
+  $('pct').value = v.pct;
+  $('pct-label').textContent = v.pct;
+  $('ruf').value = v.ruf;
+  $('fo').value = v.fo;
+  if (!$('rua').value) $('rua').value = `dmarc@${$('domain').value || 'example.com'}`;
+  document.querySelectorAll('.policy-card').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  buildRecord();
+}
+
+function setProvider(prov, btn) {
+  document.querySelectorAll('.prov-tab').forEach(t => t.classList.toggle('active', t === btn));
+  document.querySelectorAll('.prov-pane').forEach(p => p.classList.toggle('active', p.dataset.prov === prov));
+}
+
+function copyOutput(btn) {
+  const el = $('dmarc-output');
+  const m = el.textContent.match(/"([^"]+)"/);
+  const text = m ? m[1] : el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    btn.style.background = 'var(--ok)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1400);
+  });
+}
+
+async function runInlineCheck() {
+  const dom = ($('domain').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!dom || !dom.includes('.')) {
+    alert('Bitte oben eine gültige Domain eintragen (z.B. meinefirma.ch).');
+    return;
+  }
+  const btn = $('inline-check-btn');
+  const out = $('inline-check-result');
+  btn.disabled = true;
+  out.hidden = false;
+
+  // Phase-progress while server runs
+  const phases = (window.__mailcheckPhases) || [
+    { ico: '📬', label: 'MX-Records abfragen',         hint: 'Wer empfängt überhaupt Mails?',                t: 600 },
+    { ico: '📜', label: 'SPF-Record analysieren',       hint: 'Welche Server dürfen senden?',                 t: 600 },
+    { ico: '🛡️', label: 'DMARC-Policy lesen',           hint: 'Schutz gegen Spoofing aktiv?',                 t: 700 },
+    { ico: '🔑', label: '~100 DKIM-Selektoren testen',  hint: 'Google · Microsoft · Marketing-Tools …',       t: 1700 },
+    { ico: '🔒', label: 'MTA-STS, TLS-RPT, BIMI prüfen', hint: 'Moderne Mail-Security-Standards',             t: 700 },
+  ];
+  out.innerHTML = `
+    <div class="mc-loader-card mc-loader-inline">
+      <div class="mc-loader-head">
+        <div class="mc-loader-spinner" aria-hidden="true">
+          <svg viewBox="0 0 50 50" width="44" height="44">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(37,99,235,0.18)" stroke-width="5"/>
+            <circle class="mc-loader-spinner-arc" cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="60 200"/>
+          </svg>
+        </div>
+        <div>
+          <div class="mc-loader-eyebrow">Live-DNS-Check</div>
+          <div class="mc-loader-title">Prüfe <code>${dom.replace(/[<>&"]/g, '')}</code></div>
+        </div>
+      </div>
+      <ul class="mc-loader-phases">
+        ${phases.map((p, i) => `
+          <li class="mc-loader-phase" data-i="${i}">
+            <span class="mc-loader-phase-ico">${p.ico}</span>
+            <span class="mc-loader-phase-text">
+              <strong>${p.label}</strong>
+              <span class="muted small">${p.hint}</span>
+            </span>
+            <span class="mc-loader-phase-status" aria-hidden="true"></span>
+          </li>
+        `).join('')}
+      </ul>
+    </div>
+  `;
+  // animate phases
+  const phaseEls = out.querySelectorAll('.mc-loader-phase');
+  if (phaseEls[0]) phaseEls[0].classList.add('mc-loader-phase-active');
+  let idx = 0;
+  const tick = () => {
+    if (idx >= phaseEls.length) return;
+    phaseEls[idx].classList.remove('mc-loader-phase-active');
+    phaseEls[idx].classList.add('mc-loader-phase-done');
+    idx += 1;
+    if (idx < phaseEls.length) {
+      phaseEls[idx].classList.add('mc-loader-phase-active');
+      window._mcInlineTimer = setTimeout(tick, phases[idx].t);
+    }
+  };
+  window._mcInlineTimer = setTimeout(tick, phases[0].t);
+
+  try {
+    const res = await fetch('/api/check?domain=' + encodeURIComponent(dom));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (window._mcInlineTimer) clearTimeout(window._mcInlineTimer);
+    // Mark all phases done before swapping
+    phaseEls.forEach(el => { el.classList.remove('mc-loader-phase-active'); el.classList.add('mc-loader-phase-done'); });
+    setTimeout(() => renderInlineCheck(data, out), 200);
+  } catch (e) {
+    if (window._mcInlineTimer) clearTimeout(window._mcInlineTimer);
+    out.innerHTML = '<div class="warn-line danger">Prüfung fehlgeschlagen: ' + (e.message || e) + '</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderInlineCheck(data, out) {
+  const r = data.result || {};
+  const s = data.score || {};
+  const checks = s.checks || {};
+  const grade = (s.grade || 'F').toLowerCase();
+
+  const headlines = {
+    'a': 'Setup ist exzellent.',
+    'b': 'Solide, mit Feinschliff.',
+    'c': 'Solide Basis, Lücken vorhanden.',
+    'd': 'Riskant — Spoofing möglich.',
+    'f': 'Akut handlungsbedürftig.',
+  };
+
+  const rows = [];
+
+  // MX
+  if (checks.mx) {
+    const mx = r.mx || {};
+    let detail = mx.present
+      ? (mx.provider ? '<strong>' + escapeHtml(mx.provider) + '</strong>' : 'MX gesetzt')
+        + (mx.records && mx.records.length ? ' · ' + mx.records.length + ' MX-Record' + (mx.records.length !== 1 ? 's' : '') : '')
+      : 'Keine MX-Records — Domain empfängt keine Mails';
+    rows.push(rowHtml('📬', 'MX', detail, checks.mx.status));
+  }
+
+  // DMARC
+  if (checks.dmarc) {
+    const d = r.dmarc || {};
+    const detail = d.present
+      ? 'Policy <code>p=' + escapeHtml(d.policy || 'none') + '</code>' + (d.rua && d.rua.length ? ' · Reports an ' + d.rua.length + ' Empfänger' : ' · keine Reports')
+      : 'Kein DMARC-Record — jeder kann unter dieser Domain senden';
+    rows.push(rowHtml('🛡️', 'DMARC', detail, checks.dmarc.status));
+  }
+
+  // SPF
+  if (checks.spf) {
+    const sp = r.spf || {};
+    const detail = sp.present
+      ? (sp.issues && sp.issues.length ? sp.issues.length + ' Hinweis(e): ' + escapeHtml(sp.issues[0]) : 'SPF gesetzt &amp; sauber')
+      : 'Kein SPF-Record';
+    rows.push(rowHtml('📜', 'SPF', detail, checks.spf.status));
+  }
+
+  // DKIM
+  if (checks.dkim) {
+    const dk = r.dkim || [];
+    const detail = dk.length
+      ? '<strong>' + dk.length + '</strong> Selektor' + (dk.length !== 1 ? 'en' : '') + ' gefunden: '
+        + dk.slice(0, 4).map(x => '<code>' + escapeHtml(x.selector) + '</code>').join(' · ')
+        + (dk.length > 4 ? ' …' : '')
+      : 'Keine DKIM-Selektoren bei den gängigen Namen gefunden';
+    rows.push(rowHtml('🔑', 'DKIM', detail, checks.dkim.status));
+  }
+
+  // MTA-STS / TLS-RPT / BIMI (kompakt)
+  ['mta_sts', 'tls_rpt', 'bimi'].forEach(k => {
+    if (!checks[k]) return;
+    const labels = { 'mta_sts': ['🔒', 'MTA-STS'], 'tls_rpt': ['📊', 'TLS-RPT'], 'bimi': ['🎨', 'BIMI'] };
+    const [ico, name] = labels[k];
+    const obj = r[k] || {};
+    const detail = obj.present ? 'gesetzt' : 'nicht gesetzt (optional)';
+    rows.push(rowHtml(ico, name, detail, checks[k].status));
+  });
+
+  let actionsHtml = '';
+  if (s.actions && s.actions.length) {
+    actionsHtml = '<ul style="margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; color: rgba(255,255,255,0.9); line-height: 1.5;">'
+      + s.actions.slice(0, 2).map(a => '<li>' + escapeHtml(a) + '</li>').join('')
+      + '</ul>';
+  }
+
+  out.innerHTML = `
+    <div class="gic-summary g-${grade}">
+      <div class="gic-grade">${escapeHtml(s.grade || 'F')}</div>
+      <div class="gic-summary-text">
+        <strong>${headlines[grade] || 'Auswertung'}</strong>
+        <span>${s.total ?? 0} / 100 · ${escapeHtml(s.grade_label || '')}</span>
+        ${actionsHtml}
+      </div>
+    </div>
+    <div class="gic-rows">${rows.join('')}</div>
+    <div class="gic-actions">
+      <a href="/check?domain=${encodeURIComponent(data.domain)}" target="_blank" class="btn">Vollständigen Bericht öffnen →</a>
+      <a href="/check?domain=${encodeURIComponent(data.domain)}&print=1" target="_blank" class="btn">📄 Als PDF exportieren</a>
+    </div>
+  `;
+}
+
+function rowHtml(ico, name, detail, status) {
+  const labels = { 'ok': '✓ OK', 'warn': '! WARN', 'fail': '✕ FEHLT', 'info': '∘ Optional' };
+  return `<div class="gic-row s-${status}">
+    <span class="gic-row-ico">${ico}</span>
+    <span class="gic-row-detail"><strong>${escapeHtml(name)}</strong> — ${detail}</span>
+    <span class="gic-row-status">${labels[status] || status}</span>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
+
+function pctMeaning(v) {
+  v = parseInt(v, 10);
+  if (v === 0)   return 'Strenge gilt für <strong>keine</strong> verdächtige Mail — als wäre sie aus.';
+  if (v <= 10)   return 'Strenge gilt für etwa <strong>1 von 10</strong> verdächtigen Mails — sehr vorsichtiger Einstieg.';
+  if (v <= 25)   return 'Strenge gilt für etwa <strong>1 von 4</strong> verdächtigen Mails — guter Einstieg.';
+  if (v <= 50)   return 'Strenge gilt für <strong>jede zweite</strong> verdächtige Mail.';
+  if (v < 100)   return 'Strenge gilt für etwa <strong>' + v + ' von 100</strong> verdächtigen Mails.';
+                  return 'Strenge gilt für <strong>alle</strong> verdächtigen Mails.';
+}
+
+function setPct(v) {
+  $('pct').value = v;
+  $('pct-label').textContent = v;
+  const m = $('pct-meaning'); if (m) m.innerHTML = '→ ' + pctMeaning(v);
+  buildRecord();
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'pct') {
+    $('pct-label').textContent = e.target.value;
+    const m = $('pct-meaning'); if (m) m.innerHTML = '→ ' + pctMeaning(e.target.value);
+  }
+  buildRecord();
+});
+document.addEventListener('change', buildRecord);
+
+// init
+{% if prefill_domain %}
+$('rua').value = 'dmarc@{{ prefill_domain }}';
+{% endif %}
+// Mark "monitor" card as active by default
+document.querySelector('.policy-card.recommended').classList.add('active');
+buildRecord();
+</script>
+{% endblock %}

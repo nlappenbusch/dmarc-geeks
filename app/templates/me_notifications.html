@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Benachrichtigungen · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/users/me">Mein Konto</a> · Benachrichtigungen</div>
+<h1>🔔 Benachrichtigungen</h1>
+<p class="muted">Welche Mails möchtest du vom System bekommen? Standard: alle relevanten Events sind aktiviert. Hier kannst du dich pro Event-Typ ausklinken.</p>
+
+{% if flash %}
+<div class="flash">{{ flash }}</div>
+{% endif %}
+
+<form method="post" action="/users/me/notifications" class="card">
+  <h2 style="margin: -8px 0 14px 0;">Event-Typen</h2>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>🚦 Blacklist-Alarm</strong>
+      <span class="muted small">Eine deiner IPs (MX oder Sender) wurde neu auf einer DNSBL gefunden — kann Mail-Zustellung killen.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="blacklist_alerts" {% if pref.blacklist_alerts %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>✅ Blacklist clean wieder</strong>
+      <span class="muted small">Ein vorher gelistetes IP wurde delisted. Hilfreich um zu sehen ob Delisting-Anträge greifen.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="blacklist_resolved" {% if pref.blacklist_resolved %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>📉 DMARC-Pass-Rate-Spike</strong>
+      <span class="muted small">Die Pass-Rate für eine deiner Domains ist plötzlich gekippt — typisches Zeichen für einen Spoofing-Angriff oder kaputte Sender-Konfig.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="dmarc_spike" {% if pref.dmarc_spike %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>🆕 Neuer Sender erkannt</strong>
+      <span class="muted small">Eine bisher unbekannte IP/Quelle hat begonnen unter einer deiner Domains zu senden. Kann Phishing oder ein neues Tool sein.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="new_sender_detected" {% if pref.new_sender_detected %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>📅 Wochen-Digest (Mo 09:00)</strong>
+      <span class="muted small">Zusammenfassung der letzten 7 Tage: Volumen, Pass-Rate-Trend, Top-Quellen, Empfehlungen.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="weekly_digest" {% if pref.weekly_digest %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="np-field">
+    <div class="np-field-text">
+      <strong>➕ Neue Domain im Tenant</strong>
+      <span class="muted small">Wenn jemand im selben Tenant eine neue Domain anlegt. <em>Standard: aus</em> — meist nur für Compliance/Audit-Logs interessant.</span>
+    </div>
+    <label class="np-toggle">
+      <input type="checkbox" name="domain_added" {% if pref.domain_added %}checked{% endif %}>
+      <span class="np-toggle-slider"></span>
+    </label>
+  </div>
+
+  <h2 style="margin: 24px 0 14px 0; padding-top: 16px; border-top: 1px solid var(--border);">Ruhezeiten <span class="muted small" style="font-weight: 400;">— optional</span></h2>
+  <p class="muted small" style="margin: 0 0 14px 0;">In diesen Stunden bekommst du <strong>keine</strong> Notification-Mails. UTC-Stunden (0-23). Praktisch für Nachtruhe — Alerts werden gesammelt und am nächsten Morgen verschickt, kritische verzögert sich nichts.</p>
+  <div class="np-quiet-row">
+    <label>Von <span class="muted small">(Stunde 0-23 UTC)</span>
+      <input type="number" min="0" max="23" name="quiet_hours_start" value="{{ pref.quiet_hours_start if pref.quiet_hours_start is not none else '' }}" placeholder="z.B. 22" class="np-hour">
+    </label>
+    <label>Bis <span class="muted small">(Stunde 0-23 UTC)</span>
+      <input type="number" min="0" max="23" name="quiet_hours_end" value="{{ pref.quiet_hours_end if pref.quiet_hours_end is not none else '' }}" placeholder="z.B. 6" class="np-hour">
+    </label>
+  </div>
+  <p class="muted small">Beispiel: <code>22 → 6</code> = keine Mails von 22:00 UTC bis 06:00 UTC. Leer lassen = keine Ruhezeiten.</p>
+
+  <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <span class="muted small">Zuletzt geändert: {{ pref.updated_at|dt }}</span>
+    <button type="submit" class="btn-primary">💾 Einstellungen speichern</button>
+  </div>
+</form>
+
+<style>
+.np-field { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px dashed var(--border); }
+.np-field:last-of-type { border-bottom: 0; }
+.np-field-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.np-field-text .muted { display: block; line-height: 1.5; }
+
+.np-toggle { position: relative; cursor: pointer; user-select: none; }
+.np-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.np-toggle-slider { position: relative; display: inline-block; width: 44px; height: 24px; background: var(--border); border-radius: 999px; transition: background .15s; }
+.np-toggle-slider::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: left .15s; }
+.np-toggle input:checked + .np-toggle-slider { background: var(--ok); }
+.np-toggle input:checked + .np-toggle-slider::after { left: 22px; }
+
+.np-quiet-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 480px; margin-bottom: 8px; }
+.np-quiet-row label { display: block; font-size: 13px; font-weight: 600; }
+.np-quiet-row .muted { font-weight: 400; }
+.np-hour { width: 100%; box-sizing: border-box; padding: 8px 12px; font: inherit; margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .np-quiet-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}

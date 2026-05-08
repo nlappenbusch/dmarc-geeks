@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DMARC XML Report Viewer — kostenlos & lokal · DMARC Aggregator</title>
+  <meta name="description" content="DMARC RUA-XML-Report in lesbares Format umwandeln. Drag & Drop oder Paste. Server-seitige Analyse, kein Account nötig.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check">Domain prüfen</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<section class="check-hero">
+  <div class="container-mkt" style="position:relative; z-index:1; text-align:center;">
+    <span class="eyebrow">📄 XML Report Viewer · Free Tool · keine Anmeldung</span>
+    <h1 class="check-h1"><span class="grad-text">DMARC-XML</span> in lesbar.</h1>
+    <p class="lede" style="max-width:720px; margin: 0 auto 32px;">Du hast eine RUA-Report-XML im Postfach und willst nicht durch 200 Zeilen <code>&lt;source_ip&gt;</code> kämpfen? Drag &amp; Drop hier rein — wir zeigen dir Volumen, Pass-Rate, Top-Quellen und SPF/DKIM-Auth-Results in 2 Sekunden.</p>
+  </div>
+</section>
+
+<section class="container-mkt">
+  <div class="rv-input-card">
+    <div class="rv-tabs">
+      <button type="button" class="rv-tab rv-tab-active" data-tab="paste">📋 XML einfügen</button>
+      <button type="button" class="rv-tab" data-tab="upload">📤 Datei hochladen</button>
+    </div>
+
+    <div class="rv-pane rv-pane-active" data-pane="paste">
+      <textarea id="xml-input" placeholder="Hier den ganzen XML-Inhalt rein paste — beginnt typisch mit &lt;?xml version=&quot;1.0&quot;?&gt; oder &lt;feedback&gt;…" spellcheck="false"></textarea>
+      <button type="button" class="btn-primary" onclick="parseXml()">Report analysieren</button>
+    </div>
+
+    <div class="rv-pane" data-pane="upload">
+      <label for="xml-file" class="rv-drop-zone" id="drop-zone">
+        <div class="rv-drop-ico">📥</div>
+        <strong>XML-Datei hier ablegen</strong>
+        <span class="muted small">oder klicken zum Auswählen · .xml bis 5 MB</span>
+        <input type="file" id="xml-file" accept=".xml,application/xml,text/xml" style="display:none;" onchange="loadFile(this)">
+      </label>
+    </div>
+
+    <div id="rv-error" class="rv-error" style="display:none;"></div>
+  </div>
+
+  <div id="rv-result" style="display:none;"></div>
+</section>
+
+<section class="container-mkt" style="padding-top: 32px;">
+  <div class="check-cta-block" style="margin-top: 0;">
+    <h2>Willst du die Reports automatisch sammeln und auswerten?</h2>
+    <p>Statt händisch XMLs in den Viewer ziehen: <strong>der DMARC Aggregator</strong> holt sie aus deinem Postfach, parst sie täglich, und liefert dir Trends, Spike-Alerts und Vorschläge wann du auf <code>p=quarantine</code> gehen kannst.</p>
+    <div class="cta-buttons">
+      <a href="/signup" class="btn-primary big">30 Tage gratis starten</a>
+      <a href="/wissen#dmarc" class="btn big">DMARC verstehen</a>
+    </div>
+  </div>
+</section>
+
+<style>
+.rv-input-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 8px; max-width: 920px; margin: 0 auto; }
+.rv-tabs { display: flex; gap: 4px; padding: 6px; background: var(--surface-soft); border-radius: 10px 10px 0 0; }
+.rv-tab { padding: 8px 16px; background: transparent; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); }
+.rv-tab:hover { color: var(--text); background: var(--bg-elev); }
+.rv-tab-active { background: var(--bg-elev); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+.rv-pane { display: none; padding: 18px; }
+.rv-pane-active { display: block; }
+#xml-input { width: 100%; box-sizing: border-box; min-height: 220px; padding: 12px 14px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; resize: vertical; margin-bottom: 12px; }
+
+.rv-drop-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 56px 24px; background: var(--surface-soft); border: 2px dashed var(--border); border-radius: 12px; cursor: pointer; transition: border-color .12s, background .12s; }
+.rv-drop-zone:hover, .rv-drop-zone.rv-drop-active { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 4%, var(--surface-soft)); }
+.rv-drop-ico { font-size: 40px; line-height: 1; }
+
+.rv-error { padding: 12px 16px; background: color-mix(in srgb, var(--bad) 12%, transparent); border-left: 3px solid var(--bad); color: var(--text); border-radius: 6px; margin: 12px 18px; font-size: 13.5px; }
+
+.rv-result { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; margin-top: 24px; max-width: 1080px; margin-left: auto; margin-right: auto; }
+.rv-result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.rv-result-head h2 { margin: 0; font-size: 22px; }
+.rv-result-head .muted { font-size: 13px; }
+
+.rv-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.rv-stat { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.rv-stat-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.rv-stat-value { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px; }
+
+.rv-policy { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; padding: 14px 16px; background: var(--surface-soft); border-radius: 8px; margin-bottom: 20px; }
+.rv-policy-item span { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.rv-policy-item code { font-size: 13px; font-weight: 700; }
+
+.rv-section-h { font-size: 14px; font-weight: 700; margin: 16px 0 10px 0; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.rv-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.rv-table th { text-align: left; padding: 8px 10px; background: var(--surface-soft); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+.rv-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rv-table code { font-size: 11.5px; }
+.rv-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.rv-pill-pass { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.rv-pill-fail { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+.rv-pill-quarantine { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.rv-pill-none { background: var(--surface-soft); color: var(--muted); }
+.rv-pill-reject { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+
+@media (max-width: 700px) {
+  .rv-stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+
+<script>
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Tab switching
+document.querySelectorAll('.rv-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.rv-tab').forEach(x => x.classList.toggle('rv-tab-active', x === t));
+    document.querySelectorAll('.rv-pane').forEach(p => p.classList.toggle('rv-pane-active', p.dataset.pane === t.dataset.tab));
+  });
+});
+
+function loadFile(input) {
+  const f = input.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { showError('Datei zu groß (max 5 MB).'); return; }
+  const r = new FileReader();
+  r.onload = () => { document.getElementById('xml-input').value = r.result; parseXml(); };
+  r.readAsText(f);
+}
+
+// Drag-and-drop
+const dz = document.getElementById('drop-zone');
+if (dz) {
+  ['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('rv-drop-active'); }));
+  ['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('rv-drop-active'); }));
+  dz.addEventListener('drop', ev => {
+    if (ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+      document.getElementById('xml-file').files = ev.dataTransfer.files;
+      loadFile(document.getElementById('xml-file'));
+    }
+  });
+}
+
+function showError(msg) {
+  const el = document.getElementById('rv-error');
+  el.textContent = msg;
+  el.style.display = '';
+  document.getElementById('rv-result').style.display = 'none';
+}
+function clearError() {
+  document.getElementById('rv-error').style.display = 'none';
+}
+
+async function parseXml() {
+  clearError();
+  const xml = document.getElementById('xml-input').value.trim();
+  if (!xml) { showError('Bitte XML einfügen oder Datei hochladen.'); return; }
+
+  const fd = new FormData();
+  fd.append('xml', xml);
+  try {
+    const r = await fetch('/report-viewer/parse', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!data.ok) { showError(data.error || 'Parse-Fehler.'); return; }
+    renderReport(data.report);
+  } catch (e) {
+    showError('Netzwerk-Fehler: ' + e.message);
+  }
+}
+
+function renderReport(rep) {
+  const out = document.getElementById('rv-result');
+  const meta = rep.meta || {};
+  const policy = rep.policy || {};
+  const stats = rep.stats || {};
+  const recs = rep.records || [];
+
+  const startDate = meta.date_begin_iso ? meta.date_begin_iso.slice(0, 16).replace('T', ' ') : meta.date_begin || '—';
+  const endDate = meta.date_end_iso ? meta.date_end_iso.slice(0, 16).replace('T', ' ') : meta.date_end || '—';
+
+  let html = `<div class="rv-result">
+    <div class="rv-result-head">
+      <div>
+        <h2>${escapeHtml(meta.org_name || 'DMARC-Report')} · ${escapeHtml(policy.domain || '')}</h2>
+        <span class="muted small">Report-ID: <code>${escapeHtml(meta.report_id || '—')}</code> · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} · von ${escapeHtml(meta.email || '—')}</span>
+      </div>
+    </div>
+
+    <div class="rv-stats-row">
+      <div class="rv-stat"><div class="rv-stat-label">Mails total</div><div class="rv-stat-value">${(stats.total_messages || 0).toLocaleString('de-DE')}</div></div>
+      <div class="rv-stat"><div class="rv-stat-label">Pass-Rate</div><div class="rv-stat-value" style="color: ${stats.pass_rate >= 95 ? 'var(--ok)' : stats.pass_rate >= 80 ? 'var(--warn)' : 'var(--bad)'}">${stats.pass_rate || 0} %</div></div>
+      <div class="rv-stat"><div class="rv-stat-label">Pass</div><div class="rv-stat-value">${(stats.pass_count || 0).toLocaleString('de-DE')}</div></div>
+      <div class="rv-stat"><div class="rv-stat-label">Fail</div><div class="rv-stat-value">${(stats.fail_count || 0).toLocaleString('de-DE')}</div></div>
+    </div>
+
+    <h3 class="rv-section-h">Veröffentlichte Policy</h3>
+    <div class="rv-policy">
+      <div class="rv-policy-item"><span>Domain</span><code>${escapeHtml(policy.domain || '—')}</code></div>
+      <div class="rv-policy-item"><span>Policy (p)</span><code>${escapeHtml(policy.p || '—')}</code></div>
+      <div class="rv-policy-item"><span>Subdomain (sp)</span><code>${escapeHtml(policy.sp || '—')}</code></div>
+      <div class="rv-policy-item"><span>Anteil (pct)</span><code>${escapeHtml(policy.pct || '—')}</code></div>
+      <div class="rv-policy-item"><span>DKIM (adkim)</span><code>${escapeHtml(policy.adkim || '—')}</code></div>
+      <div class="rv-policy-item"><span>SPF (aspf)</span><code>${escapeHtml(policy.aspf || '—')}</code></div>
+    </div>
+
+    <h3 class="rv-section-h">Quell-IPs (${recs.length})</h3>
+    <div style="overflow-x: auto;">
+    <table class="rv-table">
+      <thead><tr><th>IP</th><th>Volumen</th><th>Disposition</th><th>DKIM</th><th>SPF</th><th>Header-From</th><th>Auth-Details</th></tr></thead>
+      <tbody>`;
+
+  recs.sort((a, b) => b.count - a.count);
+  for (const r of recs) {
+    const dispClass = r.disposition === 'reject' ? 'rv-pill-reject' : r.disposition === 'quarantine' ? 'rv-pill-quarantine' : 'rv-pill-none';
+    const dkimClass = r.dkim_eval === 'pass' ? 'rv-pill-pass' : 'rv-pill-fail';
+    const spfClass = r.spf_eval === 'pass' ? 'rv-pill-pass' : 'rv-pill-fail';
+    const authBits = [];
+    for (const d of r.auth_dkim || []) authBits.push(`DKIM ${escapeHtml(d.domain)} (s=${escapeHtml(d.selector || '?')}): <span class="rv-pill ${d.result === 'pass' ? 'rv-pill-pass' : 'rv-pill-fail'}">${escapeHtml(d.result)}</span>`);
+    for (const s of r.auth_spf || []) authBits.push(`SPF ${escapeHtml(s.domain)}: <span class="rv-pill ${s.result === 'pass' ? 'rv-pill-pass' : 'rv-pill-fail'}">${escapeHtml(s.result)}</span>`);
+
+    html += `<tr>
+      <td><code>${escapeHtml(r.source_ip)}</code></td>
+      <td><strong>${r.count.toLocaleString('de-DE')}</strong></td>
+      <td><span class="rv-pill ${dispClass}">${escapeHtml(r.disposition || 'none')}</span></td>
+      <td><span class="rv-pill ${dkimClass}">${escapeHtml(r.dkim_eval || '—')}</span></td>
+      <td><span class="rv-pill ${spfClass}">${escapeHtml(r.spf_eval || '—')}</span></td>
+      <td class="muted small"><code>${escapeHtml(r.header_from)}</code></td>
+      <td class="muted small">${authBits.join('<br>') || '—'}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table></div></div>`;
+
+  out.innerHTML = html;
+  out.style.display = '';
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/check">Mail-Health-Check</a> · <a href="/dkim-check">DKIM-Inspector</a> · <a href="/wissen">Wissen</a>
+    </p>
+  </div>
+</footer>
+</body>
+</html>

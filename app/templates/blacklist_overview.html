@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Blacklist-Monitoring · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>🚦 Blacklist-Monitoring</h1>
+    <p class="muted">Tägliche DNSBL-Prüfung deiner MX-Hosts und Top-Sender-IPs gegen ~12 wichtige Blacklists (Spamhaus, SpamCop, Barracuda, SORBS &amp; Co.). Bei <strong>neuer Listung</strong> kommt automatisch eine Mail an dich.</p>
+  </div>
+  <form method="post" action="/domains/blacklist/run-all" style="margin-left:auto;">
+    <button type="submit" class="btn-primary">🔎 Alle Domains jetzt prüfen</button>
+  </form>
+</div>
+
+{% if request.session.get('flash') %}
+<div class="flash">{{ request.session.pop('flash') }}</div>
+{% endif %}
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">Domains beobachtet</div><div class="kpi-value">{{ domains|length }}</div></div>
+  <div class="kpi"><div class="kpi-label">IPs geprüft</div><div class="kpi-value">{{ total_ips }}</div></div>
+  <div class="kpi {{ 'kpi-warn' if listed_ips else 'kpi-ok' }}"><div class="kpi-label">Aktuell gelistet</div><div class="kpi-value">{{ listed_ips }}</div></div>
+  <div class="kpi {{ 'kpi-bad' if critical_ips else 'kpi-ok' }}"><div class="kpi-label">Davon kritisch</div><div class="kpi-value">{{ critical_ips }}</div></div>
+</section>
+
+<section class="card bl-explainer">
+  <h3 class="bl-explainer-h">Was passiert hier?</h3>
+  <ul class="bl-explainer-list">
+    <li>Jeden Tag um <strong>06:00 UTC</strong> prüfen wir für jede deiner Domains die <strong>MX-Hosts</strong> und die <strong>Top-3-Sender-IPs der letzten 7 Tage</strong>.</li>
+    <li>Geprüft wird gegen <strong>12 große DNSBLs</strong>: Spamhaus (ZEN, SBL, XBL, PBL), AbuseAt CBL, SpamCop, Barracuda, SORBS, Mailspike, Manitu, PSBL, UCEProtect.</li>
+    <li>Bei einer <strong>neuen Listung</strong> (Severity „Warnung" oder „Kritisch") geht automatisch eine Mail an alle Mitglieder des Tenants — nicht nur den Admin.</li>
+    <li>Manuell scannen kannst du jederzeit über den Button oben rechts (alle Domains) oder per <em>„🔎 jetzt prüfen"</em> einzeln pro Domain.</li>
+  </ul>
+</section>
+
+{% for d in domains %}
+{% set checks = by_domain[d.id] %}
+{% set listed = checks|selectattr('severity', 'gt', 0)|list %}
+<section class="card">
+  <h2 style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <a href="/domains/{{ d.id }}#blacklist">{{ d.name }}</a>
+    {% if not checks %}
+      <span class="badge">noch nicht geprüft</span>
+    {% elif listed %}
+      {% if listed|selectattr('severity', 'ge', 3)|list %}
+        <span class="badge danger">{{ listed|length }} gelistet · kritisch</span>
+      {% else %}
+        <span class="badge warn">{{ listed|length }} gelistet</span>
+      {% endif %}
+    {% else %}
+      <span class="badge ok">✓ alles clean</span>
+    {% endif %}
+    <form method="post" action="/domains/{{ d.id }}/blacklist-check" style="margin-left:auto; display:inline;">
+      <button type="submit" class="btn-link" style="font-size: 13px;">🔎 jetzt prüfen</button>
+    </form>
+  </h2>
+  {% if checks %}
+  <table class="data">
+    <thead><tr><th>IP</th><th>Rolle</th><th>Status</th><th>Detail</th><th>geprüft</th><th>Delisting</th></tr></thead>
+    <tbody>
+    {% for c in checks %}
+      {% set hits = c.hits_json|from_json %}
+      <tr>
+        <td><code>{{ c.ip }}</code></td>
+        <td><span class="muted small">{{ c.role }}</span></td>
+        <td>
+          {% if c.severity == 0 %}<span class="badge ok">✓ clean</span>
+          {% elif c.severity == 1 %}<span class="badge">info</span>
+          {% elif c.severity == 2 %}<span class="badge warn">! gelistet</span>
+          {% else %}<span class="badge danger">✕ kritisch</span>{% endif %}
+        </td>
+        <td class="small">{{ c.summary or '—' }}</td>
+        <td class="small muted">{{ c.checked_at|dt }}</td>
+        <td class="small">
+          {% if hits %}
+            <details class="bl-delist-details">
+              <summary>{{ hits|length }} Liste{{ '' if hits|length == 1 else 'n' }} — Delisting →</summary>
+              <ul class="bl-delist-list">
+                {% for h in hits %}
+                  <li>
+                    <span class="bl-delist-name">{{ h.name }}</span>
+                    <a href="{{ bl_delist(h.zone, c.ip, 'remove') }}" target="_blank" rel="noopener" class="bl-delist-btn">📤 Delisting</a>
+                    <a href="{{ bl_delist(h.zone, c.ip, 'lookup') }}" target="_blank" rel="noopener" class="bl-delist-btn bl-delist-btn-secondary">🔍 prüfen</a>
+                  </li>
+                {% endfor %}
+              </ul>
+              <p class="muted small bl-delist-foot">
+                Sammel-Lookup über ~140 RBLs:
+                <a href="https://multirbl.valli.org/lookup/{{ c.ip }}.html" target="_blank" rel="noopener">multirbl.valli.org</a>
+              </p>
+            </details>
+          {% elif c.severity == 0 %}
+            <span class="muted small">— nicht nötig</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted small">Noch keine Daten — der Scheduler läuft täglich 06:00 UTC, oder du startest manuell.</p>
+  {% endif %}
+</section>
+{% else %}
+<section class="card">
+  <p class="muted">Du hast noch keine Domains angelegt. → <a href="/domains">Domains</a></p>
+</section>
+{% endfor %}
+
+<style>
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+.page-head h1 { margin: 0 0 4px 0; }
+.page-head p { margin: 0; max-width: 760px; }
+.bl-explainer-h { font-size: 15px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.01em; }
+.bl-explainer-list { margin: 0; padding-left: 22px; line-height: 1.7; font-size: 14px; display: grid; gap: 6px; }
+.bl-explainer-list strong { font-weight: 600; color: var(--text); }
+.bl-explainer-list em { color: var(--text-soft); }
+
+/* Delisting-Links in der Tabellen-Spalte */
+.bl-delist-details summary { cursor: pointer; color: var(--brand); font-weight: 600; padding: 4px 0; list-style: none; }
+.bl-delist-details summary::-webkit-details-marker { display: none; }
+.bl-delist-details summary::before { content: "▸ "; font-family: ui-monospace, monospace; transition: transform .12s; display: inline-block; }
+.bl-delist-details[open] summary::before { content: "▾ "; }
+.bl-delist-details summary:hover { text-decoration: underline; }
+.bl-delist-list { list-style: none; padding: 8px 0 4px 0; margin: 6px 0 0 0; display: grid; gap: 6px; border-top: 1px dashed var(--border); }
+.bl-delist-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bl-delist-name { font-weight: 600; min-width: 120px; font-size: 12.5px; }
+.bl-delist-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; padding: 3px 9px; border-radius: 5px; background: color-mix(in srgb, var(--bad) 12%, transparent); border: 1px solid color-mix(in srgb, var(--bad) 25%, transparent); color: var(--bad); text-decoration: none; font-weight: 600; transition: background .12s; }
+.bl-delist-btn:hover { background: color-mix(in srgb, var(--bad) 22%, transparent); text-decoration: none; }
+.bl-delist-btn-secondary { background: var(--surface-soft); border-color: var(--border); color: var(--muted); }
+.bl-delist-btn-secondary:hover { background: var(--bg-elev); color: var(--text); }
+.bl-delist-foot { margin: 8px 0 0 0; padding-top: 8px; border-top: 1px dashed var(--border); }
+.bl-delist-foot a { color: var(--brand); }
+.kpi-bad .kpi-value { color: var(--bad); }
+.kpi-warn .kpi-value { color: var(--warn); }
+.kpi-ok .kpi-value { color: var(--ok); }
+</style>
+{% endblock %}

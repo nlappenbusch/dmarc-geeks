@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ ip }} · IP-Drilldown{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/reports">Reports</a> · IP-Quelle</div>
+<h1>{{ ip }} <span class="muted small">{{ label }}</span></h1>
+{% if host %}<p class="muted small">Reverse-DNS: <code>{{ host }}</code></p>{% endif %}
+{% if allow_in %}
+<div class="callout tip">
+  <strong>In Allowlist:</strong>
+  {% for dname, lbl in allow_in %}
+    <span class="badge ok small">{{ dname }}{% if lbl %} · {{ lbl }}{% endif %}</span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">Nachrichten</div><div class="kpi-value">{{ total|num }}</div></div>
+  <div class="kpi pass"><div class="kpi-label">DMARC pass</div><div class="kpi-value">{{ pass_count|num }}</div><div class="kpi-sub">{{ pass_rate }} %</div></div>
+  <div class="kpi fail"><div class="kpi-label">DMARC fail</div><div class="kpi-value">{{ fail_count|num }}</div></div>
+  <div class="kpi"><div class="kpi-label">Domains betroffen</div><div class="kpi-value">{{ domain_rows|length }}</div></div>
+</section>
+
+<section class="card">
+  <h2>Verlauf</h2>
+  <canvas id="dailyChart" height="80"></canvas>
+</section>
+
+<section class="card">
+  <h2>Pro Domain</h2>
+  <table class="data">
+    <thead><tr><th>Domain</th><th>Volumen</th><th>Pass</th><th>Fail</th><th>Pass-Rate</th></tr></thead>
+    <tbody>
+    {% for d in domain_rows %}
+    <tr>
+      <td><a href="/domains?q={{ d.name }}">{{ d.name }}</a></td>
+      <td>{{ d.total|num }}</td>
+      <td class="ok">{{ d.pass|num }}</td>
+      <td class="bad">{{ d.fail|num }}</td>
+      <td>{{ d.pass_rate }} %</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Auth-Ergebnisse (Top 20)</h2>
+  <table class="data">
+    <thead><tr><th>Typ</th><th>Domain</th><th>Selector</th><th>Result</th><th>Anzahl</th></tr></thead>
+    <tbody>
+    {% for atype, adom, sel, res, cnt in auth_rows %}
+    <tr>
+      <td><span class="badge">{{ atype }}</span></td>
+      <td>{{ adom or '—' }}</td>
+      <td>{{ sel or '—' }}</td>
+      <td class="{% if res == 'pass' %}ok{% else %}bad{% endif %}">{{ res or '—' }}</td>
+      <td>{{ cnt|num }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Letzte 30 Records</h2>
+  <table class="data">
+    <thead><tr><th>Datum</th><th>Domain</th><th>Reporter</th><th>Volumen</th><th>DKIM</th><th>SPF</th><th>Disposition</th><th></th></tr></thead>
+    <tbody>
+    {% for rec, rep, dname in recent %}
+    <tr>
+      <td class="small">{{ rep.date_begin|dt }}</td>
+      <td>{{ dname }}</td>
+      <td class="small">{{ rep.org_name }}</td>
+      <td>{{ rec.count|num }}</td>
+      <td class="{% if rec.dkim_eval == 'pass' %}ok{% else %}bad{% endif %}">{{ rec.dkim_eval or '—' }}</td>
+      <td class="{% if rec.spf_eval == 'pass' %}ok{% else %}bad{% endif %}">{{ rec.spf_eval or '—' }}</td>
+      <td>{{ rec.disposition or '—' }}</td>
+      <td><a href="/reports/{{ rep.id }}">→</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+window.addEventListener('load', () => {
+  const data = {{ series | tojson }};
+  if (!data.length) return;
+  Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#6b7280';
+  new Chart(document.getElementById('dailyChart'), {
+    type: 'bar',
+    data: { labels: data.map(d => d.day),
+            datasets: [
+              { label: 'Pass', data: data.map(d => d.pass), backgroundColor: '#16a34a' },
+              { label: 'Fail', data: data.map(d => d.fail), backgroundColor: '#dc2626' },
+            ] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+               scales: { x: { stacked: true }, y: { stacked: true } } }
+  });
+});
+</script>
+{% endblock %}

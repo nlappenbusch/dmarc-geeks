@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}MSP-Konsole · {{ reseller.name }}{% endblock %}
+{% block content %}
+<h1>{{ reseller.name }} <span class="muted small">— MSP-Konsole · Plan: {{ reseller.plan }}</span></h1>
+<p class="muted">{{ overview.n_customers }} von {{ reseller.seat_limit }} Endkunden-Tenants belegt · <a href="/reseller/branding">Branding pflegen →</a> · <a href="/reseller/mailboxes">Zentrale Mailbox →</a> · <a href="/reseller/users">User über alle Endkunden →</a></p>
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">Endkunden</div><div class="kpi-value">{{ overview.n_customers }}</div></div>
+  <div class="kpi"><div class="kpi-label">Domains gesamt</div><div class="kpi-value">{{ overview.n_domains }}</div></div>
+  <div class="kpi"><div class="kpi-label">Nachrichten · 30 d</div><div class="kpi-value">{{ overview.total_messages|num }}</div></div>
+  <div class="kpi pass"><div class="kpi-label">⌀ Pass-Rate · 30 d</div><div class="kpi-value">{{ overview.avg_pass_rate }} %</div></div>
+</section>
+
+<section class="card">
+  <h2>Neuen Endkunden anlegen</h2>
+  <form method="post" action="/reseller/tenants" class="grid-form">
+    <label>Tenant-Name<input type="text" name="name" required placeholder="Acme GmbH"></label>
+    <label>Firmenname (optional)<input type="text" name="company_name" placeholder="für Rechnung"></label>
+    <label>Admin-E-Mail<input type="email" name="admin_email" required></label>
+    <label>Admin-Passwort (min. 8)<input type="password" name="admin_password" minlength="8" required></label>
+    <button type="submit" class="btn-primary">Endkunde anlegen</button>
+  </form>
+  <p class="muted small mt-8">Der Admin-Login wird für den Endkunden erzeugt. Branding wird automatisch von <strong>{{ reseller.name }}</strong> übernommen.</p>
+</section>
+
+<section class="card">
+  <h2>Endkunden ({{ overview.n_customers }})</h2>
+  {% if overview.tenants %}
+  <table class="data">
+    <thead><tr>
+      <th>Endkunde</th>
+      <th>Domains</th>
+      <th>Nachrichten · 30 d</th>
+      <th>Pass-Rate</th>
+      <th>Erstellt</th>
+      <th>Aktionen</th>
+    </tr></thead>
+    <tbody>
+    {% for r in overview.tenants %}
+      <tr>
+        <td>
+          <strong>{{ r.tenant.name }}</strong>
+          <br><span class="muted small">slug: {{ r.tenant.slug }}</span>
+        </td>
+        <td>{{ r.n_domains }}</td>
+        <td>{{ r.total|num }}</td>
+        <td class="{{ 'ok' if r.pass_rate >= 99 else 'bad' if r.pass_rate < 90 else '' }}">{{ r.pass_rate }} %</td>
+        <td class="small">{{ r.tenant.created_at|dt }}</td>
+        <td>
+          <form method="post" action="/reseller/tenants/{{ r.tenant.id }}/enter" style="display:inline"><button class="btn-link">betreten →</button></form>
+          {% if r.tenant.id != user.tenant_id %}
+          <form method="post" action="/reseller/tenants/{{ r.tenant.id }}/delete" style="display:inline" onsubmit="return confirm('Endkunde samt Daten löschen?');"><button class="btn-link danger">löschen</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty"><p class="muted">Noch keine Endkunden.</p></div>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Alle Domains über alle Endkunden ({{ overview.n_domains }})</h2>
+  <p class="muted small">Eine Tabelle, alles auf einen Blick. Klick auf eine Domain → springt in den Endkunden-Tenant und zeigt die Domain-Detail-Seite.</p>
+  {% if overview.domains %}
+  <table class="data">
+    <thead><tr>
+      <th>Endkunde</th>
+      <th>Domain</th>
+      <th>Status</th>
+      <th>Nachrichten · 30 d</th>
+      <th>Pass-Rate</th>
+      <th>Letzter Report</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    {% for d in overview.domains %}
+      <tr>
+        <td><span class="muted small">{{ d.tenant.name if d.tenant else '—' }}</span></td>
+        <td><strong>{{ d.domain.name }}</strong></td>
+        <td>
+          {% if d.domain.verified_at %}<span class="badge ok small">verifiziert</span>
+          {% else %}<span class="badge warn small">offen</span>{% endif %}
+        </td>
+        <td>{{ d.total|num }}</td>
+        <td class="{{ 'ok' if d.pass_rate >= 99 else 'bad' if d.pass_rate < 90 else '' }}">{% if d.total %}{{ d.pass_rate }} %{% else %}—{% endif %}</td>
+        <td class="small">{{ d.last_report|dt if d.last_report else '—' }}</td>
+        <td>
+          {% if d.tenant %}
+          <form method="post" action="/reseller/tenants/{{ d.tenant.id }}/enter" style="display:inline"
+                onsubmit="sessionStorage.setItem('after_enter','/domains/{{ d.domain.id }}'); return true;">
+            <button class="btn-link">öffnen →</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine Domains über alle Endkunden.</p>
+    <p class="muted small">Sobald deine Endkunden Domains anlegen oder du im Tenant-Modus eine Domain hinzufügst, erscheint sie hier.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Wie Reseller-Konsole funktioniert</h2>
+  <ul class="muted small" style="line-height:1.7;">
+    <li><strong>Endkunde anlegen</strong> erzeugt einen neuen Tenant unter dir, mit eigenem Admin-User. Der Endkunde loggt sich separat ein, sieht <em>nur</em> seine Daten.</li>
+    <li><strong>Betreten</strong> springt aus deiner Sicht in den Tenant — alle Dashboards/Reports/Domains zeigen dann dessen Daten. Kommt zurück über den orangefarbenen Banner.</li>
+    <li><strong>Branding</strong> (Logo, Farbe, App-Name) wird auf alle deine Endkunden vererbt — sie sehen <em>deine</em> Marke statt unserer.</li>
+    <li><strong>Audit-Log</strong> protokolliert jedes Betreten und jede Änderung mit deinem User und Zeitstempel.</li>
+  </ul>
+</section>
+
+<script>
+// After form submits an "enter" with stored after_enter target, redirect there
+window.addEventListener('pageshow', () => {
+  const target = sessionStorage.getItem('after_enter');
+  if (target && location.pathname === '/dashboard') {
+    sessionStorage.removeItem('after_enter');
+    location.href = target;
+  }
+});
+</script>
+{% endblock %}

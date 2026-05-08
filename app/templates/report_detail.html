@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Report {{ report.external_report_id }} · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/reports">Reports</a> · {{ report.domain.name }}</div>
+<h1>{{ report.org_name }} · <span class="muted">{{ report.external_report_id }}</span></h1>
+
+<section class="card grid-2">
+  <div>
+    <h3>Reporter</h3>
+    <p>{{ report.org_name }}<br><span class="muted">{{ report.org_email }}</span>
+       {% if report.org_extra_contact %}<br><span class="muted small">{{ report.org_extra_contact }}</span>{% endif %}</p>
+  </div>
+  <div>
+    <h3>Zeitraum</h3>
+    <p>{{ report.date_begin|dt }} – {{ report.date_end|dt }}</p>
+  </div>
+  <div>
+    <h3>Policy</h3>
+    <p><code>p={{ report.policy_p or '—' }}</code> · <code>sp={{ report.policy_sp or '—' }}</code> · <code>pct={{ report.policy_pct or '—' }}</code><br>
+       <code>adkim={{ report.policy_adkim or '—' }}</code> · <code>aspf={{ report.policy_aspf or '—' }}</code></p>
+  </div>
+  <div>
+    <h3>Auswertung</h3>
+    <p>Nachrichten: <strong>{{ total|num }}</strong><br>
+       <span class="ok">Pass: {{ aligned|num }}</span> · <span class="bad">Fail: {{ failed|num }}</span></p>
+    <p><a href="/reports/{{ report.id }}/raw">Roh-XML herunterladen</a></p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Records</h2>
+  {% if report.records %}
+  <table class="data">
+    <thead><tr><th>Quelle</th><th>Volumen</th><th>Disposition</th><th>DKIM eval</th><th>SPF eval</th><th>Header-From</th><th>Auth-Details</th></tr></thead>
+    <tbody>
+    {% for r in report.records %}
+      <tr>
+        <td>{{ r.source_ip }}{% if r.source_host %}<br><span class="muted small">{{ r.source_host }}</span>{% endif %}</td>
+        <td>{{ r.count|num }}</td>
+        <td>{% if r.disposition == 'reject' %}<span class="badge danger">{{ r.disposition }}</span>
+            {% elif r.disposition == 'quarantine' %}<span class="badge warn">{{ r.disposition }}</span>
+            {% else %}<span class="badge">{{ r.disposition or '—' }}</span>{% endif %}</td>
+        <td class="{% if r.dkim_eval == 'pass' %}ok{% else %}bad{% endif %}">{{ r.dkim_eval or '—' }}</td>
+        <td class="{% if r.spf_eval == 'pass' %}ok{% else %}bad{% endif %}">{{ r.spf_eval or '—' }}</td>
+        <td>{{ r.header_from or '—' }}</td>
+        <td class="small">
+          {% for ar in r.auth_results %}
+            <div><strong>{{ ar.auth_type }}</strong> {{ ar.domain or '' }}{% if ar.selector %}/{{ ar.selector }}{% endif %} → <span class="{{ 'ok' if ar.result=='pass' else 'bad' }}">{{ ar.result or '—' }}</span></div>
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Keine Records.</p>{% endif %}
+</section>
+{% endblock %}

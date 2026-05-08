@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Audit-Log · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/settings">Settings</a> · Audit-Log</div>
+<h1>Audit-Log <span class="muted small">(letzte 500)</span></h1>
+<section class="card">
+  {% if events %}
+  <table class="data">
+    <thead><tr><th>Zeit</th><th>User</th><th>Aktion</th><th>Ziel</th><th>Details</th><th>IP</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="small">{{ e.created_at|dt('%Y-%m-%d %H:%M:%S') }}</td>
+        <td class="small">{{ e.user_email or '—' }}</td>
+        <td><code>{{ e.action }}</code></td>
+        <td class="small">{{ e.target_type or '' }}{% if e.target_id %} <span class="muted">{{ e.target_id }}</span>{% endif %}</td>
+        <td class="small">{{ e.details or '' }}</td>
+        <td class="small muted">{{ e.ip or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty"><p class="muted">Noch keine Events.</p></div>{% endif %}
+</section>
+{% endblock %}

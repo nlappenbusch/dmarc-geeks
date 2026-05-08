@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+{% block title %}Anleitung · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="help-layout">
+  <aside class="help-toc">
+    <h3>Inhalt</h3>
+    <ol>
+      <li><a href="#was">Was tut das Tool?</a></li>
+      <li><a href="#deploy">Deployment</a>
+        <ol>
+          <li><a href="#deploy-docker">Docker</a></li>
+          <li><a href="#deploy-python">Lokal mit Python</a></li>
+          <li><a href="#deploy-firstrun">Erstes Login</a></li>
+        </ol>
+      </li>
+      <li><a href="#tenants">Mandanten (Tenants)</a></li>
+      <li><a href="#domain">Domain einrichten</a>
+        <ol>
+          <li><a href="#domain-add">Domain anlegen</a></li>
+          <li><a href="#domain-verify">DNS-Verifikation</a></li>
+          <li><a href="#domain-rua">DMARC-Record setzen</a></li>
+        </ol>
+      </li>
+      <li><a href="#mailbox">Mail-Abholung (IMAP)</a>
+        <ol>
+          <li><a href="#mailbox-howto">So funktioniert es</a></li>
+          <li><a href="#mailbox-fields">Felder erklärt</a></li>
+          <li><a href="#mailbox-providers">Anbieter-Hinweise</a></li>
+          <li><a href="#mailbox-debug">Wenn was nicht klappt</a></li>
+        </ol>
+      </li>
+      <li><a href="#upload">Reports manuell hochladen</a></li>
+      <li><a href="#api">HTTP-Upload-API &amp; API-Keys</a></li>
+      <li><a href="#webhooks">Webhooks</a></li>
+      <li><a href="#generator">DMARC-Generator</a></li>
+      <li><a href="#advisor">Advisor &amp; Allowlist</a></li>
+      <li><a href="#tags">Tags</a></li>
+      <li><a href="#settings">Settings, Branding &amp; Alerts</a></li>
+      <li><a href="#audit">Audit-Log</a></li>
+      <li><a href="#dashboard">Dashboard verstehen</a></li>
+      <li><a href="#security">Sicherheit &amp; Backup</a></li>
+      <li><a href="#faq">FAQ &amp; Troubleshooting</a></li>
+    </ol>
+  </aside>
+
+  <article class="help-body">
+    <header class="help-hero">
+      <h1>Anleitung</h1>
+      <p>Vom Aufsetzen über die Tenant-Einrichtung bis zum täglichen Betrieb.</p>
+    </header>
+
+    <!-- ============== 1 ============== -->
+    <section id="was">
+      <h2>1. Was tut das Tool?</h2>
+      <p>DMARC-Reports sind tägliche Sammelberichte, die Mailprovider (Google, Microsoft, Yahoo&nbsp;…) an die <code>rua</code>-Adresse in deinem DMARC-DNS-Record schicken. Sie enthalten pro Quell-IP, wie viele Mails in deinem Namen verschickt wurden und ob diese SPF/DKIM bestanden haben.</p>
+      <p>Roh sind das XML-Dateien — schwer zu lesen und schnell viele. Dieses Tool</p>
+      <ul>
+        <li>holt sie automatisch per IMAP aus deinem Postfach (oder du lädst sie hoch)</li>
+        <li>parst <code>.xml</code>, <code>.xml.gz</code> und <code>.zip</code></li>
+        <li>speichert sie pro <strong>Mandant</strong> (Tenant) und Domain</li>
+        <li>zeigt Auswertungen: Pass/Fail-Rate, Top-Quellen, Verlauf</li>
+      </ul>
+    </section>
+
+    <!-- ============== 2 ============== -->
+    <section id="deploy">
+      <h2>2. Deployment</h2>
+
+      <h3 id="deploy-docker">2a. Mit Docker (empfohlen)</h3>
+      <p>Voraussetzung: Docker Desktop oder Docker Engine + Compose v2.</p>
+      <pre class="code"># 1) Keys erzeugen
+python scripts/generate_keys.py
+
+# 2) .env aus Vorlage anlegen und Keys eintragen
+cp .env.example .env
+
+# 3) Hochfahren (Postgres + App)
+docker compose up -d --build
+
+# 4) Logs ansehen (optional)
+docker compose logs -f app</pre>
+      <div class="callout tip">
+        <strong>Tipp:</strong> Beim Update später <code>docker compose pull &amp;&amp; docker compose up -d --build</code>. Das DB-Volume <code>dmarc_db</code> bleibt erhalten.
+      </div>
+
+      <h3 id="deploy-python">2b. Lokal mit Python (Dev/Test)</h3>
+      <p>Voraussetzung: Python&nbsp;3.12 +. SQLite reicht für ersten Test.</p>
+      <pre class="code">pip install -r requirements.txt
+python scripts/generate_keys.py    # Keys notieren
+# .env mit DATABASE_URL=sqlite:///./dmarc.db schreiben
+python -m uvicorn app.main:app --port 8000</pre>
+
+      <h3 id="deploy-firstrun">2c. Erstes Login</h3>
+      <p>Beim ersten Start wird automatisch ein <strong>Default-Tenant</strong> und ein <strong>Superadmin</strong> aus den ENV-Variablen angelegt:</p>
+      <ul>
+        <li><code>SUPERADMIN_EMAIL</code> — Login-Adresse</li>
+        <li><code>SUPERADMIN_PASSWORD</code> — Passwort (sofort nach Login ändern → <em>Mein Account</em>)</li>
+        <li><code>DEFAULT_TENANT_NAME</code> — Name des ersten Mandanten</li>
+      </ul>
+      <p>Sind später User in der DB, werden diese ENVs ignoriert (kein Reset über .env-Edits).</p>
+      <div class="callout warn">
+        <strong>Wichtig:</strong> <code>SECRET_KEY</code> und <code>FERNET_KEY</code> nie verlieren. Verlust des <code>FERNET_KEY</code> macht alle gespeicherten IMAP-Passwörter unbrauchbar.
+      </div>
+    </section>
+
+    <!-- ============== 3 ============== -->
+    <section id="tenants">
+      <h2>3. Mandanten (Tenants)</h2>
+      <p>Ein <strong>Tenant</strong> ist eine logisch isolierte Einheit. User von Tenant A sehen <em>nichts</em> von Tenant B. Jeder Tenant hat:</p>
+      <ul>
+        <li>eigene Domains</li>
+        <li>eigene Mailboxen</li>
+        <li>eigene User (Admins + Members)</li>
+      </ul>
+
+      <h3>Mandanten anlegen (als Superadmin)</h3>
+      <ol>
+        <li>Login als Superadmin → Menü <strong>Tenants</strong></li>
+        <li>Formular &bdquo;Neuen Tenant anlegen&ldquo;:
+          <ul>
+            <li><strong>Name</strong> — z.&nbsp;B. Kunde GmbH</li>
+            <li><strong>Admin-E-Mail</strong> — der erste User dieses Tenants</li>
+            <li><strong>Admin-Passwort</strong> — min. 8 Zeichen, an Kunden weitergeben</li>
+          </ul>
+        </li>
+        <li>Anlegen → der Kunde loggt sich mit dieser Mail/Pass ein und sieht <strong>nur</strong> seine Daten.</li>
+      </ol>
+
+      <h3>User pro Mandant</h3>
+      <p>Tenant-Admins können im Menü <strong>Users</strong> weitere User in <em>ihrem</em> Tenant anlegen:</p>
+      <ul>
+        <li><strong>Member</strong> — kann Reports lesen, kein Schreiben</li>
+        <li><strong>Admin</strong> — kann zusätzlich Domains, Mailboxen und User verwalten</li>
+        <li><strong>Superadmin</strong> — nur über Datenbank (oder beim allerersten Bootstrap)</li>
+      </ul>
+    </section>
+
+    <!-- ============== 4 ============== -->
+    <section id="domain">
+      <h2>4. Domain einrichten</h2>
+      <p>Bevor Reports importiert werden, muss die Domain im Tenant registriert sein.</p>
+
+      <h3 id="domain-add">4a. Domain anlegen</h3>
+      <ol>
+        <li>Menü <strong>Domains</strong> → &bdquo;Neue Domain&ldquo; → z.&nbsp;B. <code>meinedomain.de</code></li>
+        <li>Du landest auf der Detail-Seite und siehst einen Verifikations-Token.</li>
+      </ol>
+
+      <h3 id="domain-verify">4b. DNS-Verifikation (optional, aber empfohlen)</h3>
+      <p>Trage in deinem DNS-Provider folgenden TXT-Record ein:</p>
+      <pre class="code">meinedomain.de.   IN TXT  "dmarc-aggregator-verify=DEIN_TOKEN"</pre>
+      <p>Auf der Domain-Detail-Seite &bdquo;DNS prüfen&ldquo; klicken &rarr; bei Erfolg wird die Domain als verifiziert markiert. Reine Verifikation hat keinen Einfluss auf den Import — sie ist nur ein Beweis, dass dir die Domain gehört.</p>
+
+      <h3 id="domain-rua">4c. DMARC-Record setzen (zentraler Schritt!)</h3>
+      <p>Damit überhaupt Reports kommen, brauchst du einen DMARC-DNS-Record:</p>
+      <pre class="code">_dmarc.meinedomain.de.  IN TXT  "v=DMARC1; p=none; rua=mailto:dmarc@meinedomain.de; pct=100"</pre>
+      <p>Erklärung:</p>
+      <ul>
+        <li><code>p=none</code> — nur reporten, keine Aktion. <strong>Mit dem starten!</strong></li>
+        <li><code>rua=mailto:…</code> — die Mailbox, an die ISPs Reports schicken (das ist die Adresse, die du gleich im Tool als IMAP-Mailbox einträgst)</li>
+        <li><code>pct=100</code> — alle Mails reporten</li>
+      </ul>
+      <div class="callout tip">
+        <strong>Workflow:</strong> Erst 2&ndash;4 Wochen mit <code>p=none</code> beobachten. Wenn alle <em>legitimen</em> Quellen passen (grün im Dashboard), schrittweise auf <code>p=quarantine</code>, dann <code>p=reject</code> hochziehen.
+      </div>
+    </section>
+
+    <!-- ============== 5 ============== -->
+    <section id="mailbox">
+      <h2>5. Mail-Abholung (IMAP)</h2>
+
+      <h3 id="mailbox-howto">5a. So funktioniert es</h3>
+      <ol>
+        <li>ISPs schicken Reports an <code>dmarc@meinedomain.de</code> (deine <code>rua</code>-Adresse).</li>
+        <li>Der Aggregator pollt diese Mailbox alle 15 Minuten via IMAP.</li>
+        <li>Anhänge mit <code>.xml</code>, <code>.xml.gz</code>, <code>.zip</code> werden gelesen, geparst, importiert.</li>
+        <li>Optional: Verarbeitete Mails wandern in einen anderen Ordner.</li>
+      </ol>
+
+      <h3 id="mailbox-fields">5b. Felder erklärt</h3>
+      <table class="data">
+        <thead><tr><th>Feld</th><th>Was rein gehört</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Bezeichnung</strong></td><td>Beliebig, nur für dich. Z.B. <em>dmarc@meinedomain.de</em></td></tr>
+          <tr><td><strong>Host</strong></td><td>Der IMAP-Server. Beispiele unten.</td></tr>
+          <tr><td><strong>Port</strong></td><td><code>993</code> für SSL/TLS, <code>143</code> nur ohne SSL (selten).</td></tr>
+          <tr><td><strong>SSL/TLS</strong></td><td>Praktisch immer an. Aus nur, wenn dein Hoster es ausdrücklich vorgibt.</td></tr>
+          <tr><td><strong>Username</strong></td><td>Meist die volle E-Mail-Adresse (<code>dmarc@meinedomain.de</code>).</td></tr>
+          <tr><td><strong>Passwort</strong></td><td>Bei Gmail/Outlook: <strong>App-Passwort</strong>. Wird Fernet-verschlüsselt gespeichert.</td></tr>
+          <tr><td><strong>Folder</strong></td><td>Meist <code>INBOX</code>. Hat ein Filter Reports vorsortiert: anpassen.</td></tr>
+          <tr><td><strong>Verschieben nach</strong></td><td>Optional. Nach erfolgreichem Import landet die Mail dort, z.&nbsp;B. <code>Processed</code>.</td></tr>
+          <tr><td><strong>Aktiv</strong></td><td>Erst ankreuzen, wenn du sicher bist. Sonst pausiert.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="mailbox-providers">5c. Anbieter-Hinweise</h3>
+      <table class="data">
+        <thead><tr><th>Anbieter</th><th>Host</th><th>Port</th><th>SSL</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr><td>Gmail / Workspace</td><td><code>imap.gmail.com</code></td><td>993</td><td>ja</td><td>App-Passwort (2FA-Pflicht)</td></tr>
+          <tr><td>Microsoft 365</td><td><code>outlook.office365.com</code></td><td>993</td><td>ja</td><td>App-Passwort, IMAP muss vom Tenant-Admin aktiviert sein</td></tr>
+          <tr><td>mailbox.org</td><td><code>imap.mailbox.org</code></td><td>993</td><td>ja</td><td>normales Passwort</td></tr>
+          <tr><td>Strato / IONOS / 1&amp;1</td><td>siehe Hoster-Doku</td><td>993</td><td>ja</td><td>normales Passwort</td></tr>
+          <tr><td>Eigener Server</td><td>Hoster-Doku</td><td>993</td><td>i.&nbsp;d.&nbsp;R. ja</td><td>normales Passwort</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="mailbox-debug">5d. Wenn was nicht klappt</h3>
+      <p>Im Mailboxen-View erscheint bei einer fehlgeschlagenen Abholung &bdquo;Fehler&ldquo;. Hover über das Badge zeigt die Meldung. Häufige Ursachen:</p>
+      <ul>
+        <li><strong>Auth failed</strong> &mdash; falsches Passwort, oder kein App-Passwort generiert</li>
+        <li><strong>Connection refused / timeout</strong> &mdash; Port falsch, SSL-Toggle falsch, Firewall blockiert</li>
+        <li><strong>BAD command</strong> &mdash; Folder-Name falsch (Groß-/Kleinschreibung beachten, IMAP nutzt manchmal <code>INBOX/Underordner</code>)</li>
+        <li><strong>Keine Reports importiert</strong> &mdash; Mails sind da, aber der Anhang wird nicht erkannt? Nur <code>.xml</code>/<code>.xml.gz</code>/<code>.zip</code> werden verarbeitet</li>
+      </ul>
+      <p>Tipp: nach dem Speichern auf <strong>jetzt prüfen</strong> klicken, dann sofort sehen, was passiert.</p>
+    </section>
+
+    <!-- ============== 6 ============== -->
+    <section id="upload">
+      <h2>6. Reports manuell hochladen</h2>
+      <p>Kein IMAP konfiguriert oder historische Reports nachladen?</p>
+      <ol>
+        <li>Menü <strong>Upload</strong></li>
+        <li>Dateien auswählen (Mehrfachauswahl möglich)</li>
+        <li>Hochladen — Status pro Datei wird angezeigt</li>
+      </ol>
+      <p>Status-Bedeutungen:</p>
+      <ul>
+        <li><span class="badge ok">ok</span> — importiert</li>
+        <li><span class="badge">dup</span> — gleicher Report war schon da (kein Fehler)</li>
+        <li><span class="badge warn">ignored</span> — die Domain im Report ist im Tenant nicht angelegt. Als Admin: erst <a href="/domains">Domain hinzufügen</a>, dann erneut hochladen — Admins können das Anlegen auch automatisch beim Upload zulassen.</li>
+        <li><span class="badge danger">error</span> — Datei kaputt oder kein DMARC-XML</li>
+      </ul>
+    </section>
+
+    <!-- ============== 7 ============== -->
+    <section id="api">
+      <h2>7. HTTP-Upload-API &amp; API-Keys</h2>
+      <p>Reports automatisch reinpushen — z.&nbsp;B. aus Postfix-Pipes, CI-Pipelines, oder anderen Tools.</p>
+
+      <h3>API-Key erzeugen</h3>
+      <ol>
+        <li>Menü <strong>API-Keys</strong> → Label vergeben → <strong>Key erzeugen</strong>.</li>
+        <li>Der Key wird <em>einmal</em> angezeigt im Format <code>dmk_&lt;prefix&gt;.&lt;secret&gt;</code> — sofort kopieren und sicher speichern.</li>
+        <li>Verloren? Nicht rekonstruierbar — neuen erzeugen, alten widerrufen.</li>
+      </ol>
+
+      <h3>Verwendung</h3>
+      <pre class="code">curl -X POST {{ request.base_url }}api/v1/reports \
+  -H "Authorization: Bearer dmk_PREFIX.SECRET" \
+  -F "files=@report.xml.gz"</pre>
+
+      <h3>Antwort</h3>
+      <pre class="code">{
+  "results": [
+    { "filename": "report.xml.gz", "status": "ok", "message": "imported 12 records", "report_id": 42 }
+  ]
+}</pre>
+      <p>Status: <code>ok</code>, <code>dup</code> (schon importiert), <code>ignored</code> (Domain im Report nicht für Tenant registriert), <code>error</code>.</p>
+
+      <div class="callout warn">
+        <strong>Sicherheit:</strong> Keys können jederzeit <em>widerrufen</em> werden — laufende Integrationen brechen sofort ab. Über das Audit-Log siehst du, wer wann welche Aktion gemacht hat.
+      </div>
+    </section>
+
+    <!-- ============== 7b ============== -->
+    <section id="webhooks">
+      <h2>7b. Webhooks</h2>
+      <p>Bekomme HTTP-POSTs, sobald ein Report importiert wird — für SIEM, Slack-Bridges, eigene Pipelines.</p>
+      <ol>
+        <li>Menü <strong>Webhooks</strong> → URL eintragen.</li>
+        <li>Bei jedem importierten Report wird <code>POST</code> auf deine URL gefeuert.</li>
+        <li><strong>Test</strong>-Button schickt einen <code>test.ping</code>-Event zur Verifikation.</li>
+      </ol>
+      <h3>Payload</h3>
+      <pre class="code">{
+  "event": "report.imported",
+  "tenant_id": 1,
+  "report_id": 42,
+  "domain": "example.com",
+  "records": 12
+}</pre>
+      <h3>Signatur</h3>
+      <p>Header <code>X-DMARC-Signature</code> = HMAC-SHA256 hex(secret, body). Auf Empfängerseite verifizieren — sonst akzeptierst du gefälschte Events.</p>
+      <pre class="code"># Beispiel (Python)
+import hmac, hashlib
+expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+assert expected == request.headers["X-DMARC-Signature"]</pre>
+    </section>
+
+    <!-- ============== 7c ============== -->
+    <section id="generator">
+      <h2>7c. DMARC-Generator</h2>
+      <p>Klick dir interaktiv den passenden DMARC-DNS-Record zusammen → <a href="/dmarc-generator">/dmarc-generator</a>.</p>
+      <ul>
+        <li>Drei Presets: <em>Monitoring</em> · <em>Schrittweise schärfen</em> · <em>Voll geschärft</em></li>
+        <li>Live-Vorschau aktualisiert sich beim Tippen</li>
+        <li>Validierung warnt bei riskanten Kombinationen (z.&nbsp;B. <code>p=reject</code> ohne <code>rua=</code>)</li>
+        <li>Glossar erklärt Alignment, Pass-Rate-Schwellen, SPF/DKIM-Beziehung</li>
+      </ul>
+      <p>Aus jeder Domain-Detail-Seite verlinkt — die Domain wird automatisch vorausgefüllt.</p>
+    </section>
+
+    <!-- ============== 7d ============== -->
+    <section id="advisor">
+      <h2>7d. Advisor &amp; Allowlist</h2>
+
+      <h3>Policy-Advisor</h3>
+      <p>Auf jeder Domain-Detail-Seite siehst du Empfehlungen — datengetrieben:</p>
+      <ul>
+        <li><strong>Bereit für p=quarantine</strong> — wenn 30-Tage-Pass-Rate &gt; 99 % und aktuell <code>p=none</code></li>
+        <li><strong>Bereit für p=reject</strong> — analog ab <code>p=quarantine</code></li>
+        <li><strong>Niedrige Pass-Rate</strong> — Hinweis, legitime Quellen erst zu klären</li>
+        <li><strong>Pass-Rate fällt</strong> — wenn die letzten 7 Tage stark vom 30-Tage-Schnitt abweichen</li>
+        <li><strong>Stale Reports</strong> — wenn 5+ Tage keine eingingen</li>
+      </ul>
+
+      <h3>IP-Allowlist</h3>
+      <p>Markiere bekannte legitime Sender (z.&nbsp;B. eigene Mail-Server, Marketing-Provider). In der Top-Quellen-Tabelle erscheint dann ein <span class="badge ok small">allow</span>-Badge — keine Verwechslung mit Spoofing.</p>
+      <p>Schnell hinzufügen via <strong>+ Allowlist</strong> direkt in der Top-Quellen-Tabelle.</p>
+      <p class="muted small">Hinweis: Allowlist ist informativ, ändert nichts am DMARC-Empfang. Sie hilft dir und deinem Team, schnell zu sehen, was OK ist und was nicht.</p>
+    </section>
+
+    <!-- ============== 7e ============== -->
+    <section id="tags">
+      <h2>7e. Tags</h2>
+      <p>Bei vielen Domains hilft Gruppierung — z.&nbsp;B. <em>Produktion</em>, <em>Marketing</em>, <em>Kunde-X</em>.</p>
+      <ol>
+        <li>Menü <strong>Settings → Tags</strong>: Tag mit Name + Farbe anlegen.</li>
+        <li>Auf der Domain-Detail-Seite klickbar zuweisen.</li>
+        <li>In der Domain-Liste sichtbar — visueller Anker.</li>
+      </ol>
+    </section>
+
+    <!-- ============== 7f ============== -->
+    <section id="settings">
+      <h2>7f. Settings, Branding &amp; Alerts</h2>
+
+      <h3>Branding</h3>
+      <p>In <strong>Settings</strong> kannst du eine Akzentfarbe pro Tenant setzen. Die ganze UI (Buttons, Links, Highlights) richtet sich danach. Ideal, wenn du verschiedene Mandanten visuell unterscheidest.</p>
+
+      <h3>Wöchentlicher Digest</h3>
+      <p>Mo 07:00 UTC bekommen die konfigurierten Empfänger eine Zusammenfassung pro Domain (Pass-Rate, Volumen). Ohne Empfänger gehen Mails an alle Tenant-Admins.</p>
+
+      <h3>Spike-Alerts</h3>
+      <p>Bei jedem Report-Import wird die Fail-Rate der letzten 24 h mit der Vorwoche verglichen. Sprung &gt; Schwelle (Default 10 %) bei min. 100 Nachrichten ⇒ Mail.</p>
+
+      <div class="callout warn">
+        <strong>SMTP nötig:</strong> Digest und Spike-Alerts brauchen <code>SMTP_HOST</code> usw. in <code>.env</code>. Sonst wird stillschweigend nicht gesendet.
+      </div>
+    </section>
+
+    <!-- ============== 7g ============== -->
+    <section id="audit">
+      <h2>7g. Audit-Log</h2>
+      <p>Unter <strong>Settings → Audit-Log</strong> siehst du die letzten 500 Aktionen deines Tenants:</p>
+      <ul>
+        <li>Logins / Logouts (auch fehlgeschlagene)</li>
+        <li>Domain-Anlagen, -Verifikationen, -Löschungen</li>
+        <li>API-Key Erzeugen / Widerrufen / Löschen</li>
+        <li>Webhook-Anlagen</li>
+        <li>Allowlist-Änderungen, Tag-Zuweisungen</li>
+        <li>Settings-Änderungen, Passwort-Resets</li>
+      </ul>
+      <p class="muted small">Pro Eintrag: Zeit, User, Aktion, Ziel, Details, IP.</p>
+    </section>
+
+    <!-- ============== 8 ============== -->
+    <section id="dashboard">
+      <h2>8. Dashboard verstehen</h2>
+      <p class="muted small">Charts: Sender-Mix-Donut, Sender-Stack über die Zeit, Sankey (Sender → Alignment → Disposition), Sparklines pro Domain.</p>
+
+      <h3>KPIs</h3>
+      <ul>
+        <li><strong>Nachrichten</strong> — Summe aller <code>count</code>-Werte (Anzahl Mails laut ISPs)</li>
+        <li><strong>DMARC pass</strong> — SPF <em>oder</em> DKIM aligned</li>
+        <li><strong>DMARC fail</strong> — weder noch</li>
+        <li><strong>Quarantine / Reject</strong> — was Empfänger laut deinem Policy gemacht haben</li>
+      </ul>
+
+      <h3>Verlauf</h3>
+      <p>Stacked Bar pro Tag, grün = pass, rot = fail. Rote Spitzen sind ein Warnsignal — entweder eine fehlkonfigurierte legitime Quelle oder ein Spoofing-Versuch.</p>
+
+      <h3>Top Quellen</h3>
+      <p>IPs sortiert nach Volumen. Hostname (reverse DNS) hilft beim Erkennen. Was tun, wenn eine Top-Quelle viele <em>Fails</em> hat?</p>
+      <ul>
+        <li><strong>Eigener Server</strong> (z.&nbsp;B. <code>mail.meinedomain.de</code>): SPF-Record und DKIM-Selektor prüfen.</li>
+        <li><strong>Externer Dienstleister</strong> (Mailchimp, Sendgrid, Microsoft 365 …): in SPF aufnehmen oder dort DKIM signieren lassen.</li>
+        <li><strong>Unbekannte IP</strong>: Spoofing? Sobald alle legitimen Quellen passen → DMARC-Policy hochziehen.</li>
+      </ul>
+    </section>
+
+    <!-- ============== 9 ============== -->
+    <section id="security">
+      <h2>9. Sicherheit &amp; Backup</h2>
+      <ul>
+        <li>In Produktion <strong>hinter TLS-Reverse-Proxy</strong> (Caddy/Traefik/Nginx) und <code>https_only=True</code> in <code>app/main.py</code> setzen.</li>
+        <li>IMAP-Passwörter werden mit Fernet symmetrisch verschlüsselt — der Schlüssel liegt in <code>FERNET_KEY</code>. Sichern.</li>
+        <li>Backup: Postgres-Volume <code>dmarc_db</code> regelmäßig dumpen, oder bei SQLite einfach <code>dmarc.db</code> kopieren.</li>
+        <li>Reports werden inkl. Roh-XML gespeichert. Wenn DSGVO-Bedenken: in <code>app/ingest.py</code> das <code>raw_xml=</code>-Feld weglassen.</li>
+        <li>Reverse-DNS ist Best-Effort (3 s Timeout). Mit <code>RESOLVE_PTR=false</code> deaktivieren, wenn der DNS-Server nicht erreichbar ist.</li>
+      </ul>
+    </section>
+
+    <!-- ============== 10 ============== -->
+    <section id="faq">
+      <h2>10. FAQ &amp; Troubleshooting</h2>
+
+      <details><summary>Kein Report taucht auf, obwohl ich <code>rua=</code> gesetzt habe.</summary>
+        <ul>
+          <li>DNS-Propagation kann 1&ndash;24 Stunden dauern.</li>
+          <li>ISPs senden in der Regel <em>einmal pro Tag</em>, ca. 24 h nach UTC-Mitternacht.</li>
+          <li>Pollt deine Mailbox? Auf <strong>Mailboxen → jetzt prüfen</strong>.</li>
+          <li>Geht die Mail an die richtige Adresse? Mal selbst eine Mail an <code>rua=…</code> schicken — landet sie?</li>
+        </ul>
+      </details>
+
+      <details><summary>Upload-Status &bdquo;ignored&ldquo;.</summary>
+        <p>Die im Report enthaltene Domain ist im Tenant nicht angelegt. Als Admin: <a href="/domains">Domain hinzufügen</a>, dann erneut hochladen.</p>
+      </details>
+
+      <details><summary>Polling-Intervall ändern.</summary>
+        <p>In <code>.env</code> <code>IMAP_POLL_INTERVAL_MINUTES=5</code> setzen, App neu starten. Sehr kurze Intervalle bringen wenig — ISPs schicken sowieso nur 1&times;/Tag.</p>
+      </details>
+
+      <details><summary>Reverse-DNS macht Imports langsam.</summary>
+        <p><code>RESOLVE_PTR=false</code> in <code>.env</code> setzen. Bestehende Records bekommen damit keine Hosts mehr; künftige bleiben leer.</p>
+      </details>
+
+      <details><summary>Wie melde ich mich als Superadmin um?</summary>
+        <p>Logout → mit <code>SUPERADMIN_EMAIL</code> einloggen. Über <strong>Tenants</strong> in fremde Mandanten kannst du nicht hineinwechseln — das ist Absicht (Datentrennung). Wenn du als Superadmin Daten eines Mandanten editieren musst: dort einen User anlegen.</p>
+      </details>
+
+      <details><summary>Wie reset ich das Admin-Passwort?</summary>
+        <p>Es gibt absichtlich keine Selfservice-Recovery (kein SMTP gesetzt). Direkt in der DB: User-Eintrag löschen → ENVs setzen → App neu starten → Bootstrap legt einen neuen Superadmin an. Oder über die SQL-Konsole das <code>password_hash</code>-Feld mit einem neu erzeugten bcrypt-Hash überschreiben.</p>
+      </details>
+
+      <details><summary>Postgres in der UI vermisst Daten von SQLite.</summary>
+        <p>Es gibt bewusst keinen Auto-Migrationspfad. Für eine echte Migration: <code>pg_loader</code> oder ein Skript, das Reports per <code>/api/v1/reports</code> reimportiert.</p>
+      </details>
+    </section>
+
+    <footer class="help-footer">
+      <p class="muted small">Stand: {{ tenant.created_at.year if tenant.created_at else '' }} — Anpassungen / Erweiterungen direkt im Code unter <code>app/templates/help.html</code>.</p>
+    </footer>
+  </article>
+</div>
+{% endblock %}

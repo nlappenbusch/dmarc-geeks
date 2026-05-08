@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Mail-Health-Bericht: {{ query_domain }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #2563eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --surface: #fafbfd;
+      --ok: #16a34a;
+      --bad: #dc2626;
+      --warn: #d97706;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; color: var(--text); font-size: 12.5px; line-height: 1.5; background: #f3f4f6; }
+
+    .pdf-toolbar { position: sticky; top: 0; z-index: 10; background: var(--brand); color: white; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+    .pdf-toolbar h1 { font-size: 14px; font-weight: 600; margin: 0; flex: 1; }
+    .pdf-toolbar button, .pdf-toolbar a { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 16px; border-radius: 6px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; }
+    .pdf-toolbar button:hover, .pdf-toolbar a:hover { background: rgba(255,255,255,0.28); }
+
+    .report-page { max-width: 820px; margin: 24px auto; background: white; padding: 48px 56px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border-radius: 4px; }
+
+    .rep-head { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 3px solid var(--brand); margin-bottom: 28px; }
+    .rep-head-brand strong { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .rep-head-brand strong span { color: var(--brand); }
+    .rep-head-meta { text-align: right; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .rep-head-meta strong { color: var(--text); font-size: 13px; display: block; margin-bottom: 4px; }
+
+    .rep-title { margin: 0 0 4px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; }
+    .rep-title code { font-family: 'Inter'; color: var(--brand); }
+    .rep-period { color: var(--muted); font-size: 13px; margin: 0 0 28px 0; }
+
+    /* Score */
+    .rep-score { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; padding: 24px; border-radius: 12px; color: white; margin-bottom: 28px; }
+    .rep-score.grade-a { background: linear-gradient(135deg, #16a34a, #059669); }
+    .rep-score.grade-b { background: linear-gradient(135deg, #16a34a, #65a30d); }
+    .rep-score.grade-c { background: linear-gradient(135deg, #d97706, #ca8a04); }
+    .rep-score.grade-d { background: linear-gradient(135deg, #dc2626, #d97706); }
+    .rep-score.grade-f { background: linear-gradient(135deg, #991b1b, #dc2626); }
+    .rep-score-grade { font-size: 64px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+    .rep-score-points { font-size: 14px; opacity: .85; }
+    .rep-score-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: 0.85; margin-bottom: 4px; }
+    .rep-score-headline { font-size: 22px; font-weight: 800; margin: 0 0 8px 0; }
+    .rep-score-actions { list-style: none; padding: 0; margin: 0; font-size: 12.5px; line-height: 1.5; }
+    .rep-score-actions li { padding-left: 18px; position: relative; margin-bottom: 4px; }
+    .rep-score-actions li::before { content: "→"; position: absolute; left: 0; opacity: 0.85; }
+
+    h2 { font-size: 16px; font-weight: 700; margin: 28px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+    .check-row { padding: 14px 16px; border-radius: 8px; background: var(--surface); border-left: 3px solid var(--border); margin-bottom: 8px; page-break-inside: avoid; }
+    .check-row.s-ok { border-left-color: var(--ok); }
+    .check-row.s-warn { border-left-color: var(--warn); }
+    .check-row.s-fail { border-left-color: var(--bad); }
+    .check-row.s-info { border-left-color: var(--brand); opacity: 0.95; }
+    .check-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+    .check-row-h { font-size: 14px; font-weight: 700; margin: 0; }
+    .check-row-status { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
+    .s-ok .check-row-status { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+    .s-warn .check-row-status { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
+    .s-fail .check-row-status { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+    .s-info .check-row-status { background: var(--surface); color: var(--muted); }
+    .check-row-detail { font-size: 12px; color: var(--text); line-height: 1.55; margin: 0; }
+    .check-row-detail code { font-family: ui-monospace, 'SF Mono', monospace; font-size: 11px; background: white; padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); word-break: break-all; }
+
+    .rep-foot { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+    @media print {
+      body { background: white; font-size: 10.5pt; }
+      .pdf-toolbar { display: none; }
+      .report-page { max-width: 100%; margin: 0; padding: 0; box-shadow: none; border-radius: 0; }
+      h2, .check-row { page-break-inside: avoid; }
+      @page { size: A4; margin: 18mm 16mm 22mm 16mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="pdf-toolbar">
+  <h1>📄 Mail-Health-Bericht · {{ query_domain }}</h1>
+  <button onclick="window.print()">📥 Als PDF speichern</button>
+  <a href="/check?domain={{ query_domain }}">← zurück</a>
+</div>
+
+<div class="report-page">
+
+  <div class="rep-head">
+    <div class="rep-head-brand">
+      <strong>DMARC<span>Aggregator</span></strong>
+    </div>
+    <div class="rep-head-meta">
+      <strong>Mail-Health-Bericht</strong>
+      Erstellt am <span id="gen-time"></span><br>
+      Beobachter-Modus · keine Anmeldung
+    </div>
+  </div>
+
+  <h1 class="rep-title">Domain: <code>{{ query_domain }}</code></h1>
+  <p class="rep-period">Mail-Security-Status zum Zeitpunkt der Auswertung</p>
+
+  <div class="rep-score grade-{{ score.grade|lower }}">
+    <div style="text-align:center;">
+      <div class="rep-score-grade">{{ score.grade }}</div>
+      <div class="rep-score-points">{{ score.total }} / 100</div>
+    </div>
+    <div>
+      <div class="rep-score-label">{{ score.grade_label }}</div>
+      <h3 class="rep-score-headline">
+        {% if score.grade in ('A','B') %}Setup ist solide.
+        {% elif score.grade == 'C' %}Solide Basis, mit Lücken.
+        {% elif score.grade == 'D' %}Riskant — Spoofing möglich.
+        {% else %}Akut handlungsbedürftig.{% endif %}
+      </h3>
+      <ul class="rep-score-actions">
+        {% for action in score.actions %}<li>{{ action }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <h2>Detail-Auswertung</h2>
+
+  <!-- MX -->
+  <div class="check-row s-{{ score.checks.mx.status }}">
+    <div class="check-row-head">
+      <h3 class="check-row-h">📬 MX — Wer empfängt die Mails?</h3>
+      <span class="check-row-status">{{ score.checks.mx.status|upper }}</span>
+    </div>
+    {% if result.mx.present %}
+      <p class="check-row-detail">
+        Provider: <strong>{{ result.mx.provider or '—' }}</strong>{% if result.mx.records %}, MX:
+        {% for r in result.mx.records %}<code>{{ r.priority }} {{ r.host }}</code>{% if not loop.last %} · {% endif %}{% endfor %}
+        {% endif %}
+      </p>
+    {% else %}
+      <p class="check-row-detail">Keine MX-Records — diese Domain empfängt aktuell keine Mails.</p>
+    {% endif %}
+  </div>
+
+  <!-- DMARC -->
+  <div class="check-row s-{{ score.checks.dmarc.status }}">
+    <div class="check-row-head">
+      <h3 class="check-row-h">🛡️ DMARC — Schutz gegen Spoofing</h3>
+      <span class="check-row-status">{{ score.checks.dmarc.status|upper }}</span>
+    </div>
+    {% if result.dmarc.present %}
+      <p class="check-row-detail">Policy: <code>p={{ result.dmarc.policy or 'none' }}</code>{% if result.dmarc.rua %} · Reports: {{ result.dmarc.rua|length }} Empfänger{% else %} · keine Reports konfiguriert{% endif %}<br><code>{{ result.dmarc.raw }}</code></p>
+    {% else %}
+      <p class="check-row-detail">Kein DMARC-Record — jeder kann unter dieser Domain senden, ohne dass es auffällt.</p>
+    {% endif %}
+  </div>
+
+  <!-- SPF -->
+  <div class="check-row s-{{ score.checks.spf.status }}">
+    <div class="check-row-head">
+      <h3 class="check-row-h">📜 SPF — Welche Server dürfen senden?</h3>
+      <span class="check-row-status">{{ score.checks.spf.status|upper }}</span>
+    </div>
+    {% if result.spf.present %}
+      <p class="check-row-detail"><code>{{ result.spf.raw }}</code>{% if result.spf.issues %}<br><strong>Probleme:</strong> {% for i in result.spf.issues %}{{ i }}{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
+    {% else %}
+      <p class="check-row-detail">Kein SPF-Record. Voraussetzung für DMARC fehlt.</p>
+    {% endif %}
+  </div>
+
+  <!-- DKIM -->
+  <div class="check-row s-{{ score.checks.dkim.status }}">
+    <div class="check-row-head">
+      <h3 class="check-row-h">🔑 DKIM — Mail-Signatur</h3>
+      <span class="check-row-status">{{ score.checks.dkim.status|upper }}</span>
+    </div>
+    {% if result.dkim %}
+      <p class="check-row-detail">{{ result.dkim|length }} aktive Selektor{% if result.dkim|length != 1 %}en{% endif %} gefunden:
+      {% for d in result.dkim %}<code>{{ d.selector }}._domainkey</code>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+    {% else %}
+      <p class="check-row-detail">Keine DKIM-Selektoren bei den gängigen Namen gefunden.</p>
+    {% endif %}
+  </div>
+
+  <!-- MTA-STS / TLS-RPT / BIMI -->
+  {% for key, ico, title in [('mta_sts','🔒','MTA-STS — TLS-Pflicht'),('tls_rpt','📊','TLS-RPT — TLS-Berichte'),('bimi','🎨','BIMI — Logo-Anzeige')] %}
+  <div class="check-row s-{{ score.checks[key].status }}">
+    <div class="check-row-head">
+      <h3 class="check-row-h">{{ ico }} {{ title }}</h3>
+      <span class="check-row-status">{{ score.checks[key].status|upper }}</span>
+    </div>
+    <p class="check-row-detail">{{ score.checks[key].label }}</p>
+  </div>
+  {% endfor %}
+
+  <h2>Empfehlungen</h2>
+  <ol style="font-size: 12.5px; line-height: 1.65; padding-left: 20px;">
+    {% for action in score.actions %}<li style="margin-bottom: 4px;">{{ action }}</li>{% endfor %}
+    <li style="margin-top: 8px; color: var(--muted);">Bei Unsicherheit: kostenfreies Erstgespräch über <a href="https://example.com/services" style="color: var(--brand);">/services</a> buchen.</li>
+  </ol>
+
+  <div class="rep-foot">
+    <span>DMARC Aggregator · Mail-Security-Check</span>
+    <span>Made in Switzerland · Bericht ist eine technische Momentaufnahme</span>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('gen-time').textContent = new Date().toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' });
+</script>
+
+</body>
+</html>

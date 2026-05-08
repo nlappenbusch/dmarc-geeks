@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Einstellungen</h1>
+<p class="muted">Tenant-weite Konfiguration für <strong>{{ tenant.name }}</strong>.</p>
+
+{% if not smtp_ready %}
+<div class="callout warn">
+  <strong>SMTP nicht konfiguriert.</strong> Digest-Mails, Spike-Alerts, Forgot-Password &amp; Signup-Mails werden nicht versendet.
+  Setze <code>SMTP_HOST</code>, <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code>, <code>SMTP_FROM</code> in der <code>.env</code>.
+</div>
+{% endif %}
+
+<section class="card">
+  <h2>Kundendaten <span class="muted small">— Tenant {{ tenant.name }} ({{ profile.plan }})</span></h2>
+  <p class="muted small">Pflichtfelder leer lassen ist OK. Wird in Rechnungen, Audit-Log und Reports referenziert.</p>
+  <form method="post" action="/settings/profile" class="grid-form">
+    <label>Firmenname<input type="text" name="company_name" value="{{ profile.company_name or '' }}"></label>
+    <label>Ansprechpartner<input type="text" name="contact_name" value="{{ profile.contact_name or '' }}"></label>
+    <label>Kontakt-E-Mail<input type="email" name="contact_email" value="{{ profile.contact_email or '' }}"></label>
+    <label>Telefon<input type="text" name="contact_phone" value="{{ profile.contact_phone or '' }}"></label>
+    <label>Straße<input type="text" name="street" value="{{ profile.street or '' }}"></label>
+    <label>PLZ<input type="text" name="postal_code" value="{{ profile.postal_code or '' }}"></label>
+    <label>Ort<input type="text" name="city" value="{{ profile.city or '' }}"></label>
+    <label>Land<input type="text" name="country" value="{{ profile.country or '' }}"></label>
+    <label>USt-ID<input type="text" name="vat_id" value="{{ profile.vat_id or '' }}" placeholder="DE123456789"></label>
+    <label style="grid-column: 1 / -1;">Notiz<textarea name="notes" rows="2">{{ profile.notes or '' }}</textarea></label>
+    <button type="submit" class="btn-primary">Speichern</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Marke</h2>
+  <p class="muted small">Akzentfarbe der UI für deinen Tenant.</p>
+  <form method="post" action="/settings/brand" class="row">
+    <label>Farbe<input type="color" name="brand_color" value="{{ settings.brand_color }}"></label>
+    <button type="submit" class="btn-primary">Speichern</button>
+  </form>
+  <p class="muted small mt-8">Vorschau: <span class="badge brand">Tenant-Akzent</span> · <a href="/dashboard">Test</a></p>
+</section>
+
+<section class="card">
+  <h2>Benachrichtigungen</h2>
+  <form method="post" action="/settings/notifications" class="grid-form">
+    <label class="check">
+      <input type="checkbox" name="weekly_digest_enabled" value="true" {% if settings.weekly_digest_enabled %}checked{% endif %}>
+      Wöchentlicher Digest aktiv
+      <span class="hint">Montagmorgens: Pass-Rate je Domain, Top-Quellen, neue Anomalien.</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="spike_alert_enabled" value="true" {% if settings.spike_alert_enabled %}checked{% endif %}>
+      Spike-Alerts aktiv
+      <span class="hint">Mail bei plötzlichem Anstieg der Fail-Rate.</span>
+    </label>
+    <label>Empfänger (Komma-getrennt)
+      <input type="text" name="digest_recipients" value="{{ settings.digest_recipients or '' }}" placeholder="alice@..., bob@...">
+      <span class="hint">Leer = an alle Admins des Tenants.</span>
+    </label>
+    <label>Spike-Schwelle (%)
+      <input type="number" name="spike_threshold_pct" min="1" max="100" value="{{ settings.spike_threshold_pct }}">
+      <span class="hint">Fail-Rate-Sprung in %.</span>
+    </label>
+    <label>Mindestvolumen
+      <input type="number" name="spike_min_volume" min="1" value="{{ settings.spike_min_volume }}">
+      <span class="hint">Erst ab dieser Anzahl Nachrichten alarmieren.</span>
+    </label>
+    <button type="submit" class="btn-primary">Speichern</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Mehr Verwaltung</h2>
+  <ul style="list-style:none; padding:0; margin:0; display:grid; gap:8px;">
+    <li>→ <a href="/tags">Tags verwalten</a> <span class="muted small">(Domain-Gruppen)</span></li>
+    <li>→ <a href="/audit">Audit-Log ansehen</a> <span class="muted small">(letzte Änderungen)</span></li>
+    <li>→ <a href="/api-keys">API-Keys</a> <span class="muted small">(für Automation)</span></li>
+    <li>→ <a href="/webhooks">Webhooks</a> <span class="muted small">(Outbound-Events)</span></li>
+    <li>→ <a href="/users">User-Verwaltung</a></li>
+  </ul>
+</section>
+{% endblock %}

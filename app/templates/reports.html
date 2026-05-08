@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Reports · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+
+<form method="get" action="/reports" class="filterbar card" style="margin-bottom:14px;">
+  <label>Domain
+    <select name="domain_id" onchange="this.form.submit()">
+      <option value="">— alle —</option>
+      {% for d in domains %}
+        <option value="{{ d.id }}" {% if domain_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Suche
+    <input type="search" name="q" value="{{ q }}" placeholder="IP, Hostname, Reporter, Header-from …">
+  </label>
+  <label>Status
+    <select name="status">
+      <option value="" {% if not status_filter %}selected{% endif %}>alle</option>
+      <option value="pass" {% if status_filter=='pass' %}selected{% endif %}>nur pass</option>
+      <option value="fail" {% if status_filter=='fail' %}selected{% endif %}>enthält fail</option>
+      <option value="quarantine" {% if status_filter=='quarantine' %}selected{% endif %}>quarantäne</option>
+      <option value="reject" {% if status_filter=='reject' %}selected{% endif %}>reject</option>
+    </select>
+  </label>
+  <label>Zeitraum
+    <select name="days">
+      {% for d, lab in [(7,'7 Tage'),(30,'30 Tage'),(90,'90 Tage'),(365,'1 Jahr'),(0,'alle')] %}
+      <option value="{{ d }}" {% if days==d %}selected{% endif %}>{{ lab }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="actions" style="border:0; padding:0; margin:0;">
+    <button type="submit" class="btn-primary">filtern</button>
+    <a href="/reports/export.csv?domain_id={{ domain_id or '' }}&q={{ q }}&status={{ status_filter }}&days={{ days }}" class="btn">CSV-Export</a>
+    <a href="/reports" class="btn-link">zurücksetzen</a>
+  </div>
+</form>
+
+<section class="card">
+  <p class="muted small">{{ total|num }} Reports {% if q or status_filter or domain_id %}<span class="badge brand">gefiltert</span>{% endif %}</p>
+  {% if rows %}
+  <table class="data">
+    <thead><tr><th>Domain</th><th>Reporter</th><th>Zeitraum</th><th>Nachrichten</th><th>Policy</th><th></th></tr></thead>
+    <tbody>
+    {% for report, dname, msgs in rows %}
+      <tr>
+        <td>{{ dname }}</td>
+        <td>{{ report.org_name }}<br><span class="muted small">{{ report.org_email }}</span></td>
+        <td>{{ report.date_begin|dt }} – {{ report.date_end|dt }}</td>
+        <td>{{ msgs|num }}</td>
+        <td><code>p={{ report.policy_p or '—' }} pct={{ report.policy_pct or '—' }}</code></td>
+        <td><a href="/reports/{{ report.id }}">Details →</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if total > page_size %}
+  <div class="pagination">
+    {% set query = '&domain_id=' ~ domain_id if domain_id else '' %}
+    {% set query = query ~ ('&q=' ~ q if q else '') %}
+    {% set query = query ~ ('&status=' ~ status_filter if status_filter else '') %}
+    {% set query = query ~ ('&days=' ~ days) %}
+    {% if page > 1 %}<a href="?page={{ page-1 }}{{ query }}">← zurück</a>{% endif %}
+    <span class="muted">Seite {{ page }} von {{ ((total - 1) // page_size) + 1 }}</span>
+    {% if page * page_size < total %}<a href="?page={{ page+1 }}{{ query }}">weiter →</a>{% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty">
+    <p class="muted">Keine Reports passen zum Filter.</p>
+    <p class="muted small">Filter zurücksetzen oder Reports unter <a href="/upload">Upload</a> hochladen.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

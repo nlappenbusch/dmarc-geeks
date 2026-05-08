@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}System · .env-Editor · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Admin</a> · System &amp; .env</div>
+<h1>System-Konfiguration</h1>
+<p class="muted">Direkter Editor für die <code>{{ env_path }}</code>. Änderungen werden in die Datei geschrieben — wirken aber erst nach <strong>App-Neustart</strong> (Settings sind gecacht). Tests rechts laufen gegen die <em>aktuell aktive</em> Konfiguration.</p>
+
+{% if request.session.get('flash') %}
+<div class="flash">{{ request.session.pop('flash') }}</div>
+{% endif %}
+
+<section class="card sys-warn">
+  <strong>⚠️ Vorsicht beim Ändern von Sicherheits-Werten:</strong>
+  <ul style="margin: 6px 0 0 20px;">
+    <li><code>SECRET_KEY</code> rotieren → alle bestehenden Sessions werden ungültig (User müssen sich neu einloggen).</li>
+    <li><code>FERNET_KEY</code> rotieren → alle gespeicherten IMAP-Passwörter sind unbrauchbar (Mailboxen müssen neu eingerichtet werden).</li>
+    <li><code>DATABASE_URL</code> ändern → die App zeigt eine andere DB. Migration bedeutet manuellen Datenexport/-import.</li>
+  </ul>
+</section>
+
+<div class="sys-grid">
+
+  <!-- ============== EDITOR ============== -->
+  <form method="post" action="/admin/system" class="card sys-editor">
+    <div class="sys-editor-head">
+      <h2 style="margin:0;">Settings</h2>
+      <button type="submit" class="btn-primary">💾 Änderungen speichern</button>
+    </div>
+
+    {% for group_name, fields in groups.items() %}
+    <fieldset class="sys-group">
+      <legend>{{ group_name }}</legend>
+      {% for f in fields %}
+      <div class="sys-field">
+        <label class="sys-field-head" for="env_{{ f.key }}">
+          <span class="sys-field-label">{{ f.label }}</span>
+          <code class="sys-field-key">{{ f.key }}</code>
+        </label>
+        {% if f.kind == 'bool' %}
+          <label class="sys-toggle">
+            <input type="checkbox" id="env_{{ f.key }}" name="{{ f.key }}" {% if f.value in ('true','True','1','on','yes') %}checked{% endif %}>
+            <span class="sys-toggle-slider"></span>
+            <span class="sys-toggle-label">{% if f.value in ('true','True','1','on','yes') %}aktiviert{% else %}deaktiviert{% endif %}</span>
+          </label>
+        {% elif f.kind == 'number' %}
+          <input type="number" id="env_{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" class="sys-field-input">
+        {% elif f.kind == 'password' or f.kind == 'secret' %}
+          <input type="password" id="env_{{ f.key }}" name="{{ f.key }}"
+                 placeholder="{% if f.is_set %}{{ f.display }} (zum Beibehalten leer lassen){% else %}— nicht gesetzt —{% endif %}"
+                 class="sys-field-input" autocomplete="new-password">
+        {% else %}
+          <input type="text" id="env_{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" class="sys-field-input">
+        {% endif %}
+        <p class="sys-field-hint">{{ f.hint|safe }}</p>
+      </div>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+
+    <div class="sys-editor-foot">
+      <span class="muted small">Schreibt nach <code>{{ env_path }}</code>. Alle Sensitive-Felder bleiben leer = unverändert.</span>
+      <button type="submit" class="btn-primary">💾 Änderungen speichern</button>
+    </div>
+  </form>
+
+  <!-- ============== TESTS ============== -->
+  <aside class="sys-tests">
+    <h2 style="margin:0 0 12px 0;">Live-Tests</h2>
+    <p class="muted small" style="margin: 0 0 16px 0;">Prüfen die <em>laufende</em> Konfiguration. Speichere zuerst, dann (App-Neustart und) Test.</p>
+
+    <!-- DB -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>🗄️ Datenbank</strong>
+        <button type="button" class="btn" data-test="db">Testen</button>
+      </div>
+      <p class="muted small">Verbindung zur DB öffnen und <code>SELECT 1</code> absetzen.</p>
+      <div class="sys-test-result" data-result="db"></div>
+    </div>
+
+    <!-- Fernet -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>🔐 Fernet-Key</strong>
+        <button type="button" class="btn" data-test="fernet">Testen</button>
+      </div>
+      <p class="muted small">Encrypt/Decrypt-Roundtrip mit <code>FERNET_KEY</code>.</p>
+      <div class="sys-test-result" data-result="fernet"></div>
+    </div>
+
+    <!-- DNS -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>🌐 DNS-Resolver</strong>
+        <button type="button" class="btn" data-test="dns" data-form="dns-form">Testen</button>
+      </div>
+      <form id="dns-form" class="sys-test-form">
+        <input type="text" name="host" value="google.com" placeholder="hostname" class="sys-field-input">
+      </form>
+      <p class="muted small">MX, A und TXT auf den Hostname.</p>
+      <div class="sys-test-result" data-result="dns"></div>
+    </div>
+
+    <!-- SMTP -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>✉️ SMTP-Versand</strong>
+        <button type="button" class="btn" data-test="smtp" data-form="smtp-form">Test-Mail senden</button>
+      </div>
+      <form id="smtp-form" class="sys-test-form">
+        <input type="email" name="to" value="{{ user.email }}" placeholder="an@example.com" class="sys-field-input">
+      </form>
+      <p class="muted small">Schickt eine Test-Mail an die Adresse oben — mit aktueller SMTP-Konfig.</p>
+      <div class="sys-test-result" data-result="smtp"></div>
+    </div>
+
+    <!-- SMTP-Probe (Port-Capabilities) -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>🔍 SMTP-Capability-Scan</strong>
+        <button type="button" class="btn" data-test="smtp-probe" data-form="smtp-probe-form">Ports prüfen</button>
+      </div>
+      <form id="smtp-probe-form" class="sys-test-form">
+        <input type="text" name="host" placeholder="(leer = SMTP_HOST aus Config)" class="sys-field-input">
+      </form>
+      <p class="muted small">Probiert Port <strong>25, 465, 587</strong> auf dem Host und zeigt was angeboten wird (STARTTLS, AUTH-Mechanismen). Hilfreich wenn man nicht weiß welchen Port man wählen soll.</p>
+      <div class="sys-test-result" data-result="smtp-probe" style="white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 11.5px;"></div>
+    </div>
+
+    <!-- IMAP -->
+    <div class="sys-test-card">
+      <div class="sys-test-head">
+        <strong>📥 IMAP-Login</strong>
+        <button type="button" class="btn" data-test="imap" data-form="imap-form">Verbindung testen</button>
+      </div>
+      <form id="imap-form" class="sys-test-form sys-test-form-grid">
+        <input type="text" name="host" placeholder="imap.example.com" class="sys-field-input">
+        <input type="number" name="port" value="993" placeholder="Port" class="sys-field-input">
+        <input type="text" name="user" placeholder="user@example.com" class="sys-field-input">
+        <input type="password" name="pass" placeholder="Passwort" class="sys-field-input" autocomplete="new-password">
+        <label class="sys-test-form-checkbox"><input type="checkbox" name="ssl" checked> SSL/TLS (993)</label>
+      </form>
+      <p class="muted small">Login + LIST-Kommando. Credentials werden NICHT gespeichert — nur für den Test.</p>
+      <div class="sys-test-result" data-result="imap"></div>
+    </div>
+
+    <div class="sys-restart-note">
+      <strong>App-Neustart:</strong> Damit Änderungen an <code>SECRET_KEY</code>, <code>FERNET_KEY</code>, <code>DATABASE_URL</code>, <code>SMTP_*</code> wirken, muss der App-Prozess neu gestartet werden. Bei Docker: <code>docker compose restart app</code>. Bei Systemd: <code>systemctl restart dmarc-aggregator</code>.
+    </div>
+  </aside>
+</div>
+
+<style>
+.sys-warn { background: color-mix(in srgb, var(--warn) 8%, transparent); border-left: 3px solid var(--warn); }
+.sys-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: flex-start; }
+@media (max-width: 1100px) { .sys-grid { grid-template-columns: 1fr; } }
+
+.sys-editor-head, .sys-editor-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -8px 0 18px 0; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.sys-editor-foot { margin: 18px 0 -8px 0; padding-bottom: 0; padding-top: 14px; border-top: 1px solid var(--border); border-bottom: 0; flex-wrap: wrap; }
+
+.sys-group { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px 14px 18px; margin: 0 0 14px 0; }
+.sys-group legend { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 0 10px; }
+
+.sys-field { padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.sys-field:last-child { border-bottom: 0; padding-bottom: 0; }
+.sys-field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; cursor: default; }
+.sys-field-label { font-weight: 600; font-size: 14px; }
+.sys-field-key { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; padding: 2px 8px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-weight: 500; }
+.sys-field-input { width: 100%; box-sizing: border-box; padding: 9px 12px; font: inherit; font-size: 14px; }
+.sys-field-hint { font-size: 12.5px; color: var(--muted); margin: 6px 0 0 0; line-height: 1.55; }
+.sys-field-hint code { font-size: 11.5px; }
+
+.sys-toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.sys-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.sys-toggle-slider { position: relative; display: inline-block; width: 44px; height: 24px; background: var(--border); border-radius: 999px; transition: background .15s; }
+.sys-toggle-slider::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: left .15s; }
+.sys-toggle input:checked + .sys-toggle-slider { background: var(--ok); }
+.sys-toggle input:checked + .sys-toggle-slider::after { left: 22px; }
+.sys-toggle-label { font-size: 13px; color: var(--text-soft); }
+
+.sys-tests { position: sticky; top: 12px; }
+.sys-test-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 12px; }
+.sys-test-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.sys-test-card .muted.small { margin: 0 0 8px 0; line-height: 1.5; }
+.sys-test-form { display: block; margin: 6px 0 8px 0; }
+.sys-test-form-grid { display: grid; grid-template-columns: 1fr 80px; gap: 6px; }
+.sys-test-form-grid input[name="user"], .sys-test-form-grid input[name="pass"] { grid-column: span 2; }
+.sys-test-form-checkbox { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; grid-column: span 2; }
+.sys-test-result { font-size: 12.5px; line-height: 1.55; padding: 8px 12px; border-radius: 6px; display: none; word-break: break-word; }
+.sys-test-result.show { display: block; }
+.sys-test-result.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); border-left: 3px solid var(--ok); color: var(--text); }
+.sys-test-result.fail { background: color-mix(in srgb, var(--bad) 14%, transparent); border-left: 3px solid var(--bad); color: var(--text); }
+.sys-test-result.loading { background: var(--surface-soft); border-left: 3px solid var(--brand); color: var(--muted); font-style: italic; }
+
+.sys-restart-note { margin-top: 16px; padding: 12px 14px; background: var(--bg-elev); border: 1px dashed var(--border); border-radius: 6px; font-size: 12.5px; line-height: 1.55; color: var(--text-soft); }
+</style>
+
+<script>
+document.querySelectorAll('[data-test]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const test = btn.dataset.test;
+    const formId = btn.dataset.form;
+    const result = document.querySelector(`[data-result="${test}"]`);
+    let body = null;
+    if (formId) {
+      const form = document.getElementById(formId);
+      body = new FormData(form);
+    }
+    result.className = 'sys-test-result show loading';
+    result.textContent = 'Läuft …';
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/admin/system/test/${test}`, {
+        method: 'POST',
+        body: body || undefined,
+      });
+      const data = await res.json();
+      result.className = 'sys-test-result show ' + (data.ok ? 'ok' : 'fail');
+      result.textContent = (data.ok ? '✓ ' : '✕ ') + data.msg;
+    } catch (e) {
+      result.className = 'sys-test-result show fail';
+      result.textContent = '✕ Netzwerk-Fehler: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
+
+// Live-update toggle labels
+document.querySelectorAll('.sys-toggle input').forEach(cb => {
+  cb.addEventListener('change', e => {
+    e.target.closest('.sys-toggle').querySelector('.sys-toggle-label').textContent =
+      e.target.checked ? 'aktiviert' : 'deaktiviert';
+  });
+});
+</script>
+
+{% endblock %}

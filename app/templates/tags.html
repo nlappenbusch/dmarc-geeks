@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Tags · DMARC Aggregator{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/settings">Settings</a> · Tags</div>
+<h1>Tags</h1>
+<p class="muted">Tags helfen, viele Domains zu organisieren (z.&nbsp;B. <em>Produktion</em>, <em>Marketing</em>, <em>Kunde-X</em>).</p>
+
+<section class="card">
+  <h2>Neuen Tag erstellen</h2>
+  <form method="post" action="/tags" class="row">
+    <label>Name<input type="text" name="name" required maxlength="80"></label>
+    <label>Farbe<input type="color" name="color" value="#64748b"></label>
+    <button type="submit" class="btn-primary">Anlegen</button>
+  </form>
+</section>
+
+<section class="card">
+  {% if tags %}
+  <table class="data">
+    <thead><tr><th>Tag</th><th>Erstellt</th><th></th></tr></thead>
+    <tbody>
+    {% for t in tags %}
+      <tr>
+        <td><span class="tag" style="border-color:{{ t.color }}; color:{{ t.color }};"><span class="dot" style="background:{{ t.color }}"></span>{{ t.name }}</span></td>
+        <td>{{ t.created_at|dt }}</td>
+        <td><form method="post" action="/tags/{{ t.id }}/delete" onsubmit="return confirm('Tag löschen?');"><button class="btn-link danger">löschen</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p class="muted">Noch keine Tags.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

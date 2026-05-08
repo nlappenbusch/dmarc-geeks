@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}User-Verwaltung · {{ reseller.name }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/reseller">MSP-Konsole</a> · User</div>
+<h1>User über alle Endkunden <span class="muted small">{{ reseller.name }}</span></h1>
+<p class="muted">{{ rows|length }} User in {{ customer_tenants|length }} Endkunden-Tenants. Du kannst pro Endkunde User anlegen, Rollen ändern und löschen.</p>
+
+<section class="card">
+  <h2>Neuen User anlegen</h2>
+  <form method="post" action="/reseller/users" class="grid-form">
+    <label>Endkunde
+      <select name="tenant_id" required>
+        {% for t in customer_tenants %}
+        <option value="{{ t.id }}">{{ t.name }} ({{ t.slug }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>E-Mail<input type="email" name="email" required></label>
+    <label>Passwort (min. 8)<input type="password" name="password" minlength="8" required></label>
+    <label class="check"><input type="checkbox" name="is_admin" value="true"> Admin (lesen + schreiben)</label>
+    <button type="submit" class="btn-primary">User anlegen</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Alle User</h2>
+  {% if rows %}
+  <table class="data">
+    <thead><tr><th>Endkunde</th><th>E-Mail</th><th>Rolle</th><th>Erstellt</th><th></th></tr></thead>
+    <tbody>
+    {% for u, t in rows %}
+      <tr>
+        <td><strong>{{ t.name }}</strong></td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.is_superadmin %}<span class="badge ok">Superadmin</span>{% endif %}
+          {% if u.is_reseller_admin %}<span class="badge brand">Reseller-Admin</span>{% endif %}
+          {% if u.is_admin %}<span class="badge">Admin</span>{% else %}<span class="badge">Member</span>{% endif %}
+        </td>
+        <td class="small">{{ u.created_at|dt }}</td>
+        <td>
+          {% if u.id != user.id and not u.is_superadmin %}
+            {% if u.is_admin %}
+            <form method="post" action="/reseller/users/{{ u.id }}/role" style="display:inline">
+              <input type="hidden" name="role" value="member">
+              <button class="btn-link">→ Member</button>
+            </form>
+            {% else %}
+            <form method="post" action="/reseller/users/{{ u.id }}/role" style="display:inline">
+              <input type="hidden" name="role" value="admin">
+              <button class="btn-link">→ Admin</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/reseller/users/{{ u.id }}/delete" style="display:inline" onsubmit="return confirm('User löschen?');"><button class="btn-link danger">löschen</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty"><p class="muted">Noch keine User in deinen Endkunden-Tenants.</p></div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Fehler {{ status_code }}{% endblock %}
+{% block content %}
+<section class="card" style="text-align:center; padding:40px 32px; max-width:540px; margin:48px auto;">
+  <div style="font-size:64px; font-weight:700; color:var(--brand); letter-spacing:-0.04em; line-height:1;">{{ status_code }}</div>
+  <h1 style="margin-top:12px;">
+    {% if status_code == 404 %}Seite nicht gefunden
+    {% elif status_code == 403 %}Kein Zugriff
+    {% elif status_code == 401 %}Login erforderlich
+    {% elif status_code == 500 %}Da ist etwas schiefgelaufen
+    {% else %}{{ detail or 'Fehler' }}{% endif %}
+  </h1>
+  <p class="muted" style="max-width:380px; margin:0 auto 16px;">
+    {% if status_code == 404 %}Die Seite gibt's hier nicht (mehr). Vielleicht ein alter Link?
+    {% elif status_code == 403 %}Für diese Aktion fehlen dir die Rechte. Wende dich an deinen Admin.
+    {% elif status_code == 500 %}Ein interner Fehler. Falls's wieder passiert, schau ins Server-Log — die Request-ID hilft beim Auffinden.
+    {% else %}{{ detail }}{% endif %}
+  </p>
+  <p style="margin-top:24px;">
+    <a href="/dashboard" class="btn-primary" style="text-decoration:none;">← zum Dashboard</a>
+    <a href="/help" class="btn" style="text-decoration:none; margin-left:6px;">Hilfe</a>
+  </p>
+</section>
+{% endblock %}

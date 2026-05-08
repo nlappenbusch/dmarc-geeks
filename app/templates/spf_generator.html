@@ -1,0 +1,862 @@
+{% extends "base.html" %}
+{% block title %}SPF-Generator · DMARC Aggregator{% endblock %}
+{% block content %}
+
+<div class="gen-intro">
+  <h1>SPF-Record bauen</h1>
+  <p class="muted">Klick zusammen <strong>wer alles in deinem Namen senden darf</strong> — wir bauen daraus den TXT-Record und warnen dich bei der berüchtigten 10-Lookup-Falle.</p>
+  <div class="spf-intro-meta">
+    <span class="spf-intro-tag">⚙️ Generator</span>
+    <span class="muted">DMARC braucht SPF (oder DKIM) — das hier ist der Baustein dafür.</span>
+    <a href="/wissen#spf" class="muted small" style="margin-left: auto;">Was ist SPF eigentlich? →</a>
+  </div>
+</div>
+
+<!-- Sticky Live-Vorschau -->
+<section class="gen-preview gen-sticky">
+  <div class="gen-preview-head">
+    <div>
+      <div class="gen-preview-label">Dein SPF-Eintrag</div>
+      <div class="gen-preview-sublabel">aktualisiert sich live · Lookups: <strong id="spf-lookup-count">0</strong> / 10</div>
+    </div>
+    <button type="button" class="btn-primary" onclick="copySpfOutput(this)">📋 Kopieren</button>
+  </div>
+  <pre class="code" id="spf-output">example.com.   IN TXT  "v=spf1 -all"</pre>
+  <div class="gen-preview-fields">
+    <div><span>DNS-Type</span><strong>TXT</strong></div>
+    <div><span>Name / Host</span><strong id="spf-prev-host">@ (root)</strong></div>
+    <div><span>TTL</span><strong>3600</strong></div>
+  </div>
+  <div id="spf-warnings" class="gen-warnings"></div>
+</section>
+
+<!-- Schritt 1: Domain -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">1</span>
+    <div>
+      <h2>Welche Domain möchtest du absichern?</h2>
+      <p class="muted small">Die Hauptdomain von der gesendet wird. SPF gilt pro Domain; bei mehreren Subdomains brauchst du eigene Records.</p>
+    </div>
+  </div>
+  <label class="gen-big-input">
+    <input type="text" id="spf-domain" value="{{ prefill_domain or 'example.com' }}" required pattern="^[A-Za-z0-9.\-]+$" placeholder="z.B. meinefirma.ch" autocomplete="off">
+    <span class="hint">Beispiel: <code>meinefirma.ch</code> · der TXT-Eintrag landet auf <code id="spf-hint-host">meinefirma.ch</code> (root, nicht <code>_spf</code>)</span>
+  </label>
+</section>
+
+<!-- Schritt 2: Sender wählen -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">2</span>
+    <div>
+      <h2>Wer sendet alles in deinem Namen?</h2>
+      <p class="muted small">Klick alle Tools an, die unter deiner Domain Mails verschicken. <strong>Vergessene Sender → Mails landen im Spam.</strong> Lieber zu viel ankreuzen als zu wenig — entfernen kann man später noch.</p>
+    </div>
+  </div>
+
+  <div class="spf-counter-bar">
+    <div class="spf-counter">
+      <strong id="spf-selected-count">0</strong>
+      <span class="muted small">Sender ausgewählt</span>
+    </div>
+    <div class="spf-counter">
+      <strong id="spf-lookup-count2">0</strong> / 10
+      <span class="muted small">DNS-Lookups</span>
+    </div>
+    <button type="button" class="btn" onclick="clearSpfTiles()" style="margin-left: auto;">Alle abwählen</button>
+  </div>
+
+  <div class="spf-cat">
+    <div class="spf-cat-head">
+      <h3>📨 Mail-Server / Hosting</h3>
+      <span class="muted small">Wo liegen deine Postfächer? Wähle das eine oder mehrere wenn du Hybrid fährst.</span>
+    </div>
+    <div class="spf-grid">
+      <label class="spf-tile" data-include="_spf.google.com" data-name="Google Workspace" data-color="#4285f4">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">G</span>
+        <span class="spf-tile-name">Google Workspace</span>
+        <span class="spf-tile-meta">Gmail-Business · M, S, ...</span>
+      </label>
+      <label class="spf-tile" data-include="spf.protection.outlook.com" data-name="Microsoft 365" data-color="#0078d4">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">M</span>
+        <span class="spf-tile-name">Microsoft 365</span>
+        <span class="spf-tile-meta">Exchange Online · EOP</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.mail.me.com" data-name="iCloud" data-color="#06b6d4">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🍎</span>
+        <span class="spf-tile-name">Apple iCloud Mail</span>
+        <span class="spf-tile-meta">@me.com · @icloud.com</span>
+      </label>
+      <label class="spf-tile" data-include="zoho.com" data-name="Zoho Mail" data-color="#dc2626">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">Z</span>
+        <span class="spf-tile-name">Zoho Mail</span>
+        <span class="spf-tile-meta">Mail · Workplace</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.fastmail.com" data-name="Fastmail" data-color="#ec4899">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">F</span>
+        <span class="spf-tile-name">Fastmail</span>
+        <span class="spf-tile-meta">Privat &amp; Business</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.mailbox.org" data-name="mailbox.org" data-color="#0891b2">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">📨</span>
+        <span class="spf-tile-name">mailbox.org</span>
+        <span class="spf-tile-meta">DE · Privat &amp; Business</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.protonmail.ch" data-name="Proton Mail" data-color="#7c3aed">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">P</span>
+        <span class="spf-tile-name">Proton Mail</span>
+        <span class="spf-tile-meta">CH · Verschlüsselt</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.infomaniak.com" data-name="Infomaniak" data-color="#0098ff">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🇨🇭</span>
+        <span class="spf-tile-name">Infomaniak</span>
+        <span class="spf-tile-meta">CH · Mail-Hosting</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.hostpoint.ch" data-name="Hostpoint" data-color="#16a34a">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🇨🇭</span>
+        <span class="spf-tile-name">Hostpoint</span>
+        <span class="spf-tile-meta">CH · Hosting + Mail</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.cyon.ch" data-name="cyon" data-color="#f59e0b">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🇨🇭</span>
+        <span class="spf-tile-name">cyon</span>
+        <span class="spf-tile-meta">CH · Hosting + Mail</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.kundenserver.de" data-name="IONOS / 1&1" data-color="#003d8f">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">1</span>
+        <span class="spf-tile-name">IONOS / 1&amp;1</span>
+        <span class="spf-tile-meta">DE · kundenserver.de</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.strato.com" data-name="Strato" data-color="#dc2626">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">S</span>
+        <span class="spf-tile-name">Strato</span>
+        <span class="spf-tile-meta">DE · Hosting + Mail</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="spf-cat">
+    <div class="spf-cat-head">
+      <h3>📢 Newsletter &amp; Marketing</h3>
+      <span class="muted small">Mass-Mail-Tools — typische DMARC-Stolpersteine wenn nicht authentifiziert.</span>
+    </div>
+    <div class="spf-grid">
+      <label class="spf-tile" data-include="spf.brevo.com" data-name="Brevo" data-color="#0b996e">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">B</span>
+        <span class="spf-tile-name">Brevo</span>
+        <span class="spf-tile-meta">vorm. Sendinblue</span>
+      </label>
+      <label class="spf-tile" data-include="servers.mcsv.net" data-name="Mailchimp" data-color="#ffe01b">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🐵</span>
+        <span class="spf-tile-name">Mailchimp</span>
+        <span class="spf-tile-meta">Newsletter · Automation</span>
+      </label>
+      <label class="spf-tile" data-include="sendgrid.net" data-name="SendGrid" data-color="#1a82e2">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">✉</span>
+        <span class="spf-tile-name">SendGrid</span>
+        <span class="spf-tile-meta">Twilio · Transactional</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.mailgun.org" data-name="Mailgun" data-color="#f43f5e">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🔫</span>
+        <span class="spf-tile-name">Mailgun</span>
+        <span class="spf-tile-meta">Developer-Mail-API</span>
+      </label>
+      <label class="spf-tile" data-include="amazonses.com" data-name="AWS SES" data-color="#ff9900">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">☁</span>
+        <span class="spf-tile-name">AWS SES</span>
+        <span class="spf-tile-meta">Bulk &amp; Transactional</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.klaviyo.com" data-name="Klaviyo" data-color="#000000">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">K</span>
+        <span class="spf-tile-name">Klaviyo</span>
+        <span class="spf-tile-meta">E-Commerce-Marketing</span>
+      </label>
+      <label class="spf-tile" data-include="spf.mandrillapp.com" data-name="Mandrill" data-color="#ff6f00">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">M</span>
+        <span class="spf-tile-name">Mandrill</span>
+        <span class="spf-tile-meta">Mailchimp Transactional</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.salesforce.com" data-name="Salesforce" data-color="#00a1e0">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">☁</span>
+        <span class="spf-tile-name">Salesforce / Pardot</span>
+        <span class="spf-tile-meta">Marketing Cloud (US)</span>
+      </label>
+      <label class="spf-tile" data-include="spf.sparkpostmail.com" data-name="SparkPost" data-color="#fa6423">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">★</span>
+        <span class="spf-tile-name">SparkPost</span>
+        <span class="spf-tile-meta">Bird · Transactional</span>
+      </label>
+      <label class="spf-tile" data-include="spf.mtasv.net" data-name="Postmark" data-color="#fdc907">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">📮</span>
+        <span class="spf-tile-name">Postmark</span>
+        <span class="spf-tile-meta">Transactional-only</span>
+      </label>
+      <label class="spf-tile" data-include="spf.activecampaign.com" data-name="ActiveCampaign" data-color="#356ae6">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">A</span>
+        <span class="spf-tile-name">ActiveCampaign</span>
+        <span class="spf-tile-meta">Automation &amp; CRM</span>
+      </label>
+      <label class="spf-tile" data-include="_spf-eu.salesforce.com" data-name="Pardot EU" data-color="#00a1e0">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">EU</span>
+        <span class="spf-tile-name">Pardot EU</span>
+        <span class="spf-tile-meta">Salesforce EU-Cluster</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="spf-cat">
+    <div class="spf-cat-head">
+      <h3>🤝 CRM, Helpdesk &amp; SaaS</h3>
+      <span class="muted small">Tools, die in deinem Namen E-Mails verschicken (Tickets, Notifications, Workflow-Mails).</span>
+    </div>
+    <div class="spf-grid">
+      <label class="spf-tile" data-include="_spf.hubspotemail.net" data-name="HubSpot" data-color="#ff7a59">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">H</span>
+        <span class="spf-tile-name">HubSpot</span>
+        <span class="spf-tile-meta">CRM &amp; Marketing</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.intercom.io" data-name="Intercom" data-color="#1f8ded">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">💬</span>
+        <span class="spf-tile-name">Intercom</span>
+        <span class="spf-tile-meta">Customer-Messaging</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.pipedrive.com" data-name="Pipedrive" data-color="#16a34a">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">P</span>
+        <span class="spf-tile-name">Pipedrive</span>
+        <span class="spf-tile-meta">Sales-CRM</span>
+      </label>
+      <label class="spf-tile" data-include="zendesk.com" data-name="Zendesk" data-color="#03363d">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🎫</span>
+        <span class="spf-tile-name">Zendesk</span>
+        <span class="spf-tile-meta">Helpdesk &amp; Support</span>
+      </label>
+      <label class="spf-tile" data-include="freshdesk.com" data-name="Freshdesk" data-color="#25c16f">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">F</span>
+        <span class="spf-tile-name">Freshdesk</span>
+        <span class="spf-tile-meta">Helpdesk · Freshworks</span>
+      </label>
+      <label class="spf-tile" data-include="docusign.net" data-name="DocuSign" data-color="#ffcc22">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">📝</span>
+        <span class="spf-tile-name">DocuSign</span>
+        <span class="spf-tile-meta">E-Signatur</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.atlassian.net" data-name="Atlassian" data-color="#0052cc">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🅰</span>
+        <span class="spf-tile-name">Atlassian</span>
+        <span class="spf-tile-meta">Jira · Confluence</span>
+      </label>
+      <label class="spf-tile" data-include="spf.shopify.com" data-name="Shopify" data-color="#95bf47">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🛍</span>
+        <span class="spf-tile-name">Shopify</span>
+        <span class="spf-tile-meta">Shop-Notifications</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.notion.so" data-name="Notion" data-color="#000000">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">📓</span>
+        <span class="spf-tile-name">Notion</span>
+        <span class="spf-tile-meta">Workspace-Notifications</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="spf-cat">
+    <div class="spf-cat-head">
+      <h3>🇨🇭 Schweizer Mail-Encryption &amp; Gesundheit</h3>
+      <span class="muted small">Spezial-Stack für CH-Markt — vor allem für Banken, Anwälte, Spitäler, Praxen.</span>
+    </div>
+    <div class="spf-grid">
+      <label class="spf-tile" data-include="spf.seppmail.ch" data-name="SeppMail" data-color="#dc2626">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">🔐</span>
+        <span class="spf-tile-name">SeppMail</span>
+        <span class="spf-tile-meta">CH · S/MIME · GINA</span>
+      </label>
+      <label class="spf-tile" data-include="_spf.hin.ch" data-name="HIN" data-color="#0891b2">
+        <input type="checkbox" hidden>
+        <span class="spf-tile-logo">⚕</span>
+        <span class="spf-tile-name">HIN</span>
+        <span class="spf-tile-meta">CH · Health Info Net</span>
+      </label>
+    </div>
+  </div>
+</section>
+
+<!-- Schritt 3: Eigene Server / IPs -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">3</span>
+    <div>
+      <h2>Eigene Server oder spezielle Sender? <span class="muted small" style="font-weight: 400;">— optional</span></h2>
+      <p class="muted small">Nur ausfüllen, wenn du einen <strong>eigenen Mailserver</strong> hast oder ein Tool nutzt, das oben nicht in der Liste war. Sonst kannst du diesen Schritt einfach überspringen.</p>
+    </div>
+  </div>
+
+  <div class="spf-step3-grid">
+    <!-- Card A: ip4 / ip6 -->
+    <div class="spf-step3-card spf-step3-card-best">
+      <div class="spf-step3-card-head">
+        <span class="spf-step3-icon" style="--c: #16a34a;">🟢</span>
+        <div>
+          <h3>Eigene IPs</h3>
+          <span class="muted small">Empfohlen für eigene Server — kostet <strong>keinen Lookup</strong></span>
+        </div>
+      </div>
+      <textarea id="spf-ips" rows="4" placeholder="185.20.99.1&#10;185.20.99.0/24&#10;2001:db8::/32" autocomplete="off" class="spf-textarea"></textarea>
+      <p class="muted small spf-step3-hint">Eine IP-Adresse pro Zeile. Mit oder ohne CIDR-Maske. Funktioniert für IPv4 und IPv6.<br><strong>Beispiel:</strong> Mailcow auf <code>185.20.99.1</code>, Backup-Mailserver auf <code>185.20.99.2</code>.</p>
+    </div>
+
+    <!-- Card B: includes -->
+    <div class="spf-step3-card">
+      <div class="spf-step3-card-head">
+        <span class="spf-step3-icon" style="--c: #2563eb;">🔵</span>
+        <div>
+          <h3>Weitere <code>include:</code></h3>
+          <span class="muted small">Andere Tools, die nicht oben in der Liste sind — kostet <strong>1 Lookup pro Eintrag</strong></span>
+        </div>
+      </div>
+      <textarea id="spf-includes" rows="3" placeholder="_spf.example-mailer.com&#10;spf.regio-hoster.ch" autocomplete="off" class="spf-textarea"></textarea>
+      <p class="muted small spf-step3-hint">Eine Domain pro Zeile, ohne <code>include:</code> davor. <strong>Beispiel:</strong> dein lokaler CH-Hoster mit eigenem SPF-Include.</p>
+    </div>
+
+    <!-- Card C: hostnames (a:) -->
+    <div class="spf-step3-card spf-step3-card-warn">
+      <div class="spf-step3-card-head">
+        <span class="spf-step3-icon" style="--c: #d97706;">🟡</span>
+        <div>
+          <h3>Server-Hostnames <code>a:</code></h3>
+          <span class="muted small">Selten nötig — kostet <strong>1 Lookup pro Eintrag</strong>, IPs sind besser</span>
+        </div>
+      </div>
+      <textarea id="spf-hosts" rows="2" placeholder="mail.deinedomain.ch" autocomplete="off" class="spf-textarea"></textarea>
+      <p class="muted small spf-step3-hint">Nur sinnvoll wenn dein Mailserver eine wechselnde IP hat. Sonst lieber die IP oben eintragen.</p>
+    </div>
+
+    <!-- Card D: mx mechanism -->
+    <div class="spf-step3-card">
+      <div class="spf-step3-card-head">
+        <span class="spf-step3-icon" style="--c: #7c3aed;">🟣</span>
+        <div>
+          <h3>MX-Mechanismus</h3>
+          <span class="muted small">„Die MX-Server dürfen auch outbound senden"</span>
+        </div>
+      </div>
+      <label class="spf-toggle">
+        <input type="checkbox" id="spf-mx-toggle">
+        <span class="spf-toggle-slider"></span>
+        <span class="spf-toggle-label" id="spf-mx-toggle-label">deaktiviert (empfohlen)</span>
+      </label>
+      <p class="muted small spf-step3-hint">MX-Records sind primär fürs <em>Empfangen</em> gedacht. Nur aktivieren, wenn dein eingehender Mailserver auch outbound sendet (typisch bei kleinen Mailcow- oder Postfix-Setups). Kostet 1+ Lookups.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Schritt 4: Policy -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">4</span>
+    <div>
+      <h2>Was soll mit Mails von <strong>nicht-gelisteten</strong> Servern passieren?</h2>
+      <p class="muted small">Das ist der Mechanismus am Ende des Records — entscheidet, wie streng SPF ist.</p>
+    </div>
+  </div>
+  <div class="spf-policy-cards">
+    <button type="button" class="policy-card recommended" onclick="setSpfPolicy('softfail', this)">
+      <div class="policy-card-pin">★ Empfohlen</div>
+      <div class="policy-card-ico">🟡</div>
+      <h3>Soft-Fail</h3>
+      <div class="policy-card-tech">~all</div>
+      <p>Empfänger sieht „SPF Fail, aber soft" → Mail kommt durch, wird aber als verdächtig markiert. <strong>Sicherer Standard</strong>: kein Risiko legitime Mails zu killen, DMARC-tauglich.</p>
+    </button>
+
+    <button type="button" class="policy-card" onclick="setSpfPolicy('fail', this)">
+      <div class="policy-card-ico">🔴</div>
+      <h3>Hard-Fail</h3>
+      <div class="policy-card-tech">-all</div>
+      <p>Mail wird komplett abgelehnt. Maximaler Schutz — <strong>aber wenn du einen Sender vergisst, fliegen seine Mails sofort raus</strong>. Erst nach 30 Tagen Beobachtung mit ~all setzen.</p>
+    </button>
+
+    <button type="button" class="policy-card" onclick="setSpfPolicy('neutral', this)">
+      <div class="policy-card-ico">⚪</div>
+      <h3>Neutral</h3>
+      <div class="policy-card-tech">?all</div>
+      <p><em>„Weiß nicht ob's erlaubt ist"</em> — kein Schutz. <strong>Selten sinnvoll.</strong> Nur in Sonderfällen wenn du SPF aus DMARC-Gründen brauchst aber keine Aussage treffen willst.</p>
+    </button>
+  </div>
+</section>
+
+<!-- Schritt 5: DNS einrichten — Inline-Anleitung -->
+<section class="card gen-step">
+  <div class="gen-step-head">
+    <span class="gen-step-num">5</span>
+    <div>
+      <h2>Wo trage ich den SPF-Record ein?</h2>
+      <p class="muted small">Bei deinem <strong>DNS-Anbieter</strong> — als TXT-Record auf der <strong>Root-Domain</strong> (also <code>@</code>, nicht <code>_spf</code>). Wähle deinen Anbieter für eine konkrete Anleitung.</p>
+    </div>
+  </div>
+
+  <div class="gen-warning-box">
+    <span class="gen-warning-ico">⚠️</span>
+    <div><strong>Existiert schon ein SPF-Record?</strong> Du musst ihn <em>ersetzen</em>, nicht zusätzlich anlegen. Mehrere SPF-Records auf derselben Domain = SPF gilt als „PermError" und alle Empfänger lehnen die Mails ab. Im Zweifel: erst per <a href="/dns-check?domain={{ prefill_domain or 'example.com' }}">DNS-Check</a> nachschauen ob schon einer existiert.</div>
+  </div>
+
+  <div class="gen-provider-tabs gen-provider-tabs-grouped" role="tablist">
+    <span class="gen-prov-group">🇨🇭 Schweiz</span>
+    <button type="button" class="prov-tab active" data-prov="infomaniak" onclick="setSpfProvider('infomaniak', this)">Infomaniak</button>
+    <button type="button" class="prov-tab" data-prov="hostpoint" onclick="setSpfProvider('hostpoint', this)">Hostpoint</button>
+    <button type="button" class="prov-tab" data-prov="cyon" onclick="setSpfProvider('cyon', this)">cyon</button>
+    <span class="gen-prov-group">🌍 International</span>
+    <button type="button" class="prov-tab" data-prov="cloudflare" onclick="setSpfProvider('cloudflare', this)">Cloudflare</button>
+    <button type="button" class="prov-tab" data-prov="hetzner" onclick="setSpfProvider('hetzner', this)">Hetzner</button>
+    <button type="button" class="prov-tab" data-prov="ionos" onclick="setSpfProvider('ionos', this)">IONOS / 1&amp;1</button>
+    <button type="button" class="prov-tab" data-prov="generic" onclick="setSpfProvider('generic', this)">Anderer</button>
+  </div>
+
+  <div class="prov-pane spf-prov-pane active" data-prov="infomaniak">
+    <ol class="gen-howto">
+      <li>Logge dich im <strong>Infomaniak Manager</strong> ein → <em>Domains</em> → deine Domain → <em>DNS-Zone</em>.</li>
+      <li>Suche nach einem bestehenden TXT-Eintrag mit <code>v=spf1</code> auf der Root — falls vorhanden, <strong>ersetzen</strong>. Sonst <em>„Eintrag hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Quelle/Source</td><td><code>@</code> oder leer lassen (= Root)</td></tr>
+          <tr><td>Ziel/Target</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li><em>„Bestätigen"</em>. Greift in 1-5 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="hostpoint">
+    <ol class="gen-howto">
+      <li>Login im <strong>Hostpoint Control Panel</strong> → <em>Domains</em> → deine Domain → <em>DNS</em>.</li>
+      <li>Bei TXT-Einträgen: bestehenden SPF-Eintrag (<code>v=spf1</code>) <strong>ersetzen</strong>, oder <em>„DNS-Eintrag hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Hostname</td><td>leer (= Root) oder <code>@</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td>Standard</td></tr>
+        </table>
+      </li>
+      <li>Speichern. Hostpoint propagiert in 5-10 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="cyon">
+    <ol class="gen-howto">
+      <li>Login im <strong>my.cyon</strong> → <em>Domains &amp; DNS</em> → deine Domain → <em>DNS-Einträge</em>.</li>
+      <li>Bestehenden <code>v=spf1</code>-TXT-Eintrag <strong>ersetzen</strong> (nicht zusätzlich anlegen!).</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td>leer / <code>@</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li><em>„Speichern"</em>.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="cloudflare">
+    <ol class="gen-howto">
+      <li>Bei <strong>Cloudflare</strong> einloggen → Domain wählen → <em>DNS · Records</em>.</li>
+      <li>Bestehenden TXT-Eintrag mit <code>v=spf1</code> editieren (Stift-Symbol) — oder neuen via <em>„Add record"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>@</code> <span class="muted small">(Cloudflare hängt die Domain selbst an)</span></td></tr>
+          <tr><td>Content</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td>Auto</td></tr>
+        </table>
+      </li>
+      <li><em>„Save"</em>. Greift in 1-5 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="hetzner">
+    <ol class="gen-howto">
+      <li><strong>Hetzner DNS Console</strong> → Zone deiner Domain.</li>
+      <li>Bestehenden <code>v=spf1</code>-TXT-Eintrag editieren oder <em>„Record hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name</td><td><code>@</code></td></tr>
+          <tr><td>Value</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code></td></tr>
+        </table>
+      </li>
+      <li>Speichern. Greift in 1-2 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="ionos">
+    <ol class="gen-howto">
+      <li>Bei <strong>IONOS</strong> einloggen → <em>Domains &amp; SSL</em> → deine Domain → <em>DNS</em>.</li>
+      <li>Bestehenden SPF-Eintrag (Hostname leer / <code>@</code>) editieren — falls keiner da, <em>„Record hinzufügen"</em>.</li>
+      <li>Setze diese Werte:
+        <table class="howto-table">
+          <tr><td>Typ</td><td><code>TXT</code></td></tr>
+          <tr><td>Hostname</td><td><code>@</code></td></tr>
+          <tr><td>Wert</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td>1 Stunde</td></tr>
+        </table>
+      </li>
+      <li>Speichern. Bei IONOS dauert's manchmal bis 60 Min.</li>
+    </ol>
+  </div>
+
+  <div class="prov-pane spf-prov-pane" data-prov="generic">
+    <ol class="gen-howto">
+      <li>Logge dich beim <strong>DNS-Anbieter</strong> deiner Domain ein und finde die DNS-Verwaltung (Begriffe: „DNS-Records", „Zone-Editor", „Nameserver-Einträge").</li>
+      <li><strong>Wichtig:</strong> Falls schon ein TXT-Record mit <code>v=spf1</code> auf der Root-Domain existiert → <em>diesen ersetzen</em>, nicht einen zweiten anlegen.</li>
+      <li>Lege einen TXT-Record an:
+        <table class="howto-table">
+          <tr><td>Type</td><td><code>TXT</code></td></tr>
+          <tr><td>Name / Host</td><td><code>@</code> oder leer (Root-Domain — <strong>nicht</strong> <code>_spf</code>)</td></tr>
+          <tr><td>Value / Wert</td><td><code class="prov-record-inline-spf">v=spf1 …</code></td></tr>
+          <tr><td>TTL</td><td><code>3600</code> oder Auto/Default</td></tr>
+        </table>
+      </li>
+      <li>Speichern. Erste Auswirkungen meist nach Minuten, voll nach max. 24h.</li>
+    </ol>
+  </div>
+
+  <div class="gen-tip" style="margin-top: 14px;">
+    <span class="gen-tip-ico">✅</span>
+    <div>
+      <strong>Geprüft? Test mit:</strong>
+      <a href="/check?domain={{ prefill_domain or 'example.com' }}" target="_blank">Mail-Health-Check öffnen →</a>
+      Da siehst du ob der SPF-Record richtig veröffentlicht ist und wie viele Lookups gerade real anfallen (kann mehr sein als der Counter oben anzeigt — wegen geschachtelten <code>include:</code>).
+    </div>
+  </div>
+</section>
+
+<!-- Glossar -->
+<section class="card">
+  <h2>Häufige Fragen &amp; Glossar</h2>
+  <details open>
+    <summary><strong>Wie finde ich heraus, welche Tools alle in meinem Namen senden?</strong></summary>
+    <p class="muted small">Drei Wege:
+    <ol style="margin: 8px 0 0 20px;">
+      <li><strong>Aktueller SPF-Record</strong> — schau in deinem DNS nach <code>v=spf1</code>-TXT-Records auf deiner Root-Domain. Da sind die schon gesetzten <code>include:</code> drin. Per <a href="/check">Mail-Health-Check</a> in 5 Sekunden sichtbar.</li>
+      <li><strong>DMARC-Reports</strong> — wenn du DMARC schon im Beobachtungs-Modus laufen hast, zeigen unsere Aggregate-Reports konkret welche Quell-IPs Mails unter deiner Domain verschicken. Domain auswählen → Sektion „Top Quellen".</li>
+      <li><strong>Marketing &amp; CRM-Inventar</strong> — frag dein Team: welche Newsletter-Tools, welche CRMs, welche Helpdesks senden? Häufige Vergessene: DocuSign, Calendly, Booking-Bestätigungen, Survey-Tools, automatische Rechnungen aus dem ERP.</li>
+    </ol></p>
+  </details>
+  <details>
+    <summary><strong>Was ist die 10-Lookup-Falle?</strong></summary>
+    <p class="muted small">Jeder <code>include:</code>, <code>a:</code>, <code>mx</code>, <code>exists:</code> oder <code>redirect=</code>-Mechanismus zählt als 1 DNS-Lookup. Plus geschachtelte Lookups in den ge-included Records selbst. <strong>Mehr als 10 in Summe = SPF-PermError</strong> — alle Empfänger sehen „SPF Fail" für deine Domain. Lösung: <em>SPF-Flattening</em> — Tools wie Valimail, EasyDMARC oder unser Service expandieren includes zu IPs.</p>
+  </details>
+  <details>
+    <summary><strong>Wieso ist der Record auf der <em>Root</em>-Domain (nicht <code>_spf</code>)?</strong></summary>
+    <p class="muted small">Anders als DMARC (das auf <code>_dmarc.deine-domain</code> sitzt) lebt SPF direkt auf der Root: <code>deine-domain</code> selbst. Das war historisch so festgelegt (RFC 7208). Manche DNS-Provider zeigen das als „@" oder „leer" oder eben den vollen Domain-Namen.</p>
+  </details>
+  <details>
+    <summary><strong>Was ist der Unterschied zwischen <code>~all</code> und <code>-all</code>?</strong></summary>
+    <p class="muted small"><strong><code>~all</code> (Soft-Fail):</strong> „Mails von nicht-gelisteten Servern sind verdächtig — Empfänger entscheidet selbst." Meist landen sie im Spam. <strong><code>-all</code> (Hard-Fail):</strong> „Mails von nicht-gelisteten Servern sind nicht erlaubt — bitte ablehnen." Empfänger lehnt sofort ab. <strong>Empfehlung:</strong> Start mit <code>~all</code>, später (nach 30 Tagen ohne Probleme) auf <code>-all</code>.</p>
+  </details>
+  <details>
+    <summary><strong>Brauche ich SPF wenn ich DMARC habe?</strong></summary>
+    <p class="muted small">Ja. DMARC <em>nutzt</em> SPF (und DKIM) als Bausteine. Ohne SPF (oder DKIM) hast du nichts woran DMARC die Authentizität prüfen kann. Mindestens eines von beiden muss aligned passen — sonst zählt's als DMARC-Fail.</p>
+  </details>
+  <details>
+    <summary><strong>Was ist Alignment?</strong></summary>
+    <p class="muted small">SPF prüft den <em>Envelope-From</em> (Postausgangs-Adresse, technisch). DMARC verlangt zusätzlich, dass die Domain dort mit der Domain im sichtbaren <code>From:</code>-Header übereinstimmt. <a href="/wissen#alignment">Mehr im Wiki →</a></p>
+  </details>
+</section>
+
+<style>
+/* Intro meta-bar */
+.spf-intro-meta { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 12px; flex-wrap: wrap; font-size: 13px; }
+.spf-intro-tag { font-size: 11px; font-weight: 700; color: var(--brand); background: color-mix(in srgb, var(--brand) 12%, transparent); padding: 3px 10px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; }
+
+/* Counter bar above sender tiles */
+.spf-counter-bar { display: flex; align-items: center; gap: 24px; padding: 14px 18px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.spf-counter strong { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--brand); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.spf-counter .muted { display: inline; }
+
+/* Sender categories */
+.spf-cat { margin: 18px 0 22px 0; padding-bottom: 18px; border-bottom: 1px dashed var(--border); }
+.spf-cat:last-child { border-bottom: 0; padding-bottom: 0; }
+.spf-cat-head { margin-bottom: 14px; }
+.spf-cat-head h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px 0; letter-spacing: -0.01em; }
+.spf-cat-head .muted { display: block; line-height: 1.45; }
+
+/* Sender tiles — visual cards with logo + checkmark on select */
+.spf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.spf-tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 12px 14px 12px 12px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .12s, background .12s, transform .08s;
+  user-select: none;
+}
+.spf-tile:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--border)); transform: translateY(-1px); }
+.spf-tile.checked {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 7%, var(--bg-elev));
+}
+.spf-tile.checked::after {
+  content: "✓";
+  position: absolute;
+  top: 8px; right: 10px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--brand) 30%, transparent);
+}
+.spf-tile-logo {
+  grid-row: span 2;
+  width: 40px; height: 40px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--c, var(--brand)) 14%, transparent);
+  color: var(--c, var(--brand));
+  line-height: 1;
+  flex-shrink: 0;
+}
+.spf-tile[data-color] .spf-tile-logo { --c: attr(data-color); }
+.spf-tile-name { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.25; padding-right: 22px; }
+.spf-tile-meta { font-size: 11.5px; color: var(--muted); line-height: 1.3; padding-right: 22px; }
+
+/* Step 3 — sub-cards grid */
+.spf-step3-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.spf-step3-card { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px 18px; display: flex; flex-direction: column; }
+.spf-step3-card-best { border-color: color-mix(in srgb, var(--ok) 30%, var(--border)); background: color-mix(in srgb, var(--ok) 4%, var(--surface-soft)); }
+.spf-step3-card-warn { border-color: color-mix(in srgb, var(--warn) 25%, var(--border)); }
+.spf-step3-card-head { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
+.spf-step3-icon { width: 36px; height: 36px; border-radius: 9px; background: color-mix(in srgb, var(--c, var(--brand)) 14%, transparent); color: var(--c, var(--brand)); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.spf-step3-card h3 { font-size: 14.5px; font-weight: 700; margin: 0 0 2px 0; letter-spacing: -0.01em; }
+.spf-step3-card h3 code { font-size: 12px; }
+.spf-step3-card-head .muted { line-height: 1.4; }
+.spf-textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; resize: vertical; }
+.spf-step3-hint { margin: 8px 0 0 0; line-height: 1.55; }
+
+/* Toggle for MX-mechanism */
+.spf-toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.spf-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.spf-toggle-slider { position: relative; display: inline-block; width: 42px; height: 22px; background: var(--border); border-radius: 999px; transition: background .15s; flex-shrink: 0; }
+.spf-toggle-slider::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: left .15s; }
+.spf-toggle input:checked + .spf-toggle-slider { background: var(--brand); }
+.spf-toggle input:checked + .spf-toggle-slider::after { left: 22px; }
+.spf-toggle-label { font-size: 13px; color: var(--text-soft); font-weight: 500; }
+
+/* Policy cards (Schritt 4) — re-use DMARC-Generator styles, just narrower */
+.spf-policy-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+/* Provider-pane variants (Schritt 5) — display only matches data-prov */
+.spf-prov-pane { display: none; }
+.spf-prov-pane.active { display: block; animation: provFade .25s ease-out; }
+
+@media (max-width: 980px) {
+  .spf-grid { grid-template-columns: repeat(2, 1fr); }
+  .spf-step3-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .spf-grid { grid-template-columns: 1fr; }
+  .spf-policy-cards { grid-template-columns: 1fr; }
+  .spf-counter-bar { gap: 14px; }
+}
+</style>
+
+<script>
+const $$ = id => document.getElementById(id);
+let spfPolicy = 'softfail';
+
+function spfPolicyToken() {
+  return { softfail: '~all', fail: '-all', neutral: '?all' }[spfPolicy] || '~all';
+}
+
+function setSpfPolicy(p, btn) {
+  spfPolicy = p;
+  document.querySelectorAll('.spf-policy-cards .policy-card').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  buildSpf();
+}
+
+function setSpfProvider(prov, btn) {
+  document.querySelectorAll('.gen-provider-tabs .prov-tab').forEach(t => t.classList.toggle('active', t === btn));
+  document.querySelectorAll('.spf-prov-pane').forEach(p => p.classList.toggle('active', p.dataset.prov === prov));
+}
+
+function clearSpfTiles() {
+  document.querySelectorAll('.spf-tile input[type=checkbox]').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('.spf-tile').forEach(t => t.classList.remove('checked'));
+  buildSpf();
+}
+
+// Tile-Click triggers checkbox toggle (since checkbox is hidden, label-click already does it,
+// but we need to react in the handler)
+document.querySelectorAll('.spf-tile').forEach(t => {
+  // Apply per-tile color from data-color to CSS custom property
+  if (t.dataset.color) t.style.setProperty('--c', t.dataset.color);
+  t.addEventListener('click', e => {
+    // label[for] would auto-toggle, but we use unscoped <label> wrapping a hidden cb
+    if (e.target.tagName !== 'INPUT') {
+      const cb = t.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      e.preventDefault();
+    }
+    buildSpf();
+  });
+});
+
+function buildSpf() {
+  const dom = ($$('spf-domain').value || 'example.com').trim().toLowerCase();
+  const parts = ['v=spf1'];
+  let lookups = 0;
+  let selectedSenders = 0;
+
+  // mx-mechanism (toggle)
+  const mxOn = $$('spf-mx-toggle').checked;
+  if (mxOn) {
+    parts.push('mx');
+    lookups += 1;
+  }
+  $$('spf-mx-toggle-label').textContent = mxOn ? 'aktiviert' : 'deaktiviert (empfohlen)';
+
+  // Sender tiles
+  document.querySelectorAll('.spf-tile').forEach(t => {
+    const cb = t.querySelector('input[type=checkbox]');
+    t.classList.toggle('checked', cb.checked);
+    if (cb.checked) {
+      parts.push('include:' + t.dataset.include);
+      lookups += 1;
+      selectedSenders += 1;
+    }
+  });
+
+  // Custom includes
+  ($$('spf-includes').value || '').split(/\r?\n/).forEach(line => {
+    const v = line.trim();
+    if (v) { parts.push('include:' + v.replace(/^include:/i, '')); lookups += 1; }
+  });
+
+  // IPs
+  ($$('spf-ips').value || '').split(/\r?\n/).forEach(line => {
+    const v = line.trim();
+    if (!v) return;
+    if (v.includes(':')) parts.push('ip6:' + v.replace(/^ip6:/i, ''));
+    else parts.push('ip4:' + v.replace(/^ip4:/i, ''));
+  });
+
+  // Hostnames (a:)
+  ($$('spf-hosts').value || '').split(/\r?\n/).forEach(line => {
+    const v = line.trim();
+    if (v) { parts.push('a:' + v.replace(/^a:/i, '')); lookups += 1; }
+  });
+
+  // Policy
+  parts.push(spfPolicyToken());
+
+  const record = parts.join(' ');
+
+  // Update preview
+  $$('spf-output').textContent = `${dom}.   IN TXT  "${record}"`;
+  $$('spf-prev-host').textContent = '@ (root)';
+  $$('spf-hint-host').textContent = dom;
+
+  // Counters
+  const setCount = (id, val, threshold) => {
+    const el = $$(id);
+    if (!el) return;
+    el.textContent = val;
+    if (threshold) {
+      el.style.color = val > 10 ? 'var(--bad)' : (val >= 8 ? 'var(--warn)' : '');
+    }
+  };
+  setCount('spf-lookup-count', lookups, true);
+  setCount('spf-lookup-count2', lookups, true);
+  setCount('spf-selected-count', selectedSenders, false);
+
+  // Update inline provider-pane previews
+  document.querySelectorAll('.prov-record-inline-spf').forEach(el => { el.textContent = record; });
+
+  // Warnings
+  const w = [];
+  if (lookups > 10) w.push({ k: 'danger', t: `<strong>${lookups} Lookups — du liegst ÜBER dem 10-Limit.</strong> Empfänger werden den Record als PermError verwerfen → alle Mails fliegen raus. Lösung: <em>SPF-Flattening</em> (zu einzelnen <code>ip4:</code>-Einträgen umwandeln).` });
+  else if (lookups >= 8) w.push({ k: 'warn', t: `<strong>${lookups} Lookups</strong> — knapp am 10-Limit. Ein weiterer Tool-Wechsel und es wird PermError. Plane Flattening.` });
+  if (record.length > 255) w.push({ k: 'warn', t: `Record ist <strong>${record.length} Zeichen</strong> lang — DNS-TXT-Strings &gt; 255 müssen in mehrere Quoted-Strings gesplittet werden. Cloudflare/Hetzner machen das meist automatisch.` });
+  if (parts.filter(p => p === 'mx').length > 0 && parts.filter(p => p.startsWith('ip4:') || p.startsWith('ip6:')).length > 0) {
+    w.push({ k: 'info', t: 'Du hast <code>mx</code> UND <code>ip4:</code>/<code>ip6:</code> drin. Wenn deine MX-Server identisch zu den IPs sind, ist <code>mx</code> redundant — entfernen spart 1 Lookup.' });
+  }
+  if (selectedSenders === 0 && lookups === 0) {
+    w.push({ k: 'warn', t: 'Du hast noch <strong>keinen Sender</strong> ausgewählt — der Record erlaubt damit keinen einzigen Mail-Server. Wähle oben mindestens dein Mail-Hosting.' });
+  }
+  if (!w.length) w.push({ k: 'ok', t: '✓ Sieht gut aus — ' + lookups + ' Lookups, sauber unter dem Limit.' });
+  $$('spf-warnings').innerHTML = w.map(x => `<div class="warn-line ${x.k}">${x.t}</div>`).join('');
+}
+
+function copySpfOutput(btn) {
+  const el = $$('spf-output');
+  const m = el.textContent.match(/"([^"]+)"/);
+  const text = m ? m[1] : el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    btn.style.background = 'var(--ok)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1400);
+  });
+}
+
+document.addEventListener('input', buildSpf);
+document.addEventListener('change', buildSpf);
+
+// init
+document.querySelector('.spf-policy-cards .policy-card.recommended').classList.add('active');
+buildSpf();
+</script>
+{% endblock %}

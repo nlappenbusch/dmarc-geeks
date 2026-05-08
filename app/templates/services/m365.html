@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Microsoft 365 Threat-Hardening — EOP &amp; Defender for Office 365 · DMARC Aggregator</title>
+  <meta name="description" content="EOP, Defender for Office 365, Anti-Phishing, Quarantine-Workflows. Wir bringen deinen M365-Tenant von „Default-okay" auf Strict-Preset-Niveau. Festpreis CHF 1'990.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check">Domain prüfen</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services" class="active-mkt">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="svc-hero">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph" style="background:color-mix(in srgb,#0078d4 14%,transparent);color:#0078d4;">M</span> Service · Microsoft 365 Threat-Protection</span>
+    <h1 class="svc-h1">M365 Threat-Hardening,<br><span class="grad-text">das wirklich greift.</span></h1>
+    <p class="lede">EOP und Defender for Office 365 können <em>viel</em> mehr als Microsoft im Default einschaltet. Wir bringen deinen Tenant auf <strong>Strict-Preset-Niveau oder darüber</strong> — mit gruppenspezifischen Custom-Policies, sauberer Quarantäne-UX und Compliance-tauglicher Doku.</p>
+    <div class="svc-hero-cta">
+      <a href="mailto:hello@example.com?subject=M365-Hardening" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="#blueprint" class="btn-ghost-arrow">Was wir konfigurieren <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>⭐ Schwerpunkt-Service</strong></span>
+      <span class="sep">·</span>
+      <span>Festpreis CHF 1'990 / Tenant</span>
+      <span class="sep">·</span>
+      <span>EOP + MDO P1/P2</span>
+      <span class="sep">·</span>
+      <span>Liefer-Garantie 5 Werktage</span>
+    </div>
+
+    <!-- STATS-STRIP -->
+    <div class="svc-stats-strip">
+      <div class="svc-stat">
+        <span class="svc-stat-num">8</span>
+        <span class="svc-stat-label">standardisierte Policies</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">5</span>
+        <span class="svc-stat-label">Werktage bis Live</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">100 %</span>
+        <span class="svc-stat-label">reversibel via DSC-Skript</span>
+      </div>
+      <div class="svc-stat">
+        <span class="svc-stat-num">PDF</span>
+        <span class="svc-stat-label">Auditor-Bericht im Paket</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANCHOR-NAV -->
+<nav class="svc-anchor-nav" aria-label="Auf dieser Seite">
+  <div class="container-mkt svc-anchor-nav-inner">
+    <span class="svc-anchor-nav-label">Auf dieser Seite</span>
+    <a href="#default">Default-Probleme</a>
+    <a href="#blueprint">8 Policies</a>
+    <a href="#features">Features</a>
+    <a href="#scope">Was inklusive</a>
+    <a href="#paket">Paket</a>
+    <a href="#stimme">Stimme</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<!-- DEFAULT PROBLEM -->
+<section class="container-mkt" id="default">
+  <h2 class="section-h">Microsofts Default ist „okay-ish" — aber nicht ausreichend</h2>
+  <p class="section-sub">Was M365 out-of-the-box <strong>nicht</strong> einschaltet (obwohl's da ist):</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🎭</div>
+      <h3>Impersonation-Protection ist aus</h3>
+      <p>CEO-Fraud, fingierte CFO-Mails, look-alike-Domains. Microsoft hat den Schutz dafür — aber er muss explizit pro VIP eingerichtet werden.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📤</div>
+      <h3>Outbound-Spam-Tuning auf Standard</h3>
+      <p>Wenn ein User-Account kompromittiert wird, schickt der Tausende Spams raus — und versaut deine ganze IP-Reputation. Auto-Restrict greift erst spät.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🚪</div>
+      <h3>Quarantäne ist unbenutzbar</h3>
+      <p>Default-Notifikation ist 1× Mail mit Verfallsdatum. 90 % der User ignorieren das. Echte Self-Service-Workflows brauchen eigene Konfiguration.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BLUEPRINT -->
+<section class="band" id="blueprint">
+  <div class="container-mkt">
+    <h2 class="section-h">Unser Blueprint: 8 Policies, sauber dokumentiert</h2>
+    <p class="section-sub">Standardisiert pro Tenant. Auf Wunsch als JSON-Export, PowerShell-Bundle oder Auditor-Doku-PDF.</p>
+
+    <div class="svc-blueprint" style="margin-top: 16px;">
+      <div class="svc-blueprint-grid">
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#dc2626;">🛡️</div>
+          <strong>BP_AntiPhishing</strong>
+          <span class="muted small">CEO-Impersonation, Trusted-Senders, Spoof-Intelligence Strict, Mailbox-Intelligence aktiv</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#d97706;">📧</div>
+          <strong>BP_AntiSpam_Inbound</strong>
+          <span class="muted small">Strict-Filter, geo-Block, ZAP für gelandete Mails, Bulk-Threshold tightened</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#0078d4;">📤</div>
+          <strong>BP_AntiSpam_Outbound</strong>
+          <span class="muted small">Auto-Forward-Block, Restrict bei Auffälligkeit, Throttle pro User</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#16a34a;">🦠</div>
+          <strong>BP_AntiMalware</strong>
+          <span class="muted small">Common-Attachment-Filter erweitert, ZAP, Notify-Admin bei Detection</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#7c3aed;">🔒</div>
+          <strong>BP_SafeLinks</strong>
+          <span class="muted small">URL-Detonation aktiv, Tracking, Office &amp; Teams-Apps inkludiert</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#06b6d4;">📎</div>
+          <strong>BP_SafeAttachments</strong>
+          <span class="muted small">Sandbox-Detonation für unbekannte Dateien, dynamic delivery</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#ec4899;">🚪</div>
+          <strong>BP_Quarantine</strong>
+          <span class="muted small">User-Self-Release nur für Bulk/Spam, Admin-only für Phish/Malware</span>
+        </div>
+        <div class="svc-blueprint-tile">
+          <div class="svc-blueprint-tile-ico" style="--c:#64748b;">📊</div>
+          <strong>BP_Reporting</strong>
+          <span class="muted small">Daily Digest + Real-Time-Alerts, Sentinel/Splunk-Forwarding</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted small" style="text-align:center; margin-top: 24px;">
+      Alle Policies werden mit <strong>PowerShell DSC</strong> deployed — du bekommst das Skript, damit du sie reproduzierbar in weitere Tenants übernehmen kannst.
+    </p>
+  </div>
+</section>
+
+<!-- KONKRETE FEATURES -->
+<section class="container-mkt" id="features">
+  <h2 class="section-h">Was die Policies konkret machen</h2>
+
+  <div class="svc-feature-list">
+    <div class="svc-feature-row">
+      <h3>👔 CEO-Impersonation-Protection</h3>
+      <p>Wir hinterlegen in der Anti-Phishing-Policy deine wichtigsten internen Adressen (CEO, CFO, Finanzbuchhaltung) und vertraute externe Partner. Mails die <em>aussehen</em> wie von diesen Personen, aber nicht von ihnen kommen, werden quarantäniert oder mit Warning-Banner versehen. Stoppt die meisten BEC-Versuche.</p>
+    </div>
+    <div class="svc-feature-row">
+      <h3>🛡️ Spoof-Intelligence-Tuning</h3>
+      <p>Microsoft hat ein eingebautes Spoof-Intelligence-System, das aber per Default sehr permissiv ist. Wir tunen es auf Strict, pflegen die Allow-List nur für wirklich legitime Spoofs (Salesforce-from-your-domain etc.).</p>
+    </div>
+    <div class="svc-feature-row">
+      <h3>📤 Outbound-Schutz</h3>
+      <p>Anti-Spam-Outbound-Policy mit konservativen Throttles und Auto-Restrict bei Auffälligkeiten — ein kompromittierter Account macht so nicht 50'000 Spam-Mails bevor jemand was merkt.</p>
+    </div>
+    <div class="svc-feature-row">
+      <h3>📎 Safe-Attachments mit Dynamic Delivery</h3>
+      <p>Verdächtige Anhänge werden in Microsofts Sandbox detoniert — die Mail bekommt der User aber sofort (mit Anhang-Platzhalter), so dass keine Latenz entsteht. Sandbox-Result wird nachgereicht.</p>
+    </div>
+    <div class="svc-feature-row">
+      <h3>🚪 Quarantäne mit Branded User-Digest</h3>
+      <p>Tägliche Digest-Mail mit allen quarantänierten Items, klare „Freigeben"-Buttons pro Mail, „Frag den MSP"-Button für Unsicherheits-Fälle. User-Self-Release ist nur für Bulk/Spam aktiv — Phish/Malware geht nur über den Admin.</p>
+    </div>
+    <div class="svc-feature-row">
+      <h3>📊 Real-Time-Alerts &amp; SIEM-Forwarding</h3>
+      <p>Mass-Mail-Outbound-Detection, Compromised-User-Alerts, ungewöhnliche Forward-Setups — alles in deinen Slack/Teams-Channel oder PagerDuty/OpsGenie. Plus Audit-Logs strukturiert nach Sentinel/Splunk.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCOPE -->
+<section class="band" id="scope">
+  <div class="container-mkt">
+    <h2 class="section-h">Was inklusive ist — und was nicht</h2>
+    <p class="section-sub">Damit klar ist was du bekommst. Add-ons möglich, aber nicht im Standard-Paket.</p>
+
+    <div class="svc-scope-grid">
+      <div class="svc-scope svc-scope-in">
+        <h3>✓ Im Festpreis dabei</h3>
+        <ul>
+          <li>Komplettes EOP/MDO-Tuning (8 Policies, Strict-Preset-Niveau oder darüber)</li>
+          <li>Konfiguration in Test-Group + 24h Beobachtung vor Roll-out</li>
+          <li>PowerShell-DSC-Skript zum Reproduzieren in weiteren Tenants</li>
+          <li>Branded User-Quarantine-Digest (deine Brand-Farbe + Logo)</li>
+          <li>Auditor-tauglicher Bericht (PDF) mit Mapping auf NIS2 / ISO 27001</li>
+          <li>Übergabe-Workshop (1h Video) inkl. Recording</li>
+          <li>30 Tage Mail-Support nach Übergabe</li>
+        </ul>
+      </div>
+      <div class="svc-scope svc-scope-out">
+        <h3>— Nicht im Festpreis</h3>
+        <ul>
+          <li>Mail-Server-Migration (z.B. Exchange On-Prem → M365)</li>
+          <li>Hybrid-Connector-Setup (+ ½ Tag, separates Angebot)</li>
+          <li>Attack-Simulator-Kampagnen / Phishing-Awareness-Schulung</li>
+          <li>Conditional Access / MFA-Roll-out (separates Identity-Projekt)</li>
+          <li>SeppMail-/HIN-Connector — siehe <a href="/services/seppmail">SeppMail</a> / <a href="/services/hin">HIN</a></li>
+          <li>M365-Lizenzen (Microsoft direkt, keine Wiederverkäufer-Marge)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAKET -->
+<section class="band" id="paket">
+  <div class="container-mkt">
+    <h2 class="section-h">Das Paket</h2>
+    <p class="section-sub">Festpreis. Liefer-Garantie 5 Werktage nach Kick-Off.</p>
+
+    <div class="pkg-grid pkg-grid-1">
+      <div class="pkg pkg-featured" style="max-width: 600px; margin: 0 auto;">
+        <div class="pkg-badge">Schwerpunkt-Service</div>
+        <div class="pkg-tag">M365 EOP-HARDENING</div>
+        <h3>M365 Threat-Hardening</h3>
+        <div class="pkg-price"><span class="amt">CHF 1'990</span></div>
+        <div class="pkg-bill">einmalig · 1 Tenant · 1 Tag</div>
+        <ul class="pkg-features">
+          <li>✓ EOP/MDO Threat-Policies auf Strict-Preset-Niveau (oder darüber)</li>
+          <li>✓ Anti-Phishing-Policy mit CEO/CFO-Impersonation-Protection</li>
+          <li>✓ Anti-Spam Inbound/Outbound mit Custom-Tuning</li>
+          <li>✓ Safe-Links &amp; Safe-Attachments aktiv (Mail/Teams/SharePoint)</li>
+          <li>✓ Quarantine-Policies + branded End-User-Digest</li>
+          <li>✓ Tenant-Allow/Block-Listen sauber pflegen</li>
+          <li>✓ PowerShell-DSC-Skript zum Reproduzieren in weiteren Tenants</li>
+          <li>✓ Auditor-tauglicher Bericht (PDF)</li>
+          <li>✓ 30 Tage Mail-Support</li>
+        </ul>
+        <a href="mailto:hello@example.com?subject=M365-Threat-Hardening" class="btn-primary">Buchen</a>
+      </div>
+    </div>
+
+    <p class="muted small" style="text-align: center; margin-top: 24px;">
+      Brauchst du <strong>Attack-Simulator-Setup</strong> oder <strong>Connector-Migration für Hybrid-Setups</strong>? Beides als Add-on möglich — bei Anfrage besprechen.<br>
+      <strong>Bundle-Tipp:</strong> M365-Hardening + <a href="/services/dmarc">DMARC-Reise</a> zusammen = sauberer Inbound-Schutz UND authentifizierter Outbound.
+    </p>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="container-mkt" id="stimme">
+  <span class="eyebrow" style="display:block; text-align:center; margin: 0 auto 14px; width:fit-content;">Stimme aus der Praxis</span>
+  <div class="svc-quote-card">
+    <p>„Wir hatten EOP auf Standard-Preset und dachten: passt schon, ist ja Microsoft. Nach dem Hardening: Quarantäne-Volumen +35 % im ersten Monat — alles legitime Phishing-Versuche, die vorher durchgekommen wären. Der branded Digest ist das, was die User endlich überhaupt nutzen."</p>
+    <div class="svc-quote-meta">
+      <div class="svc-quote-avatar">MK</div>
+      <div>
+        <strong>Marc K.</strong> · CTO, Treuhand-Gruppe DACH (anonymisiert) · M365 E5, ~140 User
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="container-mkt" id="faq">
+  <h2 class="section-h">Häufige Fragen.</h2>
+  <div class="faq" style="max-width: 820px; margin: 0 auto;">
+    <details>
+      <summary>Brauche ich Defender for Office 365 P1 oder P2?</summary>
+      <p>P1 reicht für die meisten Mittelstand-Tenants (Safe-Links, Safe-Attachments, Anti-Phishing). P2 lohnt für Enterprise mit Threat-Hunting, Attack-Simulator und Auto-Investigation. Wir prüfen das im Erstgespräch.</p>
+    </details>
+    <details>
+      <summary>Funktioniert das mit Hybrid-Exchange?</summary>
+      <p>Ja. Wir setzen die Connectors so dass weder DKIM-Signing noch DMARC-Alignment kaputt gehen — typischer Fehler bei Hybrid-Migrations. Hybrid-Setup: ggf. +½ Tag Aufwand.</p>
+    </details>
+    <details>
+      <summary>Was wenn ihr was kaputt macht?</summary>
+      <p>Wir konfigurieren erst in einer Test-Group (3-5 User), beobachten 24h, dann Roll-out auf alle. Plus: alle Änderungen sind reversibel — vor Roll-out exportieren wir den existing State per PowerShell.</p>
+    </details>
+    <details>
+      <summary>Kombinierbar mit DMARC-Reise?</summary>
+      <p>Sehr sinnvoll, sogar. M365-Hardening + <a href="/services/dmarc">DMARC-Reise</a> zusammen heißt: Inbound ist sauber UND Outbound ist authentifiziert. Bei kombinierter Buchung gibt's Bundle-Rabatt.</p>
+    </details>
+    <details>
+      <summary>Wer hält die Doku auf Stand wenn Microsoft was ändert?</summary>
+      <p>Wir veröffentlichen Quartals-Updates für unsere Standard-Blueprints. Mit Retainer (ab CHF 990 / Mo) kommen die Updates automatisch in dein Tenant.</p>
+    </details>
+    <details>
+      <summary>Wie lange dauert das ganze?</summary>
+      <p>5 Werktage nach Kick-Off. Tag 1: Bestandsaufnahme. Tag 2-3: Konfiguration in Test-Group. Tag 4: Roll-out und Beobachtung. Tag 5: Doku, Übergabe-Workshop, Abschluss.</p>
+    </details>
+  </div>
+</section>
+
+<!-- RELATED SERVICES -->
+<section class="container-mkt svc-related">
+  <h2>Verwandte Services</h2>
+  <div class="svc-related-grid">
+    <a href="/services/dmarc" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#2563eb;">📨</div>
+        <h3>DMARC, SPF &amp; DKIM</h3>
+      </div>
+      <p>Mail-Authentifizierung von <code>p=none</code> bis <code>p=reject</code>. 6-12 Wochen Begleitung. Festpreise ab CHF 690.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+    <a href="/services/seppmail" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#dc2626;">🔐</div>
+        <h3>SeppMail Mail-Encryption</h3>
+      </div>
+      <p>Schweizer Standard für Mail-Verschlüsselung. M365-Connector-Setup ohne DMARC-Bruch. FINMA-konform.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+    <a href="/services/hin" class="svc-related-card">
+      <div class="svc-related-card-head">
+        <div class="svc-related-ico" style="--c:#0891b2;">⚕️</div>
+        <h3>HIN für Gesundheitswesen</h3>
+      </div>
+      <p>Health Info Net Setup für Spitäler &amp; Praxen. M365-Integration mit korrekter DMARC-Konfiguration.</p>
+      <span class="svc-related-card-arrow">DETAILS →</span>
+    </a>
+  </div>
+  <p class="muted small" style="text-align:center; margin-top: 18px;">
+    <a href="/services">→ Alle Services im Überblick</a> ·
+    <a href="/wissen">→ Wissens-Wiki</a> ·
+    <a href="/check">→ Domain-Check (gratis)</a>
+  </p>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="container-mkt">
+    <h2>30 Min Erstgespräch — gratis.</h2>
+    <p>Du zeigst uns deinen Tenant (oder erzählst nur). Wir sagen dir was zu tun ist und ob's mit dem Festpreis-Paket abgedeckt ist.</p>
+    <div class="cta-buttons">
+      <a href="mailto:hello@example.com?subject=M365-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/services" class="btn big">Alle Services</a>
+    </div>
+  </div>
+</section>
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/services">Alle Services</a> · <a href="/wissen">Wissen</a> · <a href="/about#impressum">Impressum</a>
+    </p>
+  </div>
+</footer>
+
+<!-- STICKY-CTA -->
+<div class="svc-sticky-cta" id="stickyCta" role="region" aria-label="Schnellkontakt">
+  <span class="svc-sticky-cta-text">M365 Threat-Hardening — Festpreis CHF 1'990</span>
+  <a href="mailto:hello@example.com?subject=M365-Erstgespräch" class="btn-primary">Erstgespräch →</a>
+</div>
+
+<script>
+(function(){
+  var cta = document.getElementById('stickyCta');
+  if(!cta) return;
+  var lastY = 0;
+  function onScroll(){
+    var y = window.scrollY || window.pageYOffset;
+    if(y > 600 && y > lastY) cta.classList.add('visible');
+    else if(y < 400) cta.classList.remove('visible');
+    lastY = y;
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Passwort vergessen · DMARC Aggregator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+</head>
+<body class="centered">
+<form method="post" action="/forgot" class="card login">
+  <h1>Passwort zurücksetzen</h1>
+  {% if sent %}
+    <div class="alert alert-ok">Falls die E-Mail bei uns existiert, ist eine Reset-Mail unterwegs.</div>
+    <p class="muted small"><a href="/login">← zurück zum Login</a></p>
+  {% else %}
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <p class="muted small">Trag deine E-Mail ein, wir schicken dir einen Reset-Link.</p>
+    <label>E-Mail<input type="email" name="email" required autofocus></label>
+    <button type="submit" class="btn-primary">Link anfordern</button>
+    <p class="muted small mt-8" style="text-align:center;"><a href="/login">← zurück zum Login</a></p>
+  {% endif %}
+</form>
+</body></html>

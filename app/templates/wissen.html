@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mail-Security verstehen · SPF, DKIM, DMARC, MTA-STS, BIMI · DMARC Aggregator</title>
+  <meta name="description" content="Mail-Security ohne Buzzword-Bingo. SPF, DKIM, DMARC, MTA-STS, TLS-RPT, BIMI, ARC verständlich erklärt — mit Diagrammen und AHA-Momenten.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check">Domain prüfen</a>
+    <a href="/wissen" class="active-mkt">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="wiki-hero">
+  <div class="hero-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="container-mkt" style="position:relative; z-index:1; text-align:center;">
+    <span class="eyebrow" style="margin: 0 auto 24px;">📚 Wissen · 12 Min. Lesezeit · ohne Buzzword-Bingo</span>
+    <h1 class="wiki-h1">Mail-Security <span class="grad-text">wirklich</span> verstehen.</h1>
+    <p class="lede" style="max-width:760px; margin: 0 auto 0;">SPF, DKIM, DMARC, MTA-STS, BIMI klingen wie Krypto-Käse — sind aber im Kern überraschend einfach. Wir erklären's mit <strong>Analogien</strong>, <strong>Diagrammen</strong> und ein paar <strong>AHA-Momenten</strong>, die andere Tools verschweigen.</p>
+  </div>
+</section>
+
+<!-- ============== TOC GRID ============== -->
+<section class="container-mkt" style="padding-top: 32px;">
+  <div class="wiki-toc-grid">
+    <a href="#mail-reise" class="wiki-toc-card"><span class="wiki-toc-num">0</span><strong>Wie eine Mail durchs Internet reist</strong><span class="muted small">Die Grundlage — Postsystem-Analogie</span></a>
+    <a href="#spf" class="wiki-toc-card"><span class="wiki-toc-num">1</span><strong>SPF</strong><span class="muted small">„Wer darf in deinem Namen senden?" Eine Gästeliste in DNS.</span></a>
+    <a href="#dkim" class="wiki-toc-card"><span class="wiki-toc-num">2</span><strong>DKIM</strong><span class="muted small">Krypto-Siegel auf jedem Brief — fälschungssicher.</span></a>
+    <a href="#dmarc" class="wiki-toc-card"><span class="wiki-toc-num">3</span><strong>DMARC</strong><span class="muted small">Der Polizist, der SPF und DKIM zusammenführt.</span></a>
+    <a href="#alignment" class="wiki-toc-card highlight"><span class="wiki-toc-num">4</span><strong>Alignment</strong><span class="muted small">Der versteckte Knackpunkt — warum DMARC oft scheitert.</span></a>
+    <a href="#mta-sts" class="wiki-toc-card"><span class="wiki-toc-num">5</span><strong>MTA-STS &amp; TLS-RPT</strong><span class="muted small">Verschlüsselungs-Pflicht für Inbound.</span></a>
+    <a href="#bimi" class="wiki-toc-card"><span class="wiki-toc-num">6</span><strong>BIMI</strong><span class="muted small">Dein Logo neben Mails in Gmail &amp; Co.</span></a>
+    <a href="#arc" class="wiki-toc-card"><span class="wiki-toc-num">7</span><strong>ARC &amp; Forwarding</strong><span class="muted small">Wie Mailing-Listen DMARC nicht killen.</span></a>
+  </div>
+</section>
+
+<!-- ============== MAIN: SIDEBAR + CONTENT ============== -->
+<div class="wiki-layout container-mkt">
+
+  <aside class="wiki-sidebar" aria-label="Themen">
+    <div class="wiki-sidebar-inner">
+      <div class="wiki-sidebar-h">Inhalt</div>
+      <a href="#mail-reise" class="wiki-sidebar-link"><span>0</span> Wie eine Mail reist</a>
+      <a href="#spf" class="wiki-sidebar-link"><span>1</span> SPF</a>
+      <a href="#dkim" class="wiki-sidebar-link"><span>2</span> DKIM</a>
+      <a href="#dmarc" class="wiki-sidebar-link"><span>3</span> DMARC</a>
+      <a href="#alignment" class="wiki-sidebar-link"><span>4</span> Alignment</a>
+      <a href="#mta-sts" class="wiki-sidebar-link"><span>5</span> MTA-STS &amp; TLS-RPT</a>
+      <a href="#bimi" class="wiki-sidebar-link"><span>6</span> BIMI</a>
+      <a href="#arc" class="wiki-sidebar-link"><span>7</span> ARC &amp; Forwarding</a>
+      <div class="wiki-sidebar-cta">
+        <a href="/check" class="btn-primary" style="width:100%; text-align:center; padding: 10px;">Eigene Domain prüfen →</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-main">
+
+    <!-- ============== 0. MAIL REISE ============== -->
+    <article id="mail-reise" class="wiki-topic">
+      <span class="wiki-eyebrow">0 · Grundlage</span>
+      <h2>Wie reist eine E-Mail eigentlich durchs Internet?</h2>
+      <p class="wiki-hook">Bevor du Mail-Security verstehst, musst du verstehen <strong>was schief gehen kann</strong>. Und dafür: was passiert eigentlich, wenn du auf „Senden" klickst?</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">📬</div>
+        <div>
+          <strong>Stell dir das Postsystem vor.</strong> Du wirfst einen Brief in den Briefkasten (deinen Mailserver). Die Post sortiert ihn (basierend auf der Adresse), bringt ihn zum Empfänger-Postamt, und der Postbote legt ihn in den Briefkasten der Empfängerin. <strong>Niemand prüft den Absender.</strong> „Von: Bundeskanzler" steht da? Glauben wir mal.
+        </div>
+      </div>
+
+      <h3>Die fünf Stationen</h3>
+      <div class="wiki-svg-wrap">
+        <svg viewBox="0 0 800 220" class="wiki-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="reise-line" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#2563eb" stop-opacity=".3"/><stop offset="100%" stop-color="#ec4899" stop-opacity=".5"/></linearGradient>
+          </defs>
+          <line x1="80" y1="110" x2="720" y2="110" stroke="url(#reise-line)" stroke-width="3" stroke-dasharray="6 6"/>
+          <!-- 5 stations -->
+          <g transform="translate(80,110)"><circle r="38" fill="#2563eb"/><text y="6" text-anchor="middle" fill="white" font-weight="700" font-size="22">📤</text><text y="70" text-anchor="middle" font-size="13" font-weight="700">Du</text><text y="88" text-anchor="middle" font-size="11" fill="#6b7280">Mail-Client</text></g>
+          <g transform="translate(240,110)"><circle r="38" fill="#7c3aed"/><text y="6" text-anchor="middle" fill="white" font-weight="700" font-size="22">📮</text><text y="70" text-anchor="middle" font-size="13" font-weight="700">Sender-MTA</text><text y="88" text-anchor="middle" font-size="11" fill="#6b7280">dein Postamt</text></g>
+          <g transform="translate(400,110)"><circle r="38" fill="#06b6d4"/><text y="6" text-anchor="middle" fill="white" font-weight="700" font-size="22">🌐</text><text y="70" text-anchor="middle" font-size="13" font-weight="700">DNS-Lookup</text><text y="88" text-anchor="middle" font-size="11" fill="#6b7280">„Wo wohnt @firma.ch?"</text></g>
+          <g transform="translate(560,110)"><circle r="38" fill="#16a34a"/><text y="6" text-anchor="middle" fill="white" font-weight="700" font-size="22">📥</text><text y="70" text-anchor="middle" font-size="13" font-weight="700">Empfänger-MX</text><text y="88" text-anchor="middle" font-size="11" fill="#6b7280">M365 / Google / Mailcow</text></g>
+          <g transform="translate(720,110)"><circle r="38" fill="#ec4899"/><text y="6" text-anchor="middle" fill="white" font-weight="700" font-size="22">📬</text><text y="70" text-anchor="middle" font-size="13" font-weight="700">Inbox</text><text y="88" text-anchor="middle" font-size="11" fill="#6b7280">der Empfängerin</text></g>
+        </svg>
+      </div>
+
+      <p>Der Knackpunkt ist <strong>Station 4</strong>: der Empfänger-Server bekommt eine Mail aus dem Internet und muss sich entscheiden — annehmen, ablehnen, in den Spam? Eine 1995-Mail würde der Server einfach annehmen, weil der Absender eben „chef@firma.ch" behauptet hat.</p>
+
+      <p><strong>SPF, DKIM und DMARC sind drei Werkzeuge, die der Empfängerin helfen diese Entscheidung zu treffen — anhand prüfbarer Regeln, nicht bloßer Behauptungen des Absenders.</strong></p>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> Mail wurde 1982 (RFC 822) entworfen, in einer Zeit als das Internet ~200 vertrauenswürdige Universitäten umfasste. Niemand hat damals an Spoofing gedacht. <strong>Alle Sicherheits-Standards heute sind nachträglich draufgepappt.</strong> Das erklärt warum's so chaotisch wirkt.
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== 1. SPF ============== -->
+    <article id="spf" class="wiki-topic">
+      <span class="wiki-eyebrow">1 · SPF · seit 2006</span>
+      <h2>SPF — die <span class="grad-text">Gästeliste</span> in DNS</h2>
+      <p class="wiki-hook"><strong>SPF beantwortet eine Frage:</strong> „Welche IP-Adressen dürfen für meine Domain Mails verschicken?" Du veröffentlichst die Antwort als TXT-Record in DNS, der Empfänger schaut nach, und vergleicht.</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">🚪</div>
+        <div>
+          <strong>Stell dir einen Türsteher vor.</strong> Du gibst ihm vorab eine Gästeliste mit IP-Adressen („Google darf, Mailchimp darf, mein eigener Server darf"). Kommt ein Briefträger an die Tür und behauptet von dir zu sein, ruft der Türsteher in der DNS-Zentrale an: „Steht <code>185.20.99.1</code> auf der Liste?". Wenn ja → <strong>Pass</strong>. Wenn nein → <strong>Fail</strong>.
+        </div>
+      </div>
+
+      <h3>Wie der Record aussieht</h3>
+      <pre class="code wiki-code">firma.ch.   IN TXT   "v=spf1 include:_spf.google.com include:sendgrid.net ip4:185.20.99.1 ~all"</pre>
+      <ul class="wiki-list">
+        <li><code>v=spf1</code> → „Das ist ein SPF-Record"</li>
+        <li><code>include:_spf.google.com</code> → „Alle Google-IPs sind erlaubt" (Google pflegt die Liste)</li>
+        <li><code>include:sendgrid.net</code> → „Auch SendGrid darf"</li>
+        <li><code>ip4:185.20.99.1</code> → „Und unser eigener Server"</li>
+        <li><code>~all</code> → „Alle anderen sind verdächtig" (<code>-all</code> wäre „komplett ablehnen")</li>
+      </ul>
+
+      <h3>Drei Probleme die SPF allein nicht löst</h3>
+      <div class="wiki-issues">
+        <div class="wiki-issue">
+          <strong>1. Es gibt ein 10-Lookup-Limit.</strong>
+          <p>Jedes <code>include:</code> zählt als 1 DNS-Lookup, plus geschachtelte <code>include:</code>s in den ge-included Records. Übersteigt die Summe 10 → SPF schlägt komplett fehl. <strong>Häufiger Stolperstein</strong> bei Setups mit vielen Marketing-Tools.</p>
+        </div>
+        <div class="wiki-issue">
+          <strong>2. Wird beim Forwarding kaputt gemacht.</strong>
+          <p>Du leitest deine Mail an deine Privat-Adresse weiter? Die ursprünglichen Sender-IPs sind weg, der weiterleitende Server steht jetzt im Envelope. SPF Fail. (DKIM löst das.)</p>
+        </div>
+        <div class="wiki-issue">
+          <strong>3. Es prüft nur den „Envelope"-Absender, nicht das was der Empfänger sieht.</strong>
+          <p>Im Mail-Header gibt's zwei Absender: den <em>Envelope-From</em> (Postausen-Adresse, technisch) und den <em>Header-From</em> (was die Empfängerin im Mail-Client liest). SPF prüft nur den Envelope. <strong>Genau hier bohrt DMARC nach</strong> — siehe Kapitel 4.</p>
+        </div>
+      </div>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> SPF wurde nie als „Anti-Phishing" gebaut. Es war eine <em>Anti-Spam</em>-Maßnahme, damit Empfänger Botnetz-Mails ablehnen können. Erst durch DMARC bekam SPF eine Anti-Phishing-Rolle — als <em>Baustein</em>. Allein liefert SPF keinen Schutz vor sichtbarem Domain-Spoofing.
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== 2. DKIM ============== -->
+    <article id="dkim" class="wiki-topic">
+      <span class="wiki-eyebrow">2 · DKIM · seit 2007</span>
+      <h2>DKIM — das <span class="grad-text">Krypto-Siegel</span></h2>
+      <p class="wiki-hook"><strong>DKIM beantwortet:</strong> „Ist diese Mail wirklich unverändert vom angeblichen Sender?" Sender signiert ein paar Header und den Body kryptografisch, Empfänger holt den Public Key aus DNS und verifiziert die Signatur.</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">🔏</div>
+        <div>
+          <strong>Stell dir mittelalterliche Wachs-Siegel vor.</strong> Der Absender drückt seinen einzigartigen Stempel in heißes Wachs auf den Briefumschlag. Die Empfängerin kennt die Stempel-Form (weil im Wappenbuch — bei DKIM: in DNS). Stimmt der Wachsabdruck? Brief ist authentisch und nicht angefasst worden. Stimmt er nicht? Jemand hat unterwegs manipuliert.
+        </div>
+      </div>
+
+      <h3>Wie's konkret funktioniert</h3>
+      <div class="wiki-svg-wrap">
+        <svg viewBox="0 0 760 240" class="wiki-svg" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sender side -->
+          <g transform="translate(0,0)">
+            <rect x="20" y="20" width="240" height="200" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+            <text x="140" y="48" text-anchor="middle" font-weight="800" font-size="14" fill="#1e3a8a">SENDER</text>
+            <text x="140" y="78" text-anchor="middle" font-size="12" fill="#1f2937">1. Schreibt Mail</text>
+            <text x="140" y="108" text-anchor="middle" font-size="12" fill="#1f2937">2. Hashet Header + Body</text>
+            <text x="140" y="138" text-anchor="middle" font-size="12" fill="#1f2937">3. Signiert mit Private Key</text>
+            <text x="140" y="168" text-anchor="middle" font-size="12" fill="#1f2937">4. Hängt Signatur</text>
+            <text x="140" y="184" text-anchor="middle" font-size="12" fill="#1f2937">an Mail-Header</text>
+          </g>
+          <!-- Mail in transit -->
+          <g transform="translate(280,80)">
+            <rect x="0" y="0" width="200" height="80" rx="8" fill="white" stroke="#d97706" stroke-width="2"/>
+            <text x="100" y="22" text-anchor="middle" font-size="11" fill="#9ca3af">From: news@firma.ch</text>
+            <text x="100" y="40" text-anchor="middle" font-size="11" fill="#9ca3af">To: kunde@gmail.com</text>
+            <text x="100" y="58" text-anchor="middle" font-size="11" fill="#d97706" font-weight="700">DKIM-Signature: v=1;</text>
+            <text x="100" y="72" text-anchor="middle" font-size="10" fill="#d97706">d=firma.ch; s=k1; b=A8z9...</text>
+          </g>
+          <!-- Receiver side -->
+          <g transform="translate(500,0)">
+            <rect x="0" y="20" width="240" height="200" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+            <text x="120" y="48" text-anchor="middle" font-weight="800" font-size="14" fill="#14532d">EMPFÄNGER</text>
+            <text x="120" y="78" text-anchor="middle" font-size="12" fill="#1f2937">1. Empfängt Mail</text>
+            <text x="120" y="108" text-anchor="middle" font-size="12" fill="#1f2937">2. Holt Public Key</text>
+            <text x="120" y="124" text-anchor="middle" font-size="11" fill="#6b7280">aus k1._domainkey.firma.ch</text>
+            <text x="120" y="158" text-anchor="middle" font-size="12" fill="#1f2937">3. Verifiziert Signatur</text>
+            <text x="120" y="184" text-anchor="middle" font-size="12" fill="#16a34a" font-weight="700">→ Pass / Fail</text>
+          </g>
+        </svg>
+      </div>
+
+      <h3>Was ein Selektor ist</h3>
+      <p>Du kannst pro Domain <strong>mehrere DKIM-Keys</strong> haben — z.B. einen für deinen Mailserver, einen für Mailchimp, einen für SendGrid. Jeder Key bekommt einen eindeutigen Namen — den <em>Selektor</em>. Im Mail-Header steht z.B. <code>s=k1</code>, der Empfänger holt dann den Public Key aus <code>k1._domainkey.firma.ch</code>.</p>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment 1:</strong> Es gibt <strong>keinen offiziellen Selektor-Namen-Standard</strong>. Jeder Anbieter wählt selbst — Google nutzt datumsbasierte Selektoren wie <code>20240601</code>, Microsoft nutzt <code>selector1</code> und <code>selector2</code>, Mailcow nutzt <code>dkim</code> oder <code>mta1</code>. Genau deshalb müssen Tools wie unser Aggregator <strong>~100 gängige Namen durchprobieren</strong> wenn sie raten wollen welche aktiv sind.
+        </div>
+      </div>
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment 2:</strong> DKIM überlebt Forwarding (im Gegensatz zu SPF). Solange niemand den signierten Header-Bereich oder Body verändert, bleibt die Signatur gültig — auch durch 5 Hops und Mailing-Listen hindurch. Genau dieser Punkt ist gleich wichtig für DMARC.
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== 3. DMARC ============== -->
+    <article id="dmarc" class="wiki-topic">
+      <span class="wiki-eyebrow">3 · DMARC · seit 2012</span>
+      <h2>DMARC — der <span class="grad-text">Polizist</span> über SPF und DKIM</h2>
+      <p class="wiki-hook"><strong>DMARC beantwortet:</strong> „Wenn weder SPF noch DKIM sauber durchgehen — was soll der Empfänger tun?" Plus: „Schicke mir bitte Berichte darüber, wer alles versucht hat unter meinem Namen zu senden."</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">👮</div>
+        <div>
+          <strong>SPF und DKIM sind Prüfungen, DMARC ist die Anweisung.</strong> Stell dir vor SPF und DKIM sind zwei Detektoren am Flughafen — Metalldetektor und Gepäck-Scan. DMARC ist der Polizist, der sagt: „Wenn beides nichts zeigt → durchlassen. Wenn beides anschlägt → ablehnen. Wenn nur einer anschlägt → Quarantäne. Und schick mir täglich einen Bericht über alle die durch sind."
+        </div>
+      </div>
+
+      <h3>Wie der Record aussieht</h3>
+      <pre class="code wiki-code">_dmarc.firma.ch.   IN TXT   "v=DMARC1; p=quarantine; rua=mailto:dmarc@firma.ch; pct=100"</pre>
+      <ul class="wiki-list">
+        <li><code>v=DMARC1</code> → „Ich bin ein DMARC-Record"</li>
+        <li><code>p=quarantine</code> → „Bei Fail bitte in den Spam"</li>
+        <li><code>rua=mailto:dmarc@firma.ch</code> → „Schick mir tägliche Berichte hierhin"</li>
+        <li><code>pct=100</code> → „Auf 100 % der verdächtigen Mails anwenden"</li>
+      </ul>
+
+      <h3>Die drei Policy-Stufen</h3>
+      <div class="wiki-policy-cards">
+        <div class="wiki-policy-card">
+          <div class="wiki-policy-tag">p=none</div>
+          <h4>Beobachten</h4>
+          <p>Nichts ändert sich am Mail-Verhalten. Aber: du bekommst Berichte. <strong>Immer der Start.</strong></p>
+        </div>
+        <div class="wiki-policy-card">
+          <div class="wiki-policy-tag">p=quarantine</div>
+          <h4>In den Spam</h4>
+          <p>Verdächtige Mails landen im Junk-Ordner. Empfänger sieht sie noch, kann sie zurückholen.</p>
+        </div>
+        <div class="wiki-policy-card">
+          <div class="wiki-policy-tag">p=reject</div>
+          <h4>Komplett ablehnen</h4>
+          <p>Empfänger-Server lehnt schon beim SMTP-Handshake ab. Mail wird nie zugestellt.</p>
+        </div>
+      </div>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> DMARC selbst <em>authentifiziert nichts</em>. Es ist nur die Regel, was passiert, wenn die anderen beiden (SPF + DKIM) durchfallen. Wer DMARC ohne SPF/DKIM setzt, hat einen Polizisten ohne Detektoren — der Polizist sagt nur „nichts gefunden, durchwinken" zu allem.
+        </div>
+      </div>
+
+      <p class="muted small" style="text-align:center; margin-top: 18px;">
+        🤝 Lieber begleiten lassen? <a href="/services/dmarc"><strong>→ DMARC-Service</strong></a> · 6-12 Wochen von <code>p=none</code> bis <code>p=reject</code>, Festpreise ab CHF 690.
+      </p>
+    </article>
+
+    <!-- ============== 4. ALIGNMENT — Highlight ============== -->
+    <article id="alignment" class="wiki-topic wiki-topic-highlight">
+      <span class="wiki-eyebrow wiki-eyebrow-highlight">4 · Alignment · der versteckte Knackpunkt</span>
+      <h2>Alignment — warum 80 % aller Setups <span class="grad-text">trotz allem</span> failen</h2>
+      <p class="wiki-hook">Das ist der Punkt, den die meisten Tutorials komplett übergehen. <strong>SPF und DKIM können „Pass" sein — und DMARC kann trotzdem failen.</strong> Wegen Alignment.</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">🪪</div>
+        <div>
+          <strong>Stell dir vor du fliegst.</strong> Am Check-In zeigst du einen Pass auf den Namen <em>„Hans Müller"</em> — der Pass ist echt (DKIM Pass!). Aber dein Boarding-Pass ist auf den Namen <em>„Maria Schmidt"</em>. Pass ist gültig — passt aber nicht zu dem Namen für den du fliegst. Würde dich da jemand durchlassen? <strong>Das ist Alignment.</strong>
+        </div>
+      </div>
+
+      <h3>Wo's passiert</h3>
+      <p>In jeder Mail gibt's zwei Absender-Felder:</p>
+      <ul class="wiki-list">
+        <li><strong>Header-From</strong> (was die Empfängerin sieht): <code>news@firma.ch</code></li>
+        <li><strong>Envelope-From / Return-Path</strong> (Postausgangs-Adresse, technisch): <code>bounces+abc123@mailchimp-server.com</code></li>
+      </ul>
+      <p>SPF prüft nur den <strong>Envelope-From</strong>. Mailchimp ist berechtigt für <code>mailchimp-server.com</code> zu senden → SPF Pass! Aber die Domain im Envelope (<code>mailchimp-server.com</code>) <strong>passt nicht zur Domain im Header-From</strong> (<code>firma.ch</code>) → SPF-Alignment Fail. DMARC zählt's als Misserfolg.</p>
+
+      <div class="wiki-align-diagram">
+        <div class="wiki-align-verdict">
+          <strong>⚠️ DMARC FAIL</strong>
+          <span>Keine der authentifizierten Domains stimmt mit der sichtbaren Absender-Domain <code>firma.ch</code> überein.</span>
+        </div>
+        <div class="wiki-align-grid">
+          <div class="wiki-align-row wiki-align-row-bad">
+            <div class="wiki-align-field">
+              <span class="wiki-align-label">FROM <span class="muted small">(was die Empfängerin sieht)</span></span>
+              <code class="wiki-align-value">news@<strong style="color: var(--bad)">firma.ch</strong></code>
+            </div>
+            <div class="wiki-align-judge">↑ Header-From-Domain: <strong>firma.ch</strong></div>
+          </div>
+          <div class="wiki-align-row wiki-align-row-ok">
+            <div class="wiki-align-field">
+              <span class="wiki-align-label">RETURN-PATH <span class="muted small">(Envelope · SPF-Prüfung)</span></span>
+              <code class="wiki-align-value">bounces@<strong style="color: var(--ok)">mailchimp-server.com</strong></code>
+            </div>
+            <div class="wiki-align-judge">✓ SPF passt für <strong>mailchimp-server.com</strong></div>
+          </div>
+          <div class="wiki-align-row wiki-align-row-ok">
+            <div class="wiki-align-field">
+              <span class="wiki-align-label">DKIM-Signatur <code>d=</code> <span class="muted small">(DKIM-Prüfung)</span></span>
+              <code class="wiki-align-value">d=<strong style="color: var(--ok)">mail.mailchimp.com</strong></code>
+            </div>
+            <div class="wiki-align-judge">✓ DKIM passt für <strong>mail.mailchimp.com</strong></div>
+          </div>
+        </div>
+        <div class="wiki-align-conclusion">
+          SPF und DKIM sind technisch <strong>beide gültig</strong> — aber für eine andere Domain als der Empfänger sieht. Genau das ist der <strong>Alignment-Fail</strong>.
+        </div>
+      </div>
+
+      <h3>Wie du's löst</h3>
+      <ol class="wiki-list" style="padding-left: 20px;">
+        <li><strong>DKIM aligned signieren lassen.</strong> Mailchimp &amp; Co. erlauben dir einen <em>Custom-DKIM</em> mit deiner Domain (<code>k1._domainkey.firma.ch</code> per CNAME). Dann ist <code>d=firma.ch</code> in der Signatur und Alignment passt.</li>
+        <li><strong>Custom-Return-Path.</strong> Marketing-Tools können auch eine Sub-Domain wie <code>bounces.firma.ch</code> als Return-Path nutzen — wenn deine SPF-Records sie freigeben, ist auch SPF-Alignment OK.</li>
+        <li><strong>Relaxed Alignment</strong> (der Default) erlaubt Subdomain-Übereinstimmung. <code>news.firma.ch</code> passt zu <code>firma.ch</code>. <code>strict</code> verlangt exakte Übereinstimmung.</li>
+      </ol>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> Wenn dein DMARC-Setup „funktioniert" aber <strong>Mailchimp-Mails plötzlich im Spam landen</strong> — Alignment ist mit 90% Wahrscheinlichkeit der Grund. Lösung: Custom-Domain-Authentifizierung im Marketing-Tool aktivieren. Dauert 5 Min, fixt 80 % aller DMARC-Pannen.
+        </div>
+      </div>
+
+      <p class="muted small" style="text-align:center; margin-top: 18px;">
+        Tools sehen Pass/Fail. Wir sehen <em>warum</em> Alignment kippt. <a href="/services/dmarc"><strong>→ DMARC-Service mit Alignment-Diagnose</strong></a>
+      </p>
+    </article>
+
+    <!-- ============== 5. MTA-STS + TLS-RPT ============== -->
+    <article id="mta-sts" class="wiki-topic">
+      <span class="wiki-eyebrow">5 · MTA-STS &amp; TLS-RPT · seit 2018</span>
+      <h2>MTA-STS — <span class="grad-text">Verschlüsselungs-Pflicht</span> für Inbound-Mails</h2>
+      <p class="wiki-hook"><strong>Problem:</strong> Wenn ein Server dir eine Mail schickt, ist TLS optional. Wenn der Empfänger sagt „kein TLS, lass uns Klartext sprechen", funktioniert das. <strong>MTA-STS sagt:</strong> „Nein, wenn du an meine Domain schickst, MUSS TLS gehen — oder lass es bleiben."</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">📦</div>
+        <div>
+          <strong>Stell dir vor du bestellst Pakete.</strong> Standard ist heute: der Lieferant kommt mit dem normalen Lkw, kein Schloss am Container. Du sagst aber: „Wenn ihr an meine Adresse liefert, dann nur in Sicherheits-LKWs mit Plombe — kein Plomben → kein Liefern." Das ist MTA-STS.
+        </div>
+      </div>
+
+      <h3>Wie's konkret aussieht</h3>
+      <p>Du veröffentlichst zwei DNS-Einträge plus eine Policy-Datei auf einer HTTPS-URL:</p>
+      <pre class="code wiki-code">_mta-sts.firma.ch.   IN TXT   "v=STSv1; id=20250101120000Z"
+mta-sts.firma.ch.    IN A     1.2.3.4
+
+# https://mta-sts.firma.ch/.well-known/mta-sts.txt
+version: STSv1
+mode: enforce
+mx: mail.firma.ch
+max_age: 604800</pre>
+
+      <p>Andere Mailserver, die an <code>@firma.ch</code> senden wollen:</p>
+      <ol class="wiki-list" style="padding-left: 20px;">
+        <li>Schauen den DNS-Eintrag <code>_mta-sts.firma.ch</code> nach.</li>
+        <li>Holen die Policy-Datei von <code>https://mta-sts.firma.ch/.well-known/mta-sts.txt</code>.</li>
+        <li>Cachen die Policy für <code>max_age</code> Sekunden.</li>
+        <li>Erzwingen TLS bei jeder Verbindung. Wenn TLS fehlschlägt → Mail wird nicht zugestellt.</li>
+      </ol>
+
+      <h3>Und TLS-RPT?</h3>
+      <p>Der ergänzende DNS-Record <code>_smtp._tls.firma.ch</code> sagt: „Wenn ein Sender wegen TLS-Fehler nicht zustellen konnte, schick mir bitte einen JSON-Bericht hierhin (<code>tlsrpt@firma.ch</code>)." Das ist quasi <em>RUA für TLS-Probleme</em>.</p>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment 1:</strong> MTA-STS &amp; TLS-RPT brauchst du <strong>nur als Empfänger</strong>, nicht als Sender. Wenn deine Domain Mails empfängt, schaltest du es ein. Wenn deine Domain nur sendet (z.B. Marketing-Subdomain), ist's irrelevant.
+        </div>
+      </div>
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment 2:</strong> Es ist <em>optional</em> — kein Compliance-Framework außer ISO 27001 / FINMA empfiehlt es zwingend. Aber: <strong>wenn du Compliance-relevant bist, ist es ein billiger Punkt</strong>. ~30 Min Setup für ein Audit-Häkchen.
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== 6. BIMI ============== -->
+    <article id="bimi" class="wiki-topic">
+      <span class="wiki-eyebrow">6 · BIMI · seit 2020</span>
+      <h2>BIMI — dein Logo neben Mails in <span class="grad-text">Gmail, Yahoo &amp; Apple</span></h2>
+      <p class="wiki-hook">Hast du dich schon mal gefragt, warum manche Newsletter im Gmail-Posteingang ein <strong>rundes Logo</strong> neben dem Absender haben — und andere nicht? Das ist BIMI. Und es funktioniert nur, wenn deine DMARC-Hausaufgaben gemacht sind.</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">🏛️</div>
+        <div>
+          <strong>BIMI ist das Briefkopf-Wappen für E-Mails.</strong> Aber nur Firmen die nachweislich seriös sind dürfen es nutzen. Der Nachweis: DMARC mind. <code>p=quarantine</code>, plus optional ein <em>Verified Mark Certificate (VMC)</em> von DigiCert oder Entrust — eine Art „Markenzeichen-Pass" für deine Domain.
+        </div>
+      </div>
+
+      <h3>Wie's funktioniert</h3>
+      <ol class="wiki-list" style="padding-left: 20px;">
+        <li><strong>Voraussetzung:</strong> DMARC läuft mit <code>p=quarantine</code> oder <code>p=reject</code>.</li>
+        <li>Du legst ein SVG-Logo bereit (BIMI-konformes „SVG Tiny PS"-Profil — kein normales SVG).</li>
+        <li>Optional: VMC-Zertifikat kaufen (~ CHF 1'500 / Jahr) — Pflicht für Apple Mail, optional für Gmail.</li>
+        <li>DNS-Record <code>default._bimi.firma.ch</code> zeigt auf Logo + Zertifikat.</li>
+        <li>Empfänger-Mailclient (Gmail, Yahoo, Apple) zeigt dein Logo neben der Mail.</li>
+      </ol>
+
+      <pre class="code wiki-code">default._bimi.firma.ch.   IN TXT   "v=BIMI1; l=https://firma.ch/logo.svg; a=https://firma.ch/cert.pem"</pre>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> BIMI ist <em>nicht primär Sicherheit</em>, sondern <strong>Marketing-Belohnung für Sicherheit</strong>. Mail-Clients sagen: „Du hast DMARC sauber? Hier, dein Logo darf rauf — gibt mehr Open-Rates." Studien zeigen 10-20% höhere Open-Rates bei BIMI-aktivierten Mails. <strong>BIMI ist die Karotte, mit der Google &amp; Co. uns alle zu DMARC bringen.</strong>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== 7. ARC + Forwarding ============== -->
+    <article id="arc" class="wiki-topic">
+      <span class="wiki-eyebrow">7 · ARC · seit 2019</span>
+      <h2>ARC — wie <span class="grad-text">Mailing-Listen</span> DMARC nicht mehr killen</h2>
+      <p class="wiki-hook"><strong>Problem:</strong> Du schreibst eine Mail an eine Mailing-Liste. Die Liste leitet weiter — aber ändert dabei das Subject („[mailingliste] Hi alle"). DKIM-Signatur ist jetzt ungültig. DMARC failt. ARC ist die Lösung dafür.</p>
+
+      <div class="wiki-analogy">
+        <div class="wiki-analogy-icon">🔗</div>
+        <div>
+          <strong>Stell dir eine Notar-Kette vor.</strong> Deine Mail geht erst an die Mailing-Liste. Die Liste sagt: „Ich bestätige notariell — als die Mail bei mir ankam, war SPF, DKIM und Alignment alles OK." Sie hängt diese notarielle Bestätigung als ARC-Header an, signiert mit <em>ihrem</em> eigenen Schlüssel. Wenn die Mail dann beim Endempfänger ankommt, prüft der die ARC-Kette: „Vertraue ich der Liste als Notar? Ja → DMARC-Result von der Liste übernehmen, nicht selbst neu prüfen."
+        </div>
+      </div>
+
+      <h3>Wer's nutzt</h3>
+      <ul class="wiki-list">
+        <li><strong>Google Groups</strong> &amp; Mailman setzen ARC-Header.</li>
+        <li><strong>Outlook.com</strong>, <strong>Gmail</strong>, <strong>iCloud</strong> verifizieren ARC.</li>
+        <li><strong>Microsoft 365 Connectors</strong> nutzen ARC um DMARC nicht zu zerstören.</li>
+      </ul>
+
+      <p><strong>Du selbst musst nichts tun</strong> wenn du nur Endsender oder Endempfänger bist. ARC ist ein Mailserver-zu-Mailserver-Standard.</p>
+
+      <div class="wiki-aha">
+        <div class="wiki-aha-icon">💡</div>
+        <div>
+          <strong>AHA-Moment:</strong> Wenn jemand dir sagt „DMARC funktioniert nicht mit Mailing-Listen" — die Aussage ist von 2017. Seit ARC und seit Microsoft/Google ARC verifizieren, ist das Problem zu 90 % gelöst. <strong>Mailing-Listen sind kein Grund mehr, DMARC nicht scharf zu schalten.</strong>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== CTA ============== -->
+    <section class="wiki-final-cta">
+      <h2>Verstanden — was machst du jetzt damit?</h2>
+      <p>Drei naheliegende nächste Schritte. Such dir aus was passt.</p>
+      <div class="wiki-final-grid">
+        <a href="/check" class="wiki-final-card">
+          <div class="wiki-final-ico">🔎</div>
+          <strong>Eigene Domain prüfen</strong>
+          <span class="muted small">Score in 5 Sekunden, mit konkreten Empfehlungen</span>
+        </a>
+        <a href="/dmarc-generator" class="wiki-final-card">
+          <div class="wiki-final-ico">⚙️</div>
+          <strong>DMARC-Record bauen</strong>
+          <span class="muted small">Schritt-für-Schritt-Wizard für DAUs &amp; Pros</span>
+        </a>
+        <a href="/services" class="wiki-final-card">
+          <div class="wiki-final-ico">🤝</div>
+          <strong>Wir machen's für dich</strong>
+          <span class="muted small">Festpreis-Setup oder Erstgespräch (gratis)</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============== SERVICE-PAGES Cross-Link ============== -->
+    <section class="container-mkt svc-related" style="padding: 40px 0 8px 0;">
+      <h2>Schwerpunkt-Services</h2>
+      <p class="section-sub" style="margin-bottom: 14px;">Vier Themen für die wir eigene Detail-Seiten haben — falls eines davon zu deiner Situation passt.</p>
+      <div class="svc-related-grid svc-related-grid-4">
+        <a href="/services/dmarc" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#2563eb;">📨</div>
+            <h3>DMARC, SPF &amp; DKIM</h3>
+          </div>
+          <p>Mail-Authentifizierung von <code>p=none</code> bis <code>p=reject</code>. Datengetrieben. Festpreise ab CHF 690.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+        <a href="/services/m365" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#0078d4;">M</div>
+            <h3>M365 Threat-Hardening</h3>
+          </div>
+          <p>EOP &amp; Defender for Office 365 auf Strict-Preset-Niveau. Anti-Phishing, branded Quarantäne. CHF 1'990.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+        <a href="/services/seppmail" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#dc2626;">🔐</div>
+            <h3>SeppMail Mail-Encryption</h3>
+          </div>
+          <p>Schweizer Standard für Mail-Verschlüsselung. S/MIME, OpenPGP, GINA. FINMA-konform.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+        <a href="/services/hin" class="svc-related-card">
+          <div class="svc-related-card-head">
+            <div class="svc-related-ico" style="--c:#0891b2;">⚕️</div>
+            <h3>HIN für Gesundheitswesen</h3>
+          </div>
+          <p>Health Info Net Setup für Spitäler &amp; Praxen. KIS/PIS-Integration, EPD-Vorbereitung.</p>
+          <span class="svc-related-card-arrow">DETAILS →</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/services">Services</a> · <a href="/about#impressum">Impressum</a> · <a href="/about#datenschutz">Datenschutz</a> · <a href="/">Startseite</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+// Highlight active sidebar link based on scroll position
+const links = document.querySelectorAll('.wiki-sidebar-link');
+const topics = document.querySelectorAll('.wiki-topic');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+topics.forEach(t => obs.observe(t));
+</script>
+
+</body>
+</html>

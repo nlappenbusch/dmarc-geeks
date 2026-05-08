@@ -1,0 +1,15 @@
+{% extends "email/_base.html" %}
+{% block body %}
+<h1 style="font-size:18px; margin:0 0 12px 0; color:#dc2626;">DMARC-Alarm: {{ domain }}</h1>
+<p>Die DMARC-Fail-Rate ist gerade um <strong>{{ delta }} %</strong> hochgesprungen.</p>
+<table role="presentation" cellspacing="0" cellpadding="0" style="margin:16px 0;">
+  <tr><td style="padding:6px 14px 6px 0; color:#6b7280;">Letzte 24 h</td>
+      <td style="padding:6px 0;"><strong>{{ cur_fail }} % Fail</strong> ({{ cur_total }} Nachrichten)</td></tr>
+  <tr><td style="padding:6px 14px 6px 0; color:#6b7280;">Vorwoche</td>
+      <td style="padding:6px 0;">{{ prev_fail }} % Fail ({{ prev_total }} Nachrichten)</td></tr>
+</table>
+<p style="color:#6b7280; font-size:13px;">Mögliche Ursachen: gebrochene Sender-Konfiguration (z.&nbsp;B. abgelaufener DKIM-Selektor), neuer Versanddienst ohne SPF, oder ein Spoofing-Versuch.</p>
+<p style="margin:20px 0 0 0;">
+  <a href="{{ link }}" style="background:{{ brand_color }}; color:white; text-decoration:none; padding:10px 18px; border-radius:6px; font-weight:500; display:inline-block;">Top-Quellen ansehen</a>
+</p>
+{% endblock %}

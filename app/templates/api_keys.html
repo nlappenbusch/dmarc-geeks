@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}API-Keys · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>API-Keys</h1>
+<p class="muted">Tokens für die HTTP-API (z.&nbsp;B. <code>POST /api/v1/reports</code>). Pro Tenant separat.</p>
+
+{% if new_secret %}
+<section class="card" style="border-left: 3px solid var(--ok);">
+  <h2>Dein neuer API-Key</h2>
+  <p class="muted small">Diesen Wert <strong>jetzt</strong> kopieren — er wird nie wieder angezeigt.</p>
+  <div class="copy-row">
+    <pre class="code" id="new-secret">{{ new_secret }}</pre>
+    <button class="btn" type="button" onclick="copyText('new-secret', this)">kopieren</button>
+  </div>
+  <p class="muted small mt-8">Verwendung: <code>Authorization: Bearer {{ new_secret }}</code></p>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Neuen Key erstellen</h2>
+  <form method="post" action="/api-keys" class="row">
+    <label>Label
+      <input type="text" name="label" required placeholder="z.B. CI-Pipeline / Postfix-Pipe">
+      <span class="hint">Nur für dich — wofür wird der Key benutzt?</span>
+    </label>
+    <button type="submit" class="btn-primary">Key erzeugen</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Aktive Keys</h2>
+  {% if keys %}
+  <table class="data">
+    <thead><tr><th>Label</th><th>Prefix</th><th>Erstellt</th><th>Zuletzt verwendet</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for k in keys %}
+      <tr>
+        <td>{{ k.label }}</td>
+        <td><code>{{ k.prefix }}</code></td>
+        <td>{{ k.created_at|dt }}</td>
+        <td>{{ k.last_used_at|dt }}</td>
+        <td>
+          {% if k.revoked_at %}<span class="badge danger">widerrufen {{ k.revoked_at|dt }}</span>
+          {% else %}<span class="badge ok">aktiv</span>{% endif %}
+        </td>
+        <td>
+          {% if not k.revoked_at %}
+          <form method="post" action="/api-keys/{{ k.id }}/revoke" style="display:inline" onsubmit="return confirm('Key widerrufen? Alle laufenden Integrationen brechen ab.');"><button class="btn-link danger">widerrufen</button></form>
+          {% endif %}
+          <form method="post" action="/api-keys/{{ k.id }}/delete" style="display:inline" onsubmit="return confirm('Key endgültig löschen?');"><button class="btn-link danger">löschen</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine API-Keys angelegt.</p>
+    <p class="muted small">API-Keys schickst du im <code>Authorization: Bearer &lt;key&gt;</code>-Header. Beispiel siehe <a href="/help#api">Hilfe</a>.</p>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+function copyText(elId, btn) {
+  navigator.clipboard.writeText(document.getElementById(elId).innerText).then(() => {
+    const orig = btn.innerText; btn.innerText = 'kopiert ✓';
+    setTimeout(() => btn.innerText = orig, 1200);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>{{ brand.name }} — Report {{ domain.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: {{ brand.color }};
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --surface: #fafbfd;
+      --ok: #16a34a;
+      --bad: #dc2626;
+      --warn: #d97706;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); font-size: 12.5px; line-height: 1.5; background: #f3f4f6; }
+
+    /* Toolbar — only on screen, hidden in print */
+    .pdf-toolbar { position: sticky; top: 0; z-index: 10; background: var(--brand); color: white; padding: 12px 24px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .pdf-toolbar h1 { font-size: 14px; font-weight: 600; margin: 0; flex: 1; }
+    .pdf-toolbar button, .pdf-toolbar a { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 16px; border-radius: 6px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; }
+    .pdf-toolbar button:hover, .pdf-toolbar a:hover { background: rgba(255,255,255,0.28); }
+    .pdf-hint { font-size: 12px; opacity: 0.85; margin-left: auto; }
+
+    /* The actual report — centered A4-ish */
+    .report-page { max-width: 820px; margin: 24px auto; background: white; padding: 48px 56px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border-radius: 4px; }
+
+    /* Header / footer */
+    .rep-head { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 24px; border-bottom: 3px solid var(--brand); margin-bottom: 32px; }
+    .rep-head-brand img { max-height: 40px; max-width: 200px; }
+    .rep-head-brand strong { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+    .rep-head-brand strong span { color: var(--brand); }
+    .rep-head-meta { text-align: right; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .rep-head-meta strong { color: var(--text); font-size: 13px; display: block; margin-bottom: 4px; }
+
+    .rep-title { margin: 0 0 4px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; color: var(--text); }
+    .rep-domain { color: var(--brand); }
+    .rep-period { color: var(--muted); font-size: 13px; margin: 0 0 32px 0; }
+
+    /* KPI strip */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+    .kpi-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; border-left: 3px solid var(--border); }
+    .kpi-box.pass { border-left-color: var(--ok); }
+    .kpi-box.fail { border-left-color: var(--bad); }
+    .kpi-box.warn { border-left-color: var(--warn); }
+    .kpi-box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+    .kpi-box-value { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px; }
+    .kpi-box-sub { font-size: 11px; color: var(--muted); }
+
+    /* Sections */
+    h2 { font-size: 16px; font-weight: 700; margin: 32px 0 12px 0; letter-spacing: -0.01em; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+    /* Charts */
+    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .chart-wrap svg { width: 100%; height: auto; display: block; }
+
+    /* Two-column layout */
+    .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+    .donut-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-tile svg { width: 100%; max-width: 200px; height: auto; }
+    .donut-tile-list { width: 100%; margin-top: 12px; font-size: 11.5px; }
+    .donut-tile-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .donut-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .donut-tile-row .name { flex: 1; }
+    .donut-tile-row .num { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    /* Tables */
+    table.report-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    table.report-table thead th { text-align: left; padding: 8px 10px; background: var(--surface); border-bottom: 1px solid var(--border); font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em; }
+    table.report-table tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .ok { color: var(--ok); font-weight: 600; }
+    .bad { color: var(--bad); font-weight: 600; }
+
+    /* Advisor cards */
+    .adv { display: flex; gap: 12px; padding: 12px 14px; border-left: 3px solid var(--border); background: var(--surface); border-radius: 4px; margin-bottom: 8px; }
+    .adv.ok { border-left-color: var(--ok); }
+    .adv.warn { border-left-color: var(--warn); }
+    .adv.danger { border-left-color: var(--bad); }
+    .adv.info { border-left-color: var(--brand); }
+    .adv-icon { font-weight: 800; font-size: 14px; }
+    .adv.ok .adv-icon { color: var(--ok); }
+    .adv.warn .adv-icon { color: var(--warn); }
+    .adv.info .adv-icon { color: var(--brand); }
+    .adv h4 { margin: 0 0 4px 0; font-size: 13px; font-weight: 600; }
+    .adv p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .rep-foot { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+    /* PRINT styles — make this look like a proper PDF */
+    @media print {
+      body { background: white; font-size: 10.5pt; }
+      .pdf-toolbar { display: none; }
+      .report-page { max-width: 100%; margin: 0; padding: 0; box-shadow: none; border-radius: 0; }
+      h2 { page-break-after: avoid; }
+      .chart-wrap, .two-col, .adv, table { page-break-inside: avoid; }
+      tr { page-break-inside: avoid; }
+      @page { size: A4; margin: 18mm 16mm 22mm 16mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="pdf-toolbar">
+  <h1>📄 Report {{ domain.name }} · {{ period_start }} – {{ period_end }}</h1>
+  <span class="pdf-hint">Strg+P / ⌘P → "Als PDF speichern"</span>
+  <button onclick="window.print()">📥 Als PDF speichern</button>
+  <a href="/domains/{{ domain.id }}">← zurück</a>
+</div>
+
+<div class="report-page">
+
+  <!-- Header -->
+  <div class="rep-head">
+    <div class="rep-head-brand">
+      {% if brand.logo %}
+        <img src="{{ brand.logo }}" alt="{{ brand.name }}">
+      {% else %}
+        <strong>{{ brand.name.split(' ')[0] }}<span>{% if brand.name.split(' ')|length > 1 %} {{ brand.name.split(' ', 1)[1] }}{% endif %}</span></strong>
+      {% endif %}
+    </div>
+    <div class="rep-head-meta">
+      <strong>DMARC-Report</strong>
+      Erstellt am {{ generated_at.strftime('%d.%m.%Y %H:%M') }} UTC<br>
+      Tenant: {{ tenant.name }}
+      {% if brand.support_email %}<br>Support: {{ brand.support_email }}{% endif %}
+    </div>
+  </div>
+
+  <h1 class="rep-title">{{ domain.name }}</h1>
+  <p class="rep-period">Berichtszeitraum: {{ period_start.strftime('%d.%m.%Y') }} – {{ period_end.strftime('%d.%m.%Y') }} · {{ days }} Tage</p>
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi-box">
+      <div class="kpi-box-label">Nachrichten</div>
+      <div class="kpi-box-value">{{ totals.total|num }}</div>
+    </div>
+    <div class="kpi-box pass">
+      <div class="kpi-box-label">DMARC pass</div>
+      <div class="kpi-box-value">{{ totals.pass_count|num }}</div>
+      <div class="kpi-box-sub">{{ totals.pass_rate }} %</div>
+    </div>
+    <div class="kpi-box fail">
+      <div class="kpi-box-label">DMARC fail</div>
+      <div class="kpi-box-value">{{ totals.fail_count|num }}</div>
+    </div>
+    <div class="kpi-box warn">
+      <div class="kpi-box-label">Quarantine</div>
+      <div class="kpi-box-value">{{ totals.quarantine_count|num }}</div>
+    </div>
+  </div>
+
+  <!-- Empfehlungen -->
+  {% if advice %}
+  <h2>Empfehlungen</h2>
+  {% for a in advice %}
+  <div class="adv {{ a.level }}">
+    <span class="adv-icon">
+      {% if a.level == 'ok' %}✓{% elif a.level == 'warn' %}!{% elif a.level == 'danger' %}✕{% else %}i{% endif %}
+    </span>
+    <div>
+      <h4>{{ a.headline }}</h4>
+      <p>{{ a.body }}</p>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Daily chart -->
+  <h2>Verlauf täglich</h2>
+  <div class="chart-wrap">
+    {{ chart_svg | safe }}
+  </div>
+
+  <!-- Two-col: donut + top sources -->
+  <h2>Sender-Mix &amp; Top-Quellen</h2>
+  <div class="two-col">
+    <table class="report-table">
+      <thead><tr><th>IP</th><th>Hostname</th><th>Volumen</th><th>Pass-Rate</th></tr></thead>
+      <tbody>
+      {% for s in sources %}
+        <tr>
+          <td><code>{{ s.ip }}</code></td>
+          <td>{{ s.host or '—' }}</td>
+          <td>{{ s.total|num }}</td>
+          <td class="{{ 'ok' if s.pass_rate >= 99 else 'bad' if s.pass_rate < 90 else '' }}">{{ s.pass_rate }} %</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="donut-tile">
+      {{ donut_svg | safe }}
+      <div class="donut-tile-list">
+        {% for s in senders %}
+        <div class="donut-tile-row">
+          <span class="donut-dot" style="background: {{ s.color }}"></span>
+          <span class="name">{{ s.label }}</span>
+          <span class="num">{{ s.total|num }} · {{ s.pass_rate }} %</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="rep-foot">
+    <span>{{ brand.name }} · {{ tenant.name }}</span>
+    <span>Generiert mit DMARC Aggregator · Made in Switzerland</span>
+  </div>
+
+</div>
+
+</body>
+</html>

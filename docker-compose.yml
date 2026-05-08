@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dmarc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dmarc}
+      POSTGRES_DB: ${POSTGRES_DB:-dmarc}
+    volumes:
+      - dmarc_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dmarc}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dmarc}:${POSTGRES_PASSWORD:-dmarc}@db:5432/${POSTGRES_DB:-dmarc}
+      SECRET_KEY: ${SECRET_KEY}
+      FERNET_KEY: ${FERNET_KEY}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@example.com}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-changeme}
+      DEFAULT_TENANT_NAME: ${DEFAULT_TENANT_NAME:-Default}
+      IMAP_POLL_INTERVAL_MINUTES: ${IMAP_POLL_INTERVAL_MINUTES:-15}
+      RESOLVE_PTR: ${RESOLVE_PTR:-true}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+
+volumes:
+  dmarc_db:

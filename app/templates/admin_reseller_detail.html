@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ target.name }} · Reseller-Detail{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/resellers">Reseller</a> · {{ target.name }}</div>
+<h1>{{ target.name }} <span class="muted small">slug: {{ target.slug }}{% if target.is_platform %} · Plattform-Default{% endif %}</span></h1>
+
+<section class="kpi-row">
+  <div class="kpi"><div class="kpi-label">Endkunden</div><div class="kpi-value">{{ customer_tenants|length }} / {{ target.seat_limit }}</div></div>
+  <div class="kpi"><div class="kpi-label">Reseller-Admins</div><div class="kpi-value">{{ reseller_admins|length }}</div></div>
+  <div class="kpi"><div class="kpi-label">Reports gesamt</div><div class="kpi-value">{{ n_reports|num }}</div></div>
+  <div class="kpi"><div class="kpi-label">Plan</div><div class="kpi-value" style="font-size:18px;">{{ target.plan }}</div></div>
+</section>
+
+<section class="card">
+  <h2>Stammdaten &amp; Branding</h2>
+  <form method="post" action="/admin/resellers/{{ target.id }}" class="grid-form">
+    <label>Name<input type="text" name="name" value="{{ target.name }}" required></label>
+    <label>App-Name (Whitelabel)
+      <input type="text" name="app_name" value="{{ target.app_name }}" required>
+      <span class="hint">Erscheint im Topbar bei Endkunden, in E-Mail-Subjects.</span>
+    </label>
+    <label>Brand-Farbe<input type="color" name="brand_color" value="{{ target.brand_color }}"></label>
+    <label>Logo-URL
+      <input type="url" name="logo_url" value="{{ target.logo_url or '' }}" placeholder="https://msp.example/logo.png">
+      <span class="hint">Externes PNG/SVG, ~200×40 px.</span>
+    </label>
+    <label>Support-E-Mail<input type="email" name="support_email" value="{{ target.support_email or '' }}"></label>
+    <label>Custom-Domain
+      <input type="text" name="custom_domain" value="{{ target.custom_domain or '' }}" placeholder="dmarc.msp-firma.de">
+      <span class="hint">Reseller+ — DNS-CNAME + TLS-Cert kommt mit Hetzner-DNS-Phase. Vorerst nur gespeichert.</span>
+    </label>
+    <label>Plan
+      <select name="plan">
+        {% for p in ['agency','reseller','reseller_plus','enterprise'] %}
+        <option value="{{ p }}" {% if target.plan==p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Seat-Limit<input type="number" name="seat_limit" value="{{ target.seat_limit }}" min="1" max="10000"></label>
+    <label>Revenue-Share % (Reseller bekommt)
+      <input type="number" name="revenue_share_pct" value="{{ target.revenue_share_pct }}" min="0" max="100">
+      <span class="hint">Nur für Reseller+ / Enterprise mit Direkt-Stripe.</span>
+    </label>
+    <label style="grid-column: 1 / -1;">Notiz<textarea name="notes" rows="2">{{ target.notes or '' }}</textarea></label>
+    <button type="submit" class="btn-primary">Speichern</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Reseller-Admin neu anlegen</h2>
+  <p class="muted small">Erzeugt einen frischen User mit Reseller-Admin-Rechten. Falls kein Tenant gewählt: legt automatisch einen <em>Operations</em>-Tenant unter „{{ target.name }}" an, in dem der User wohnt.</p>
+  <form method="post" action="/admin/resellers/{{ target.id }}/create-admin" class="grid-form">
+    <label>E-Mail<input type="email" name="email" required placeholder="msp-admin@example.com"></label>
+    <label>Passwort (min. 8)<input type="password" name="password" minlength="8" required></label>
+    <label>Tenant
+      <select name="tenant_id">
+        <option value="0">— Operations-Tenant automatisch anlegen —</option>
+        {% for t in customer_tenants %}
+          <option value="{{ t.id }}">{{ t.name }} ({{ t.slug }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn-primary">Reseller-Admin anlegen</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Bestehenden User zum Reseller-Admin machen</h2>
+  <p class="muted small">Nur User aus einem Tenant <em>dieses</em> Resellers können hochgestuft werden.</p>
+  <form method="post" action="/admin/resellers/{{ target.id }}/promote-admin" class="row">
+    <input type="email" name="user_email" required placeholder="vorhandener-user@example.com">
+    <button type="submit" class="btn">Hochstufen</button>
+  </form>
+  {% if reseller_admins %}
+  <table class="data" style="margin-top:12px;">
+    <thead><tr><th>E-Mail</th><th>Tenant</th><th>Erstellt</th></tr></thead>
+    <tbody>
+    {% for u in reseller_admins %}
+      <tr>
+        <td>{{ u.email }}{% if u.is_superadmin %} <span class="badge ok small">Superadmin</span>{% endif %}</td>
+        <td>{{ u.tenant.name if u.tenant else '—' }}</td>
+        <td class="small">{{ u.created_at|dt }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Endkunden ({{ customer_tenants|length }})</h2>
+  {% if customer_tenants %}
+  <table class="data">
+    <thead><tr><th>Endkunde</th><th>Slug</th><th>Erstellt</th><th></th></tr></thead>
+    <tbody>
+    {% for t in customer_tenants %}
+      <tr>
+        <td><a href="/admin/tenants/{{ t.id }}">{{ t.name }}</a></td>
+        <td><code>{{ t.slug }}</code></td>
+        <td class="small">{{ t.created_at|dt }}</td>
+        <td><form method="post" action="/admin/tenants/{{ t.id }}/enter" style="display:inline"><button class="btn-link">betreten →</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty"><p class="muted">Noch keine Endkunden unter diesem Reseller.</p></div>{% endif %}
+</section>
+
+{% if not target.is_platform and customer_tenants|length == 0 %}
+<section class="card">
+  <h2 style="color: var(--bad);">Gefahrenzone</h2>
+  <form method="post" action="/admin/resellers/{{ target.id }}/delete" onsubmit="return confirm('Reseller löschen? (geht nur, wenn keine Endkunden mehr drunter)');">
+    <button type="submit" class="btn-danger">Reseller endgültig löschen</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

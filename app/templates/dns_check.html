@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}DNS-Check · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>DNS-Health-Check</h1>
+<p class="muted">Live-Lookup deiner Mail-Auth-Records: SPF, DMARC, DKIM (häufige Selektoren), MTA-STS, TLS-RPT, BIMI.</p>
+
+<form method="get" action="/dns-check" class="card row">
+  <label>Domain
+    <input type="text" name="domain" value="{{ query_domain }}" required pattern="^[A-Za-z0-9.\-]+$" placeholder="meinedomain.de" autofocus>
+  </label>
+  <button type="submit" class="btn-primary">Check</button>
+</form>
+
+{% if result %}
+
+{% macro status_pill(present, valid=True) -%}
+  {% if present and valid %}<span class="badge ok">vorhanden</span>
+  {% elif present %}<span class="badge warn">vorhanden (Issues)</span>
+  {% else %}<span class="badge danger">fehlt</span>{% endif %}
+{%- endmacro %}
+
+<section class="card">
+  <h2>SPF — <code>{{ result.domain }}</code> {{ status_pill(result.spf.present, result.spf.valid) }}</h2>
+  {% if result.spf.raw %}<pre class="code">{{ result.spf.raw }}</pre>{% endif %}
+  {% if not result.spf.present %}
+  <p class="muted small">Kein <code>v=spf1</code>-Record auf der Apex-Domain. Empfohlen mindestens: <code>v=spf1 -all</code> wenn keine Mail von hier ausgeht.</p>
+  {% endif %}
+  {% for iss in result.spf.issues %}<div class="callout warn">{{ iss }}</div>{% endfor %}
+</section>
+
+<section class="card">
+  <h2>DMARC {{ status_pill(result.dmarc.present, result.dmarc.valid) }}</h2>
+  {% if result.dmarc.raw %}<pre class="code">{{ result.dmarc.raw }}</pre>
+    <p class="muted small">Policy: <strong>p={{ result.dmarc.policy or '—' }}</strong>{% if result.dmarc.pct is defined %} · pct={{ result.dmarc.pct }}{% endif %} · rua: {{ result.dmarc.rua | join(', ') if result.dmarc.rua else '—' }}</p>
+  {% else %}
+    <p class="muted small">Kein Record auf <code>_dmarc.{{ result.domain }}</code>. Bau dir einen mit dem <a href="/dmarc-generator?domain={{ result.domain }}">Generator</a>.</p>
+  {% endif %}
+  {% for iss in result.dmarc.issues %}<div class="callout warn">{{ iss }}</div>{% endfor %}
+</section>
+
+<section class="card">
+  <h2>DKIM-Selektoren <span class="badge {% if result.dkim %}ok{% else %}warn{% endif %}">{{ result.dkim|length }} gefunden</span></h2>
+  <p class="muted small">Probiert wurden gängige Selektoren: <code>default</code>, <code>google</code>, <code>selector1/2</code>, <code>s1/s2</code>, <code>mailchimp</code>, <code>sendgrid</code>, <code>amazonses</code>, <code>klaviyo</code>, …</p>
+  {% if result.dkim %}
+  <table class="data">
+    <thead><tr><th>Selector</th><th>Record</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for d in result.dkim %}
+    <tr><td><code>{{ d.selector }}._domainkey.{{ result.domain }}</code></td>
+        <td><pre class="code" style="margin:0; max-width:520px; overflow:auto;">{{ d.raw[:200] }}{% if d.raw|length > 200 %}…{% endif %}</pre></td>
+        <td>{% if d.valid %}<span class="badge ok">valid</span>{% else %}<span class="badge warn">unklar</span>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted small">Keine bekannten Selektoren gefunden. DKIM-Selektoren sind frei wählbar — wenn du andere benutzt, sind sie hier evtl. nicht in der Test-Liste. Ein Blick in die Mail-Header (Header <code>DKIM-Signature</code>) zeigt den realen Selector.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>MTA-STS {{ status_pill(result.mta_sts.present) }}</h2>
+  {% if result.mta_sts.raw %}<pre class="code">{{ result.mta_sts.raw }}</pre>
+  {% else %}<p class="muted small">Optional. MTA-STS erzwingt TLS für eingehende Mail. Empfehlenswert für sensible Domains.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>TLS-RPT {{ status_pill(result.tls_rpt.present) }}</h2>
+  {% if result.tls_rpt.raw %}<pre class="code">{{ result.tls_rpt.raw }}</pre>
+  {% else %}<p class="muted small">Optional. TLS-RPT (RFC 8460) liefert Reports über fehlgeschlagene STARTTLS. Komplementär zu DMARC.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>BIMI {{ status_pill(result.bimi.present) }}</h2>
+  {% if result.bimi.raw %}<pre class="code">{{ result.bimi.raw }}</pre>
+  {% else %}<p class="muted small">Optional. BIMI zeigt dein Logo neben Mails (bei Gmail, Yahoo). Setzt p=quarantine/reject voraus.</p>
+  {% endif %}
+</section>
+
+<p><a href="/dmarc-generator?domain={{ result.domain }}">DMARC-Generator für {{ result.domain }} öffnen →</a></p>
+
+{% else %}
+<section class="card">
+  <p class="muted">Trag oben eine Domain ein, um SPF/DMARC/DKIM-Setup live zu prüfen.</p>
+  <p class="muted small">Tipp: aus jeder Domain-Detail-Seite verlinkt — füllt automatisch.</p>
+</section>
+{% endif %}
+{% endblock %}

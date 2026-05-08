@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compliance &amp; Standards · DMARC Aggregator</title>
+  <meta name="description" content="FINMA, revDSG, DSGVO, NIST, ISO 27001, NIS2, CIS — was DMARC Aggregator zur Compliance beiträgt und was du selbst tun musst. Ehrlich erklärt.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/mailcheck-loader.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/">DMARC<span>Aggregator</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/check">Domain prüfen</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance" class="active-mkt">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/signup" class="btn-primary">Tool starten</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero hero-v3 hero-compliance">
+  <div class="hero-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  <div class="container-mkt" style="position:relative; z-index:1;">
+    <span class="eyebrow">
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      Compliance &amp; Standards · ehrlich erklärt
+    </span>
+    <h1 style="max-width: 920px;">Was wir liefern.<br>Was <span class="grad-text">du</span> liefern musst.</h1>
+    <p class="lede" style="max-width: 760px;">DMARC ist in praktisch jedem ernstzunehmenden Cyber-Security-Framework gefordert oder explizit empfohlen. Hier steht ehrlich, was unser Tool dir an Audit-Hausaufgaben abnimmt — und welche Schritte beim Kunden bleiben.</p>
+  </div>
+</section>
+
+<!-- INTRO TABLE OF CONTENTS -->
+<section class="container-mkt" style="padding-top:48px;">
+  <div class="comp-toc">
+    <a href="#finma">FINMA-RS 2023/1 <span class="muted small">CH</span></a>
+    <a href="#revdsg">revDSG <span class="muted small">CH</span></a>
+    <a href="#dsgvo">DSGVO <span class="muted small">EU</span></a>
+    <a href="#nis2">NIS2-Richtlinie <span class="muted small">EU</span></a>
+    <a href="#nist">NIST SP 800-177 <span class="muted small">USA</span></a>
+    <a href="#iso">ISO/IEC 27001:2022 <span class="muted small">global</span></a>
+    <a href="#cis">CIS Controls v8 <span class="muted small">global</span></a>
+    <a href="#bsi">BSI IT-Grundschutz <span class="muted small">DE</span></a>
+    <a href="#m3aawg">M3AAWG Best Practices <span class="muted small">Industrie</span></a>
+  </div>
+  <div class="callout warn" style="max-width:800px; margin:32px auto 0; padding:14px 18px; border-radius:8px;">
+    <strong>Wichtig:</strong> Wir behaupten <em>nicht</em>, formal zertifiziert zu sein. Unten siehst du pro Standard transparent, was unser Tool an technischen Maßnahmen liefert (Tool-Beitrag) und welche organisatorischen/prozessualen Auditpunkte beim Kunden bleiben (Kunden-Pflicht). Genau diese Trennung verlangen Auditoren ohnehin.
+  </div>
+</section>
+
+<!-- FINMA -->
+<section id="finma" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">CH · FINMA</span>
+    <h2>FINMA-Rundschreiben 2023/1 — <span class="muted">Operationelle Risiken und Resilienz</span></h2>
+  </div>
+  <p class="comp-lede">Das FINMA-Rundschreiben 2023/1 (in Kraft seit 01.01.2024) verschärft die Anforderungen an Banken, Versicherungen und Vermögensverwalter zu Cyber-Risiken und ICT-Resilienz. Mail-Domain-Spoofing zählt explizit zu den behandelten Bedrohungsszenarien.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was die FINMA verlangt</h4>
+      <ul>
+        <li>Identifikation kritischer Funktionen mit Cyber-Bezug — inkl. E-Mail-Kommunikation als Dienstleister-Schnittstelle</li>
+        <li>Schutz gegen Phishing/Spoofing, das Kunden oder Mitarbeitende gefährdet</li>
+        <li>Kontinuierliche Überwachung und Auswertung von Sicherheitsvorfällen</li>
+        <li>Audit-Trail über Sicherheitsmaßnahmen und Reaktionen</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li><strong>DMARC-Auswertung</strong> für alle Domains der regulierten Einheit</li>
+        <li><strong>Spike-Alerts</strong> bei plötzlichem Anstieg von Spoofing-Versuchen — als Cyber-Vorfall dokumentierbar</li>
+        <li><strong>Audit-Log</strong> über jede Konfigurationsänderung mit User &amp; Zeit</li>
+        <li><strong>Smart Advisor</strong> dokumentiert technische Reife (Pass-Rate, Policy-Reife)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> ICT-Risiko-Inventar, Eskalationsprozess bei Vorfällen, Auslagerungs-Vereinbarung mit uns (DPA), regelmäßige Berichterstattung an Geschäftsleitung. Wir liefern die rohen Daten und Audit-Logs — die Verzeichnisse und Prozesse baust du.
+  </div>
+</section>
+
+<!-- revDSG -->
+<section id="revdsg" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">CH · revDSG</span>
+    <h2>revidiertes Datenschutzgesetz (revDSG)</h2>
+  </div>
+  <p class="comp-lede">In Kraft seit 01.09.2023. Das revidierte Schweizer Datenschutzgesetz orientiert sich stark an der DSGVO, hat aber spezifische Schweizer Eigenheiten — besonders die Pflicht zum Verzeichnis von Bearbeitungstätigkeiten und die Auskunftspflicht.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was das revDSG verlangt</h4>
+      <ul>
+        <li>Auftragsbearbeitungs-Vertrag (AVV/DPA) mit allen Drittparteien</li>
+        <li>Auskunftspflicht — du musst auf Anfrage zeigen können, was über eine Person gespeichert ist</li>
+        <li>Datenminimierung — nur was nötig ist</li>
+        <li>Meldepflicht bei Datenschutzverletzungen an EDÖB innert 72h</li>
+        <li>Verzeichnis der Bearbeitungstätigkeiten (Art. 12)</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li><strong>Self-Hosted-Modus</strong>: Daten verlassen deine Infrastruktur nie — kein Auftragsbearbeitungs-Verhältnis nötig</li>
+        <li><strong>Cloud-Variante</strong>: AVV/DPA-Vertrag auf Anfrage, Hosting in CH/EU</li>
+        <li><strong>Audit-Log</strong> für Auskunftserteilung — wer hat wann was geändert</li>
+        <li><strong>CSV-Export</strong> auf Tenant-Ebene für Datenportabilität</li>
+        <li>Verschlüsselte IMAP-Credentials (Fernet) und Bcrypt-Passwörter</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> Verzeichnis der Bearbeitungstätigkeiten pflegen, Datenschutzerklärung schreiben, Betroffenenrechte abwickeln, Meldekette zum EDÖB definieren. Bei Cloud-Variante zusätzlich: AVV mit uns abschließen.
+  </div>
+</section>
+
+<!-- DSGVO -->
+<section id="dsgvo" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">EU · DSGVO</span>
+    <h2>Datenschutz-Grundverordnung (DSGVO)</h2>
+  </div>
+  <p class="comp-lede">Seit 25.05.2018 in Kraft. Gilt auch für Schweizer Unternehmen, sobald sie Personen in der EU bedienen — also für die meisten. Setzt klare Regeln für Datenverarbeitung, Auftragsverarbeiter und Betroffenenrechte.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was die DSGVO verlangt</h4>
+      <ul>
+        <li>Auftragsverarbeitungsvertrag nach Art. 28 mit allen Verarbeitern</li>
+        <li>Privacy-by-Design und Privacy-by-Default (Art. 25)</li>
+        <li>Meldepflicht innert 72h bei Datenschutzverletzungen</li>
+        <li>Verschlüsselung als angemessene Maßnahme (Art. 32)</li>
+        <li>Recht auf Auskunft, Löschung, Datenportabilität</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li>AVV nach Art. 28 DSGVO auf Anfrage (Cloud-Variante)</li>
+        <li>Daten-Minimierung: nur was DMARC-Reports liefern, kein Tracking</li>
+        <li>Verschlüsselung at-rest und in-transit (TLS, Bcrypt, Fernet)</li>
+        <li>Datenportabilität via CSV-Export</li>
+        <li>Datenlöschung: Tenant-Löschung kaskadiert auf alle abhängigen Daten</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> Datenschutzerklärung, Cookie-Banner (falls nötig), Verzeichnis von Verarbeitungstätigkeiten, Meldekette zur Aufsichtsbehörde, Verträge mit deinen eigenen Verarbeitern (Mail-Provider, etc.).
+  </div>
+</section>
+
+<!-- NIS2 -->
+<section id="nis2" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">EU · NIS2</span>
+    <h2>NIS2-Richtlinie (EU 2022/2555)</h2>
+  </div>
+  <p class="comp-lede">Seit 17.01.2023 in Kraft, umzusetzen bis 17.10.2024. Gilt für „wesentliche" und „wichtige" Einrichtungen in 18 Sektoren — inkl. ICT-Dienstleister wie MSPs. Schweizer Firmen mit EU-Tochter oder EU-Geschäft fallen mit drunter.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was NIS2 Art. 21 verlangt</h4>
+      <ul>
+        <li>Risk-Management-Maßnahmen für Netz- und Informationssysteme</li>
+        <li>Sichere Authentifizierung und Verschlüsselung in der Kommunikation</li>
+        <li>Lieferanten-Sicherheits-Management</li>
+        <li>Vorfall-Behandlung und Meldepflicht innert 24h (Frühwarnung) / 72h (Bewertung)</li>
+        <li>Geschäftsleitung trägt persönliche Verantwortung</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li>Mail-Authentifizierung als zentrales Element von Art. 21 abgedeckt</li>
+        <li>Webhooks + Audit-Log für SIEM-Integration und Incident-Response</li>
+        <li>Spike-Alerts als „Frühwarnsystem"</li>
+        <li>API für automatisierte Integration in dein bestehendes Risk-Tool</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> Klassifizierung als wesentlich/wichtig, Meldewege zur nationalen Behörde (BSI in DE, NCSC in CH falls angepasst), Schulung der Geschäftsleitung, Lieferanten-Verzeichnis. Die meisten Schweizer Banken sind bereits über FINMA-Anforderungen abgedeckt.
+  </div>
+</section>
+
+<!-- NIST -->
+<section id="nist" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">USA · NIST</span>
+    <h2>NIST SP 800-177 Rev. 1 — <span class="muted">Trustworthy Email</span></h2>
+  </div>
+  <p class="comp-lede">Die NIST-Special-Publication 800-177 trägt den Titel „Trustworthy Email" und empfiehlt DMARC explizit als technische Schutzmaßnahme gegen Spoofing. Plus NIST CSF 2.0 (Cybersecurity Framework) deckt mit den Funktionen Identify/Protect/Detect/Respond ähnliche Themen ab.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was NIST empfiehlt</h4>
+      <ul>
+        <li>SPF, DKIM und DMARC als drei aufeinander abgestimmte Säulen</li>
+        <li>Reporting-Auswertung (DMARC <code>rua</code>) zur kontinuierlichen Verbesserung</li>
+        <li>Schrittweise Schärfung der Policy: <code>none → quarantine → reject</code></li>
+        <li>Monitoring von Drittsendern (Mailchimp etc.)</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li><strong>DNS-Health-Check</strong> für SPF, DKIM, DMARC, MTA-STS, BIMI, TLS-RPT</li>
+        <li><strong>DMARC-Generator</strong> mit Validierung der Policy-Syntax</li>
+        <li><strong>Smart Advisor</strong> empfiehlt datenbasiert wann auf <code>quarantine</code>/<code>reject</code> gewechselt werden kann</li>
+        <li><strong>Sender-Attribution</strong> erkennt 22+ Drittsender automatisch</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> SPF und DKIM bei den eigentlichen Sendern korrekt einrichten — wir messen, du konfigurierst.
+  </div>
+</section>
+
+<!-- ISO -->
+<section id="iso" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">ISO</span>
+    <h2>ISO/IEC 27001:2022 — <span class="muted">Information Security Management</span></h2>
+  </div>
+  <p class="comp-lede">Der internationale Standard für Informationssicherheits-Management. Der Annex A listet 93 Controls; mehrere davon haben direkten Bezug zu Mail-Auth.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Relevante Annex-A-Controls</h4>
+      <ul>
+        <li><strong>A.5.30</strong> ICT-Bereitschaft für Geschäftskontinuität</li>
+        <li><strong>A.8.16</strong> Monitoring-Aktivitäten</li>
+        <li><strong>A.8.21</strong> Sichere Konfiguration von Netzwerk-Diensten</li>
+        <li><strong>A.8.22</strong> Sicherheit beim Mail-Empfang/-Versand</li>
+        <li><strong>A.8.23</strong> Web-Filtering (analog für Mail)</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li>Audit-Log mit User, Zeit, IP für jede sicherheitsrelevante Aktion</li>
+        <li>Rate-Limiting auf Login und Magic-Link-Endpoints</li>
+        <li>Bcrypt-Passwort-Hashing, Fernet-verschlüsselte IMAP-Credentials</li>
+        <li>HMAC-SHA256-signierte Outbound-Webhooks</li>
+        <li>CSP, X-Frame-Options, X-Content-Type-Options secure-by-default</li>
+        <li>Backup-Strategie via Postgres-Dump + Tenant-Cascade-Delete</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> ISMS-Aufbau, Risiko-Bewertung, Statement of Applicability, interne Audits, Management-Review. Wir liefern die technischen Maßnahmen, das ISMS-Framework baust du selbst (oder mit deinem Auditor).
+  </div>
+</section>
+
+<!-- CIS -->
+<section id="cis" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">CIS</span>
+    <h2>CIS Controls v8</h2>
+  </div>
+  <p class="comp-lede">Die 18 Critical Security Controls vom Center for Internet Security — pragmatische Liste der wichtigsten technischen Maßnahmen. Control 9 ist E-Mail- und Browser-Schutz, mit DMARC explizit in Sub-Control 9.5.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Relevante CIS-Controls</h4>
+      <ul>
+        <li><strong>9.5</strong> Implement DMARC — wörtlich</li>
+        <li><strong>9.6</strong> Block Unnecessary File Types (Mail-Anhänge)</li>
+        <li><strong>13.6</strong> Collect Network Traffic Flow Logs</li>
+        <li><strong>17</strong> Incident Response Management</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li>Komplette DMARC-Implementierung inkl. Reporting-Auswertung</li>
+        <li>IP-Allowlist und IP-Drilldown für Quell-Forensik</li>
+        <li>Sankey-Visualisierung für schnelle Einordnung</li>
+        <li>Webhook-Integration in dein SIEM/SOC für Control 17</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="comp-todo">
+    <strong>📋 Bei dir bleibt:</strong> CIS Implementation Group (IG1/2/3) festlegen, Maßnahmen-Tracking, ggf. CIS-Self-Assessment. Wir decken Control 9.5 vollständig ab.
+  </div>
+</section>
+
+<!-- BSI -->
+<section id="bsi" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">DE · BSI</span>
+    <h2>BSI IT-Grundschutz — Baustein NET.3.3</h2>
+  </div>
+  <p class="comp-lede">Das deutsche Bundesamt für Sicherheit in der Informationstechnik (BSI) führt im IT-Grundschutz-Kompendium den Baustein <strong>NET.3.3 „Mail-Server"</strong> mit Anforderungen an Mail-Auth.</p>
+
+  <div class="comp-split">
+    <div class="comp-half">
+      <h4>📌 Was NET.3.3 verlangt</h4>
+      <ul>
+        <li>NET.3.3.A12 — DKIM-Verwendung</li>
+        <li>NET.3.3.A13 — DMARC-Verwendung mit Reporting</li>
+        <li>NET.3.3.A14 — TLS-Verwendung mit MTA-STS</li>
+      </ul>
+    </div>
+    <div class="comp-half">
+      <h4>✅ Tool-Beitrag</h4>
+      <ul>
+        <li>DMARC-Reporting-Auswertung (A13)</li>
+        <li>DNS-Health-Check für DKIM, MTA-STS, TLS-RPT</li>
+        <li>Audit-Log für Nachweis der Maßnahme</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- M3AAWG -->
+<section id="m3aawg" class="container-mkt comp-section">
+  <div class="comp-section-head">
+    <span class="comp-badge">Industrie</span>
+    <h2>M3AAWG Best Practices</h2>
+  </div>
+  <p class="comp-lede">Die <em>Messaging, Malware and Mobile Anti-Abuse Working Group</em> (M3AAWG) ist die wichtigste Industrie-Organisation für E-Mail-Sicherheit. Mehrere ihrer Best-Current-Practices behandeln DMARC.</p>
+  <ul style="max-width:760px; line-height:1.7;">
+    <li><strong>BCP-DMARC-Setup</strong>: schrittweises Vorgehen von <code>p=none</code> zu <code>p=reject</code></li>
+    <li><strong>BCP-Forensic-Reports</strong>: Empfehlung gegen <code>ruf</code> wegen DSGVO-Risiken — wir setzen das um</li>
+    <li><strong>BCP-Subdomain-Policy</strong>: <code>sp=</code>-Policy explizit empfohlen — unser Generator zeigt's</li>
+  </ul>
+</section>
+
+<!-- CTA -->
+<section class="cta-band" style="margin-top: 64px;">
+  <div class="container-mkt">
+    <h2>AVV/DPA gewünscht?</h2>
+    <p>Auftragsverarbeitungsvertrag nach Art. 28 DSGVO + Art. 9 revDSG auf Anfrage. Üblicherweise innert 24 Stunden.</p>
+    <div class="cta-buttons">
+      <a href="mailto:dpa@example.com?subject=AVV-Anfrage" class="btn-primary big">AVV/DPA anfordern</a>
+      <a href="/" class="btn big">← zur Startseite</a>
+    </div>
+  </div>
+</section>
+
+<footer class="mkt-footer">
+  <div class="container-mkt">
+    <p class="muted small" style="text-align:center;">
+      © 2026 DMARC Aggregator · Made in Switzerland
+      <svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg>
+      · <a href="/about#impressum">Impressum</a> · <a href="/about#datenschutz">Datenschutz</a> · <a href="/">Startseite</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

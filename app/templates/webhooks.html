@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Webhooks · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Webhooks</h1>
+<p class="muted">Bekomme HTTP-POSTs, sobald ein Report importiert wird. Payload ist JSON, signiert per HMAC-SHA256 im Header <code>X-DMARC-Signature</code>.</p>
+
+<section class="card">
+  <h2>Neuen Webhook anlegen</h2>
+  <form method="post" action="/webhooks" class="grid-form">
+    <label>Label
+      <input type="text" name="label" required placeholder="z.B. SIEM, Slack-Bridge">
+    </label>
+    <label>URL
+      <input type="url" name="url" required placeholder="https://example.com/dmarc-hook">
+      <span class="hint">HTTPS empfohlen.</span>
+    </label>
+    <label>Events
+      <input type="text" name="events" value="report.imported">
+      <span class="hint">Komma-separiert. Aktuell: <code>report.imported</code>, <code>test.ping</code>.</span>
+    </label>
+    <button type="submit" class="btn-primary">Webhook anlegen</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Konfigurierte Webhooks</h2>
+  {% if hooks %}
+  <table class="data">
+    <thead><tr><th>Label</th><th>URL</th><th>Events</th><th>Status</th><th>Letzter Call</th><th>Aktionen</th></tr></thead>
+    <tbody>
+    {% for wh in hooks %}
+      <tr>
+        <td>{{ wh.label }}<br><span class="muted small">Secret: <code>{{ wh.secret[:6] }}…</code></span></td>
+        <td class="small"><code>{{ wh.url }}</code></td>
+        <td><span class="badge">{{ wh.events }}</span></td>
+        <td>
+          {% if wh.enabled %}<span class="badge ok">aktiv</span>{% else %}<span class="badge warn">pausiert</span>{% endif %}
+          {% if wh.last_status %}
+            {% if 200 <= wh.last_status < 300 %}<span class="badge ok small">{{ wh.last_status }}</span>
+            {% else %}<span class="badge danger small" title="{{ wh.last_error }}">{{ wh.last_status }}</span>{% endif %}
+          {% endif %}
+        </td>
+        <td>{{ wh.last_called_at|dt }}</td>
+        <td>
+          <form method="post" action="/webhooks/{{ wh.id }}/test" style="display:inline"><button class="btn-link">test</button></form>
+          <form method="post" action="/webhooks/{{ wh.id }}/toggle" style="display:inline"><button class="btn-link">{% if wh.enabled %}pausieren{% else %}aktivieren{% endif %}</button></form>
+          <form method="post" action="/webhooks/{{ wh.id }}/delete" style="display:inline" onsubmit="return confirm('Webhook löschen?');"><button class="btn-link danger">löschen</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine Webhooks.</p>
+    <p class="muted small">Beispiel-Payload: <code>{ "event": "report.imported", "tenant_id": 1, "report_id": 42 }</code></p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

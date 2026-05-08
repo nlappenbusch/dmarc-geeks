@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Mein Account · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Mein Account</h1>
+
+<section class="card">
+  <p><strong>{{ user.email }}</strong> · Tenant: {{ tenant.name }}</p>
+</section>
+
+<section class="card">
+  <h2 style="margin-top: 0;">🔔 Benachrichtigungen</h2>
+  <p class="muted small" style="margin: 0 0 12px 0;">Welche System-Mails möchtest du bekommen? Blacklist-Alarme, DMARC-Spikes, Wochen-Digest etc. — pro Event-Typ einzeln aktivierbar, plus Ruhezeiten.</p>
+  <a href="/users/me/notifications" class="btn">Einstellungen verwalten →</a>
+</section>
+
+<section class="card">
+  <h2>Passwort ändern</h2>
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  {% if success %}<div class="alert alert-ok">{{ success }}</div>{% endif %}
+  <form method="post" action="/users/me/password" class="grid-form">
+    <label>Aktuelles Passwort<input type="password" name="current" required></label>
+    <label>Neues Passwort (min. 8)<input type="password" name="new" minlength="8" required></label>
+    <button type="submit" class="btn-primary">Ändern</button>
+  </form>
+</section>
+{% endblock %}

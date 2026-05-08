@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Reseller-Mailbox · {{ reseller.name }}{% endblock %}
+{% block content %}
+{% if polling_ids %}<meta http-equiv="refresh" content="6">{% endif %}
+<div class="breadcrumb"><a href="/reseller">MSP-Konsole</a> · Zentrale Mailbox</div>
+<h1>Zentrale Mailbox(en) <span class="muted small">{{ reseller.name }}</span></h1>
+<p class="muted">Eine zentrale IMAP-Mailbox für <strong>alle deine Endkunden</strong>. Reports werden automatisch per <code>policy_published.domain</code> in den richtigen Endkunden-Tenant geroutet — kein Pflegen von 50 Postfächern.</p>
+
+<div class="callout tip">
+  <strong>So funktioniert's:</strong> Lege eine zentrale Mailbox an (z.&nbsp;B. <code>dmarc@{{ reseller.slug }}.example</code>). Bei jedem Endkunden trägst du diese Adresse als <code>rua=mailto:...</code> in dessen DMARC-DNS-Record ein. Reports treffen alle hier ein und werden anhand der Domain automatisch dem richtigen Endkunden zugeordnet — vorausgesetzt, die Domain ist beim jeweiligen Endkunden-Tenant <em>registriert</em>. Domains ohne Match werden mit Status <span class="badge warn small">ignored</span> im Ingest-Log markiert.
+</div>
+
+<section class="card">
+  <h2>Neue Reseller-Mailbox</h2>
+
+  <div class="presets">
+    <span class="muted small">Anbieter-Preset:</span>
+    <button type="button" class="btn-link" onclick="applyPreset('gmail')">Gmail</button>
+    <button type="button" class="btn-link" onclick="applyPreset('m365')">Microsoft 365</button>
+    <button type="button" class="btn-link" onclick="applyPreset('mailbox')">mailbox.org</button>
+    <button type="button" class="btn-link" onclick="applyPreset('strato')">Strato</button>
+    <button type="button" class="btn-link" onclick="applyPreset('ionos')">IONOS</button>
+  </div>
+
+  <form id="mb-form" method="post" action="/reseller/mailboxes" class="grid-form">
+    <label>Bezeichnung<input name="label" required placeholder="MSP-zentrale dmarc-Mailbox"></label>
+    <label>Host<input name="host" required placeholder="imap.example.com"></label>
+    <label>Port<input name="port" type="number" value="993" required></label>
+    <label class="check"><input type="checkbox" name="use_ssl" value="true" checked> SSL/TLS</label>
+    <label>Username<input name="username" required></label>
+    <label>Passwort<input name="password" type="password" required></label>
+    <label>Folder<input name="folder" value="INBOX"></label>
+    <label>Verschieben nach (optional)<input name="move_to_folder" placeholder="Processed"></label>
+    <label class="check"><input type="checkbox" name="enabled" value="true"> Aktiv</label>
+    <button type="submit" class="btn-primary">Anlegen</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Konfigurierte Reseller-Mailboxen</h2>
+  {% if mailboxes %}
+  <table class="data">
+    <thead><tr><th>Label</th><th>Host</th><th>User</th><th>Letzter Poll</th><th>Status</th><th>Aktionen</th></tr></thead>
+    <tbody>
+    {% for m in mailboxes %}
+      <tr>
+        <td>{{ m.label }}</td>
+        <td>{{ m.host }}:{{ m.port }} {% if m.use_ssl %}<span class="badge ok small">SSL</span>{% endif %}</td>
+        <td>{{ m.username }}</td>
+        <td>{{ m.last_polled_at|dt }}</td>
+        <td>
+          {% if m.id in polling_ids %}<span class="badge brand"><span class="dot-spin"></span> läuft …</span>{% endif %}
+          {% if m.enabled %}<span class="badge ok">aktiv</span>{% else %}<span class="badge warn">pausiert</span>{% endif %}
+          {% if m.last_error %}
+          <details class="mb-error">
+            <summary><span class="badge danger small">Fehler</span></summary>
+            <div class="mb-error-body">{{ m.last_error }}</div>
+          </details>
+          {% endif %}
+        </td>
+        <td>
+          <form method="post" action="/reseller/mailboxes/{{ m.id }}/toggle" style="display:inline"><button class="btn-link">{% if m.enabled %}pausieren{% else %}aktivieren{% endif %}</button></form>
+          <form method="post" action="/reseller/mailboxes/{{ m.id }}/poll" style="display:inline"><button class="btn-link">jetzt prüfen</button></form>
+          <form method="post" action="/reseller/mailboxes/{{ m.id }}/delete" style="display:inline" onsubmit="return confirm('Mailbox löschen?');"><button class="btn-link danger">löschen</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine zentrale Mailbox.</p>
+    <p class="muted small">Anders als <a href="/mailboxes">tenant-spezifische Mailboxen</a> sammelt diese hier Reports <strong>für alle deine Endkunden</strong> auf einmal.</p>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+const PRESETS = {
+  gmail:   { host: 'imap.gmail.com',         port: 993, ssl: true },
+  m365:    { host: 'outlook.office365.com',  port: 993, ssl: true },
+  mailbox: { host: 'imap.mailbox.org',       port: 993, ssl: true },
+  strato:  { host: 'imap.strato.de',         port: 993, ssl: true },
+  ionos:   { host: 'imap.ionos.de',          port: 993, ssl: true },
+};
+function applyPreset(key) {
+  const p = PRESETS[key]; if (!p) return;
+  const f = document.getElementById('mb-form');
+  f.host.value = p.host; f.port.value = p.port; f.use_ssl.checked = p.ssl;
+}
+</script>
+{% endblock %}

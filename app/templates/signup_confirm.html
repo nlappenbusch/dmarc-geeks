@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account aktivieren · DMARC Aggregator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('dark'); })();
+  </script>
+</head>
+<body class="centered">
+<form method="post" action="/signup/confirm" class="card login">
+  <h1>Account aktivieren</h1>
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  <p class="muted small">Setze ein Passwort, um deinen Tenant + Account zu erstellen.</p>
+  <input type="hidden" name="email" value="{{ email }}">
+  <input type="hidden" name="token" value="{{ token }}">
+  <label>E-Mail<input type="email" value="{{ email }}" disabled></label>
+  <label>Passwort (min. 8)<input type="password" name="password" minlength="8" required autofocus></label>
+  <button type="submit" class="btn-primary">Aktivieren &amp; einloggen</button>
+</form>
+</body></html>

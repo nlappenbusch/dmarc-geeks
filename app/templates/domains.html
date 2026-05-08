@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Domains · DMARC Aggregator{% endblock %}
+{% block content %}
+<h1>Domains</h1>
+
+{% if user.is_admin or user.is_superadmin %}
+<div class="grid-2-50">
+<section class="card">
+  <h2>Neue Domain</h2>
+  <form method="post" action="/domains" class="row">
+    <input type="text" name="name" placeholder="example.com" required pattern="^[A-Za-z0-9\.\-]+$">
+    <button type="submit" class="btn-primary">Anlegen</button>
+  </form>
+  <p class="muted small">Reports werden für jede registrierte Domain automatisch zugeordnet (per <code>policy_published.domain</code>).</p>
+</section>
+<section class="card">
+  <h2>Bulk-Import</h2>
+  <form method="post" action="/domains/import" enctype="multipart/form-data" class="row">
+    <input type="file" name="file" accept=".csv,.txt" required>
+    <button type="submit" class="btn">Importieren</button>
+  </form>
+  <p class="muted small">CSV mit Spalte <code>name</code>/<code>domain</code> oder eine Domain pro Zeile. Duplikate werden übersprungen.</p>
+</section>
+</div>
+{% endif %}
+
+<section class="card">
+  {% if domains %}
+  <table class="data">
+    <thead><tr><th>Domain</th><th>Status</th><th>Verification-Token</th><th>Erstellt</th><th></th></tr></thead>
+    <tbody>
+    {% for d in domains %}
+      <tr>
+        <td><a href="/domains/{{ d.id }}">{{ d.name }}</a></td>
+        <td>{% if d.verified_at %}<span class="badge ok">verifiziert</span>{% else %}<span class="badge warn">nicht verifiziert</span>{% endif %}</td>
+        <td><code>{{ d.verification_token }}</code></td>
+        <td>{{ d.created_at|dt }}</td>
+        <td><a href="/domains/{{ d.id }}">Details →</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p class="muted">Noch keine Domains angelegt.</p>
+    {% if user.is_admin or user.is_superadmin %}
+    <p class="muted small">Trage oben deine erste Domain ein — z.&nbsp;B. <code>meinedomain.de</code>. Anschließend zeigt dir die Detail-Seite, welche zwei DNS-Records du brauchst.</p>
+    {% else %}
+    <p class="muted small">Bitte deinen Admin, eine Domain anzulegen — Member dürfen nur lesen.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

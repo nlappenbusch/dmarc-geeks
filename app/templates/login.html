@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login · DMARC Aggregator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (function() {
+      const t = localStorage.getItem('theme');
+      if (t === 'dark' || (t === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body class="centered">
+<div class="landing">
+  <section class="landing-hero">
+    <h1>DMARC-Reports, <span style="color:var(--brand)">verständlich</span>.</h1>
+    <p>Sammelt RUA-Reports automatisch aus deinem Postfach, parst Google/Microsoft/Yahoo-XML, und macht sichtbar wer in deinem Namen Mails verschickt — pro Domain, pro Mandant.</p>
+    <div class="landing-feats">
+      <div class="landing-feat"><span class="ico">🛰️</span><div><h4>IMAP &amp; HTTP-Upload</h4><p>Postfach anbinden oder Reports per API hochladen.</p></div></div>
+      <div class="landing-feat"><span class="ico">🏢</span><div><h4>Multi-Tenant</h4><p>Domains, Mailboxen und User strikt pro Mandant getrennt.</p></div></div>
+      <div class="landing-feat"><span class="ico">🧠</span><div><h4>Smarter Advisor</h4><p>Empfehlungen, wann du sicher von p=none auf p=quarantine umstellen kannst.</p></div></div>
+      <div class="landing-feat"><span class="ico">🔌</span><div><h4>Webhooks &amp; CSV</h4><p>Eigene Pipelines bauen — Daten gehören dir.</p></div></div>
+    </div>
+  </section>
+  <form method="post" action="/login" class="card login">
+    <h1>Anmelden</h1>
+    {% if request.session.get('flash') %}
+      {% set _flash = request.session.pop('flash') %}
+      <div class="alert {{ 'alert-ok' if _flash.kind=='ok' else 'alert-error' }}">{{ _flash.text }}</div>
+    {% endif %}
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <label>E-Mail<input type="email" name="email" required autofocus></label>
+    <label>Passwort<input type="password" name="password" required></label>
+    <button type="submit" class="btn-primary">Login</button>
+    <p class="muted small mt-8" style="text-align:center;">
+      <a href="/forgot">Passwort vergessen?</a>
+      {% if allow_signup %}· <a href="/signup">Account anlegen</a>{% endif %}
+      · <a href="/about">Über das Tool</a>
+    </p>
+  </form>
+</div>
+</body></html>

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Branding · {{ reseller.name }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/reseller">Reseller</a> · Branding</div>
+<h1>Branding pflegen</h1>
+<p class="muted">Diese Einstellungen gelten für <strong>{{ reseller.name }}</strong> und alle Endkunden-Tenants darunter. Wirkt sofort nach dem Speichern.</p>
+
+<section class="card">
+  <form method="post" action="/reseller/branding" class="grid-form">
+    <label style="grid-column: 1 / -1;">App-Name
+      <input type="text" name="app_name" value="{{ reseller.app_name }}" required>
+      <span class="hint">Erscheint im Topbar, in E-Mail-Subject-Lines, Browser-Title.</span>
+    </label>
+    <label>Brand-Farbe
+      <input type="color" name="brand_color" value="{{ reseller.brand_color }}">
+      <span class="hint">Akzentfarbe in der gesamten UI.</span>
+    </label>
+    <label style="grid-column: 1 / -1;">Logo-URL
+      <input type="url" name="logo_url" value="{{ reseller.logo_url or '' }}" placeholder="https://msp-firma.de/logo.png">
+      <span class="hint">Externe URL zu deinem Logo (PNG/SVG, max. 200×40 px empfohlen). Erscheint im Topbar statt Default-Brand.</span>
+    </label>
+    <label>Support-E-Mail
+      <input type="email" name="support_email" value="{{ reseller.support_email or '' }}" placeholder="support@msp-firma.de">
+      <span class="hint">Wird im Footer angezeigt.</span>
+    </label>
+    <label>Custom-Domain <span class="badge brand small">Reseller+</span>
+      <input type="text" name="custom_domain" value="{{ reseller.custom_domain or '' }}" placeholder="dmarc.msp-firma.de">
+      <span class="hint">Eigene Domain zum Anbieten. Erfordert DNS-CNAME auf unsere Plattform und TLS-Cert via Let's Encrypt (kommt als Feature, vorerst nur Speicherung).</span>
+    </label>
+    <label style="grid-column: 1 / -1;">Impressum (HTML)
+      <textarea name="imprint_html" rows="3" placeholder="<p>MSP Firma GmbH<br>Musterstraße 1<br>...</p>">{{ reseller.imprint_html or '' }}</textarea>
+      <span class="hint">Wird unter <code>/imprint</code> angezeigt wenn Endkunde auf deiner Custom-Domain ist.</span>
+    </label>
+    <label style="grid-column: 1 / -1;">Datenschutz (HTML)
+      <textarea name="privacy_html" rows="3">{{ reseller.privacy_html or '' }}</textarea>
+      <span class="hint">Analog für <code>/privacy</code>.</span>
+    </label>
+    <button type="submit" class="btn-primary">Speichern</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Vorschau</h2>
+  <div class="brand-preview" style="--preview-color: {{ reseller.brand_color }};">
+    <div class="preview-topbar">
+      {% if reseller.logo_url %}<img src="{{ reseller.logo_url }}" alt="Logo" style="height:24px;">
+      {% else %}<strong>{{ reseller.app_name }}</strong>{% endif %}
+      <span class="muted small" style="margin-left:auto;">Topbar-Vorschau</span>
+    </div>
+    <div style="margin-top:10px;">
+      <span class="badge" style="background: {{ reseller.brand_color }}1a; color: {{ reseller.brand_color }}; border-color: {{ reseller.brand_color }}40;">Brand-Akzent-Farbe</span>
+    </div>
+  </div>
+</section>
+
+<style>
+.brand-preview { background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+.preview-topbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; }
+</style>
+{% endblock %}
