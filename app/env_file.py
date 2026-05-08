@@ -186,12 +186,20 @@ def write_env(updates: dict[str, str], path: Optional[Path] = None) -> dict:
     if final_text and not final_text.endswith("\n"):
         final_text += "\n"
 
-    # Atomic write: temp + rename
+    # Atomic write: temp + rename. Faellt zurueck auf in-place-write wenn
+    # die Ziel-Datei ein bind-mount ist (Docker single-file mount kann nicht
+    # via rename() ersetzt werden -> "Device or resource busy").
     fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=".env.", suffix=".tmp", text=True)
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(final_text)
-        os.replace(tmp, p)
+        try:
+            os.replace(tmp, p)
+        except OSError:
+            # bind-mounted target -> write in place, dann tmp loeschen
+            p.write_text(final_text, encoding="utf-8")
+            try: os.unlink(tmp)
+            except OSError: pass
     except Exception:
         try: os.unlink(tmp)
         except OSError: pass
