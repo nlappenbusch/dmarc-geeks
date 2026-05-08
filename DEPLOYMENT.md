@@ -23,7 +23,7 @@ aus dem Internet erreichbar ist.
    - Deployment Script: `/opt/dmarc-geeks/deploy.sh`
    - `.env` liegt **nur auf dem Server** (nicht im Repo)
    - Stack: App-Container + Postgres-Container via `docker compose`
-   - App ist intern erreichbar auf Port **8085** (`8085:8000` im Compose, gesteuert ueber `APP_PORT` in `.env`)
+   - App ist intern erreichbar auf Port **8086** (`8086:8000` im Compose, gesteuert ueber `APP_PORT` in `.env`)
 
 3. **GitHub Actions Self-hosted Runner (intern)**
    - Laeuft als systemd service
@@ -31,7 +31,7 @@ aus dem Internet erreichbar ist.
    - Fuehrt Deploy-Script lokal aus
 
 4. **Nginx Proxy Manager (separate VM)**
-   - Forward `dmarc-geeks.ch` -> Docker-Server-IP:8085
+   - Forward `dmarc-geeks.ch` -> Docker-Server-IP:8086
    - TLS via Let's Encrypt
    - Wichtig: in NPM "Websockets Support" anhaken (HTMX schadet's nicht, kostet
      nichts; FastAPI selbst nutzt's nicht zwingend).
@@ -78,7 +78,7 @@ POSTGRES_USER=dmarc
 POSTGRES_PASSWORD=<starkes-passwort>
 POSTGRES_DB=dmarc
 
-APP_PORT=8085
+APP_PORT=8086
 
 SECRET_KEY=<via: python -c "import secrets; print(secrets.token_urlsafe(64))">
 FERNET_KEY=<via: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
@@ -142,7 +142,7 @@ sudo -u actions bash /opt/dmarc-geeks/deploy.sh
 Direkt-Test auf dem Server:
 
 ```bash
-curl -i http://127.0.0.1:8085/healthz
+curl -i http://127.0.0.1:8086/healthz
 ```
 
 ### 5) NPM-Forward
@@ -152,7 +152,7 @@ In Nginx Proxy Manager neuen Proxy Host:
 - Domain Names: `dmarc-geeks.ch`, ggf. `www.dmarc-geeks.ch`
 - Scheme: `http`
 - Forward Hostname / IP: `<Docker-Server-IP>`
-- Forward Port: `8085`
+- Forward Port: `8086`
 - "Block Common Exploits" + "Websockets Support" an
 - SSL: Let's Encrypt fuer beide Domains
 - "Force SSL" + "HTTP/2 Support" an
@@ -200,7 +200,7 @@ sonst scheitert `git fetch`.
 
 ### E) NPM Forward Port
 
-App haengt auf **8085** auf dem Docker-Host. NPM muss dorthin forwarden.
+App haengt auf **8086** auf dem Docker-Host. NPM muss dorthin forwarden.
 
 ### F) Secrets niemals ins Repo
 
@@ -229,7 +229,7 @@ docker exec -t $(docker ps -qf "name=db") \
 1. Lief der GitHub Actions Run durch?
 2. Runner-Logs zeigen "Succeeded"?
 3. Server: `sudo -u actions git -C /opt/dmarc-geeks log -1 --oneline`
-4. `curl http://127.0.0.1:8085/healthz`
+4. `curl http://127.0.0.1:8086/healthz`
 5. NPM zeigt auf richtigen Port?
 
 **Container nicht erreichbar:**
