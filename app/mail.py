@@ -13,21 +13,25 @@ from .templating import templates
 log = logging.getLogger(__name__)
 
 
-def render_email(name: str, **context) -> str:
-    """Render an HTML email template by name (without .html)."""
+def render_email(template: str, **context) -> str:
+    """Render an HTML email template by name (without .html).
+
+    Param is `template`, not `name`, so context can include ``name=...`` without
+    colliding with the positional argument.
+    """
     # Default branding context — overridable per call
-    context.setdefault("brand_name", "DMARC Aggregator")
+    context.setdefault("brand_name", "DMARC Geeks")
     context.setdefault("brand_logo", None)
     context.setdefault("brand_color", "#2563eb")
-    return templates.get_template(f"email/{name}.html").render(**context)
+    return templates.get_template(f"email/{template}.html").render(**context)
 
 
 def brand_for(reseller) -> dict:
     """Build the branding context dict for a Reseller. Falls back to platform default."""
     if reseller is None or getattr(reseller, "is_platform", False):
-        return {"brand_name": "DMARC Aggregator", "brand_logo": None, "brand_color": "#2563eb"}
+        return {"brand_name": "DMARC Geeks", "brand_logo": None, "brand_color": "#2563eb"}
     return {
-        "brand_name": reseller.app_name or "DMARC Aggregator",
+        "brand_name": reseller.app_name or "DMARC Geeks",
         "brand_logo": reseller.logo_url,
         "brand_color": reseller.brand_color or "#2563eb",
     }

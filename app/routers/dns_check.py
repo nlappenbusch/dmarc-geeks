@@ -56,6 +56,10 @@ def public_check(
     dom = _normalize_domain(domain)
     result = full_dns_check(dom) if dom and "." in dom else None
     score = score_check(result) if result else None
+    if dom and "." in dom:
+        # Lead-Signal: Domain wurde gecheckt -> einmalige Notification an Operator
+        from .marketing import notify_domain_check
+        notify_domain_check(request, tool="mail-health-check", domain=dom)
     template = "mailcheck_print.html" if print_view and result else "mailcheck.html"
     return render(
         request,

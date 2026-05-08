@@ -240,6 +240,75 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
     # Operator-Mail ist die "Pflicht-Sendung" -- wenn die scheitert, Fehler zeigen.
     sent = op_sent
 
+
+# ============================================================================
+# Lead-Notify bei Domain-Eingabe in oeffentlichen Tools (Mail-Check, DKIM Insp.)
+# ============================================================================
+
+def _operator_recipients(s) -> list[str]:
+    """SMTP_FROM + SUPERADMIN_EMAIL, dedupliziert."""
+    rec: list[str] = []
+    if s.smtp_from:
+        rec.append(s.smtp_from)
+    if s.superadmin_email and s.superadmin_email.lower() not in (r.lower() for r in rec):
+        rec.append(s.superadmin_email)
+    return rec or ["operator@localhost"]
+
+
+def notify_domain_check(request: Request, tool: str, domain: str) -> None:
+    """Schickt Lead-Notification ans Operator-Postfach, wenn jemand in einem
+    oeffentlichen Tool eine Domain eingibt. Session-dedup: pro Browser-Session
+    nur einmal pro (tool, domain) feuern -- Refreshes feuern nichts neu.
+    Silent fail wenn SMTP nicht konfiguriert.
+    """
+    if not domain or "." not in domain:
+        return
+    domain = domain.strip().lower().rstrip(".")
+    session_key = "lead_notified"
+    notified = set(request.session.get(session_key, []))
+    fp = f"{tool}::{domain}"
+    if fp in notified:
+        return
+    notified.add(fp)
+    request.session[session_key] = list(notified)[-50:]  # cap session size
+
+    try:
+        from .. import mail as mail_mod
+        from ..config import get_settings
+        s = get_settings()
+        ip = request.client.host if request.client else "-"
+        ua = request.headers.get("user-agent", "-")
+        ref = request.headers.get("referer", "-")
+        subject = f"[Lead] {domain} im {tool} geprüft"
+        text = (
+            f"Jemand hat im Tool '{tool}' eine Domain eingegeben:\n\n"
+            f"  Domain:   {domain}\n"
+            f"  IP:       {ip}\n"
+            f"  Referer:  {ref}\n"
+            f"  User-Agent: {ua}\n\n"
+            f"Schau dir die Domain an: https://dmarc-geeks.ch/check?domain={domain}\n"
+        )
+        html = (
+            f"<h2 style='margin:0 0 12px 0'>Lead-Signal: Domain-Check</h2>"
+            f"<p>Jemand hat im Tool <strong>{tool}</strong> die Domain "
+            f"<strong>{domain}</strong> geprueft.</p>"
+            f"<table style='border-collapse:collapse;font:14px sans-serif'>"
+            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Domain</td>"
+            f"<td><a href='https://dmarc-geeks.ch/check?domain={domain}'>{domain}</a></td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>IP</td><td>{ip}</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Referer</td><td>{ref}</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>User-Agent</td><td>{ua}</td></tr>"
+            f"</table>"
+        )
+        mail_mod.send_mail(
+            to=_operator_recipients(s),
+            subject=subject, text=text, html=html,
+        )
+    except Exception:  # noqa: BLE001
+        # Lead-Notification darf NIE den User-Request crashen
+        import logging
+        logging.getLogger(__name__).warning("notify_domain_check failed", exc_info=True)
+
     if not sent:
         # SMTP nicht konfiguriert oder fehlgeschlagen -> wir loggen's, zeigen aber
         # dem User keinen 500er, sondern eine ehrliche "wir konnten gerade nicht
@@ -337,6 +406,9 @@ def dkim_check_tool(request: Request, domain: str = "", selector: str = ""):
 
     results = None
     summary_msg = None
+    if domain and "." in domain:
+        # Lead-Signal: jemand prueft eine Domain mit dem DKIM-Inspector
+        notify_domain_check(request, tool="dkim-inspector", domain=domain)
     if domain and "." in domain:
         if selector:
             # Manual single-selector check
