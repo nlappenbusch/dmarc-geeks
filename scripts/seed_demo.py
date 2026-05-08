@@ -185,6 +185,54 @@ def _gen_reports_for_day(db, domain: Domain, policy: str, senders: list, day: da
                                        domain=domain.name, result=spf, scope="mfrom"))
 
 
+def seed_tenant(db, tenant: Tenant, days: int = 30, reset: bool = False) -> dict:
+    """Seed demo domains + reports into the given tenant. Idempotent.
+
+    Returns a dict with counts so callers (CLI or web /demo endpoint) can show stats.
+    """
+    deleted = 0
+    if reset:
+        for d in db.execute(
+            select(Domain).where(Domain.tenant_id == tenant.id, Domain.name.like("%.demo"))
+        ).scalars().all():
+            db.delete(d)
+            deleted += 1
+        db.commit()
+
+    domains_seen = []
+    for spec in DEMOS:
+        d = _create_domain(db, tenant, spec["name"], spec["tags"])
+        domains_seen.append(d)
+        for label, ips, _, fail_rate in spec["senders"]:
+            if fail_rate < 0.5:
+                for ip in ips:
+                    if not db.execute(select(IpAllowlist).where(
+                        IpAllowlist.domain_id == d.id, IpAllowlist.ip_or_cidr == ip
+                    )).scalars().first():
+                        db.add(IpAllowlist(tenant_id=tenant.id, domain_id=d.id,
+                                            ip_or_cidr=ip, label=label))
+        db.commit()
+
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    reports_added = 0
+    for spec in DEMOS:
+        d = db.execute(
+            select(Domain).where(Domain.tenant_id == tenant.id, Domain.name == spec["name"])
+        ).scalars().first()
+        for n in range(days):
+            day = today - timedelta(days=n)
+            _gen_reports_for_day(db, d, spec["policy"], spec["senders"], day)
+            reports_added += 1
+        db.commit()
+
+    return {
+        "tenant": tenant.name,
+        "domains": len(domains_seen),
+        "reports_days": days,
+        "deleted_on_reset": deleted,
+    }
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--reset", action="store_true",
@@ -195,42 +243,11 @@ def main():
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
         tenant = _ensure_tenant(db)
-        if args.reset:
-            for d in db.execute(
-                select(Domain).where(Domain.tenant_id == tenant.id, Domain.name.like("%.demo"))
-            ).scalars().all():
-                db.delete(d)
-            db.commit()
-
+        result = seed_tenant(db, tenant, days=args.days, reset=args.reset)
         for spec in DEMOS:
-            d = _create_domain(db, tenant, spec["name"], spec["tags"])
-            # Allowlist legit IPs
-            for label, ips, _, fail_rate in spec["senders"]:
-                if fail_rate < 0.5:
-                    for ip in ips:
-                        if not db.execute(select(IpAllowlist).where(
-                            IpAllowlist.domain_id == d.id, IpAllowlist.ip_or_cidr == ip
-                        )).scalars().first():
-                            db.add(IpAllowlist(tenant_id=tenant.id, domain_id=d.id,
-                                                ip_or_cidr=ip, label=label))
-            db.commit()
-
-        # Generate reports
-        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-        for spec in DEMOS:
-            d = db.execute(
-                select(Domain).where(Domain.tenant_id == tenant.id, Domain.name == spec["name"])
-            ).scalars().first()
-            for n in range(args.days):
-                day = today - timedelta(days=n)
-                _gen_reports_for_day(db, d, spec["policy"], spec["senders"], day)
-            db.commit()
             print(f"  OK {spec['name']}: {args.days} Tage Demo-Daten")
-
-    try:
-        print("\nFertig. Login -> Dashboard oeffnen, um die Demo-Daten zu sehen.")
-    except UnicodeEncodeError:
-        pass
+        print(f"\nFertig: {result}")
+        print("Login -> Dashboard oeffnen, um die Demo-Daten zu sehen.")
 
 
 if __name__ == "__main__":

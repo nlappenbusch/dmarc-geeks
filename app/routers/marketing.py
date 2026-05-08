@@ -1,9 +1,69 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from ..database import get_db
+from ..models import CustomerProfile, Tenant, TenantSettings, User
+from ..security import hash_password, make_token
 from ..templating import render
 
 router = APIRouter()
+
+
+# Demo-Tenant-Konfiguration -- isoliert vom echten Default-Tenant.
+# Das Passwort ist absichtlich hart codiert (nicht geheim) -- es ist eine
+# oeffentliche Demo, jeder klickt auf "Live-Demo" und wird automatisch
+# eingeloggt. Der User hat is_admin=true (damit er navigieren kann), ist aber
+# kein Superadmin (kann keine Tenants/User systemweit anlegen).
+DEMO_TENANT_SLUG = "demo"
+DEMO_TENANT_NAME = "Demo-Tenant"
+DEMO_USER_EMAIL = "demo@dmarc-geeks.ch"
+
+
+def _ensure_demo(db: Session) -> User:
+    """Garantiert: Demo-Tenant + Demo-User + 30 Tage Demo-Daten existieren.
+    Idempotent -- mehrmaliges Aufrufen fuegt nichts doppelt hinzu."""
+    from scripts.seed_demo import seed_tenant
+
+    tenant = db.execute(select(Tenant).where(Tenant.slug == DEMO_TENANT_SLUG)).scalars().first()
+    if tenant is None:
+        tenant = Tenant(name=DEMO_TENANT_NAME, slug=DEMO_TENANT_SLUG)
+        db.add(tenant)
+        db.flush()
+    if tenant.settings is None:
+        db.add(TenantSettings(tenant_id=tenant.id, brand_color="#7c3aed"))
+    if db.get(CustomerProfile, tenant.id) is None:
+        db.add(CustomerProfile(tenant_id=tenant.id))
+    db.commit()
+
+    user = db.execute(select(User).where(User.email == DEMO_USER_EMAIL)).scalars().first()
+    if user is None:
+        user = User(
+            email=DEMO_USER_EMAIL,
+            password_hash=hash_password(make_token()),  # password unused for demo
+            tenant_id=tenant.id,
+            is_admin=True,
+            is_superadmin=False,
+        )
+        db.add(user)
+        db.commit()
+
+    seed_tenant(db, tenant, days=30, reset=False)
+    return user
+
+
+@router.get("/demo")
+def demo_signin(request: Request, db: Session = Depends(get_db)):
+    """Public live demo -- creates demo tenant + user + data on first hit, then logs in."""
+    user = _ensure_demo(db)
+    request.session.clear()
+    request.session["user_id"] = user.id
+    request.session["flash"] = (
+        "🎯 Demo-Modus aktiv. Du siehst 3 Beispiel-Domains mit 30 Tagen Reports. "
+        "Klick dich durch, alles ist live. Logout via Profil-Menue."
+    )
+    return RedirectResponse("/dashboard", status_code=303)
 
 
 @router.get("/")

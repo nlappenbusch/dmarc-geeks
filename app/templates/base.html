@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}DMARC Aggregator{% endblock %}</title>
+  <title>{% block title %}DMARC Geeks{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
     {% if brand_logo_url(tenant) %}
       <img src="{{ brand_logo_url(tenant) }}" alt="Logo" style="height:24px; vertical-align:middle;">
     {% else %}
-      {{ brand_app_name(tenant) }}
+      <img src="/static/logo.svg" alt="" width="22" height="22" style="vertical-align:-5px;margin-right:6px">{{ brand_app_name(tenant) }}
     {% endif %}
   </a>
   <button class="nav-toggle" type="button" aria-label="Navigation umschalten" onclick="document.querySelector('.topbar nav').classList.toggle('open')">

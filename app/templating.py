@@ -38,11 +38,11 @@ def _brand_color(tenant) -> str:
 
 def _brand_app_name(tenant) -> str:
     if tenant is None:
-        return "DMARC Aggregator"
+        return "DMARC Geeks"
     reseller = getattr(tenant, "reseller", None)
     if reseller is not None and not getattr(reseller, "is_platform", False):
-        return reseller.app_name or "DMARC Aggregator"
-    return "DMARC Aggregator"
+        return reseller.app_name or "DMARC Geeks"
+    return "DMARC Geeks"
 
 
 def _brand_logo_url(tenant) -> str | None:
