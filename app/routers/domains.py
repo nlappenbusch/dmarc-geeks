@@ -366,6 +366,13 @@ def managed_dmarc_check_cname(
         answers = fresh.resolve(qname, "CNAME", lifetime=5.0)
         targets = [str(r.target).lower() for r in answers]
         if any(t.rstrip(".") + "." == expected.lower() for t in targets):
+            # CNAME bewiesen -> Domain-Ownership implizit nachgewiesen
+            # (nur DNS-Owner kann den CNAME setzen). Onboarding-Step "verifiziert"
+            # damit ohne separaten dmarc-aggregator-verify TXT-Record automatisch.
+            if domain.verified_at is None:
+                from datetime import datetime, timezone
+                domain.verified_at = datetime.now(timezone.utc)
+                db.commit()
             return JSONResponse({"ok": True, "status": "active",
                                  "msg": f"CNAME zeigt korrekt auf {expected}"})
         return JSONResponse({"ok": False, "status": "mismatch",
