@@ -169,13 +169,7 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
     # User-Setup: SMTP_FROM=service@dmarc-geeks.ch, SUPERADMIN_EMAIL=nlappenbusch@gmail.com
     # -> beide bekommen die Anfrage, Operator UND Inhaber.
     s = get_settings()
-    op_recipients: list[str] = []
-    if s.smtp_from:
-        op_recipients.append(s.smtp_from)
-    if s.superadmin_email and s.superadmin_email.lower() not in (r.lower() for r in op_recipients):
-        op_recipients.append(s.superadmin_email)
-    if not op_recipients:
-        op_recipients = ["operator@localhost"]
+    op_recipients = _operator_recipients(s)
 
     op_subject = f"[Anfrage: {_topic_label(topic)}] {name}"
     op_text = (
@@ -262,12 +256,29 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
 # ============================================================================
 
 def _operator_recipients(s) -> list[str]:
-    """SMTP_FROM + SUPERADMIN_EMAIL, dedupliziert."""
+    """SMTP_FROM + SUPERADMIN_EMAIL + LEAD_NOTIFY_EMAILS, dedupliziert.
+
+    SMTP_FROM = Operator-Postfach (z.B. service@firma.ch)
+    SUPERADMIN_EMAIL = Login-Adresse (auch im Loop)
+    LEAD_NOTIFY_EMAILS = komma-separierte Liste zusaetzlicher Lead-Empfaenger
+                        (z.B. private Gmail, CRM-Inbox, ...)
+    """
     rec: list[str] = []
-    if s.smtp_from:
-        rec.append(s.smtp_from)
-    if s.superadmin_email and s.superadmin_email.lower() not in (r.lower() for r in rec):
-        rec.append(s.superadmin_email)
+    seen: set[str] = set()
+
+    def _add(email: str) -> None:
+        e = (email or "").strip()
+        if not e:
+            return
+        if e.lower() in seen:
+            return
+        seen.add(e.lower())
+        rec.append(e)
+
+    _add(s.smtp_from)
+    _add(s.superadmin_email)
+    for e in (s.lead_notify_emails or "").split(","):
+        _add(e)
     return rec or ["operator@localhost"]
 
 

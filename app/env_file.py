@@ -93,6 +93,9 @@ EDITABLE_FIELDS: list[dict] = [
      "hint": "Standard an. Auf <strong>aus</strong> setzen wenn dein Mail-Provider ein selbst-signiertes Zertifikat hat (typisch bei pc4play, kleinen Self-Hosted-Servern). Sicherheits-Trade-off: MITM-Angriffe sind dann möglich — nur in vertrauenswürdigen Netzen ausschalten.", "kind": "bool"},
     {"key": "SMTP_FROM", "label": "From-Adresse", "group": "Mail-Versand",
      "hint": "Absender für alle System-Mails.", "kind": "email"},
+    {"key": "LEAD_NOTIFY_EMAILS", "label": "Lead-Mail Empfänger (zusätzlich)", "group": "Mail-Versand",
+     "hint": "Komma-separierte Liste zusätzlicher Empfänger für <strong>Lead-Mails</strong> (Kontakt-Anfrage, Domain-Check in öffentlichen Tools). Beispiel: <code>nils@privat.ch, sales@firma.ch</code>. SMTP_FROM und SUPERADMIN_EMAIL bekommen die Lead-Mails sowieso.",
+     "kind": "text"},
 ]
 
 

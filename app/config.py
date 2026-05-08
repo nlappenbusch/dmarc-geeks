@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     # generische Fehler-Seite. NICHT in Produktion anlassen — gibt internals preis.
     debug_traceback: bool = Field(default=False, alias="DEBUG_TRACEBACK")
 
+    # Zusaetzliche Empfaenger fuer Lead-Mails (Kontakt-Anfrage, Domain-Check
+    # in oeffentlichen Tools). Komma-separiert. Default leer — nur Operator
+    # (SMTP_FROM) bekommt dann was. Auf Prod z.B. private Gmail eintragen.
+    lead_notify_emails: str = Field(default="", alias="LEAD_NOTIFY_EMAILS")
+
 
 @lru_cache()
 def get_settings() -> Settings:
