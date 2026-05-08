@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/marketing.css">
   <script>
     (function() { const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+      if (t === 'dark')
         document.documentElement.classList.add('dark'); })();
   </script>
   <script src="/static/mailcheck-loader.js" defer></script>
@@ -35,6 +35,7 @@
       <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
     <a href="/signup" class="btn-primary">Tool starten</a>
   </div>
 </header>
@@ -47,7 +48,7 @@
     <h1 class="svc-h1">HIN — sicher kommunizieren<br><span class="grad-text">im Gesundheitswesen.</span></h1>
     <p class="lede">HIN (Health Info Net) ist <strong>die de-facto Pflicht-Plattform</strong> für Spitäler, Arztpraxen, Apotheken und Versicherer in der Schweiz — sichere Mail, gesicherter Patientendaten-Austausch, Telematikdienste, EPD-Anbindung. Wir setzen HIN sauber gegen deine bestehende Mail-Infrastruktur auf, integrieren KIS/PIS/PRAX und kümmern uns um die Compliance-Doku.</p>
     <div class="svc-hero-cta">
-      <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/kontakt?topic=hin" class="btn-primary big">Erstgespräch buchen</a>
       <a href="#integrationen" class="btn-ghost-arrow">KIS/PIS-Anbindung <span>→</span></a>
     </div>
     <div class="svc-hero-meta">
@@ -309,7 +310,7 @@
       <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
         <a href="/services/seppmail" class="btn">→ SeppMail</a>
         <a href="/services/dmarc" class="btn">→ DMARC</a>
-        <a href="mailto:hello@example.com?subject=Gesundheits-Stack-Komplett" class="btn-primary">Kombi-Angebot anfragen</a>
+        <a href="/kontakt?topic=hin-stack" class="btn-primary">Kombi-Angebot anfragen</a>
       </div>
     </div>
   </div>
@@ -402,7 +403,7 @@
     <h2>30 Min Erstgespräch — gratis.</h2>
     <p>Erzähl uns deine Praxis/Spital-Größe und IT-Stack. Wir sagen dir was zu tun ist und was es kosten wird. Schweizerdeutsch, Hochdeutsch oder Französisch — wie du willst.</p>
     <div class="cta-buttons">
-      <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/kontakt?topic=hin" class="btn-primary big">Erstgespräch buchen</a>
       <a href="/services" class="btn big">Alle Services</a>
     </div>
   </div>
@@ -421,7 +422,7 @@
 <!-- STICKY-CTA -->
 <div class="svc-sticky-cta" id="stickyCta" role="region" aria-label="Schnellkontakt">
   <span class="svc-sticky-cta-text">HIN-Setup für deine Praxis / dein Spital</span>
-  <a href="mailto:hello@example.com?subject=HIN-Erstgespräch" class="btn-primary">Erstgespräch →</a>
+  <a href="/kontakt?topic=hin" class="btn-primary">Erstgespräch →</a>
 </div>
 
 <script>

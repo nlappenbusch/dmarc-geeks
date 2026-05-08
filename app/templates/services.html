@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/marketing.css">
   <script>
     (function() { const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+      if (t === 'dark')
         document.documentElement.classList.add('dark'); })();
   </script>
   <script src="/static/mailcheck-loader.js" defer></script>
@@ -35,6 +35,7 @@
       <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
     <a href="/signup" class="btn-primary">Tool starten</a>
   </div>
 </header>
@@ -53,7 +54,7 @@
     <h1 style="max-width:980px; margin: 0 auto 20px;">Wir kümmern uns um deine <span class="grad-text">Mail-Infrastruktur</span>.</h1>
     <p class="lede" style="max-width:780px; margin: 0 auto 32px;">Von DMARC-Rollout bis Mailcow-Betrieb. Von SPF-Records bis Exchange-Online-Threat-Policies. Beratung, Setup, Migration, Hardening, 24/7-Betrieb — du wählst Tiefe und Engagement-Modell, wir liefern.</p>
     <div class="hero-cta" style="justify-content:center;">
-      <a href="mailto:hello@example.com?subject=Erstgespr%C3%A4ch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/kontakt?topic=general" class="btn-primary big">Erstgespräch buchen</a>
       <a href="#capabilities" class="btn-ghost-arrow">Was wir machen <span>→</span></a>
     </div>
     <div class="hero-trust" style="justify-content:center; margin-top:32px;">
@@ -493,7 +494,7 @@
         <li>Strategie-Sparring</li>
         <li>Hands-On-Live-Setup</li>
       </ul>
-      <a href="mailto:hello@example.com?subject=Beratungs-Workshop" class="btn">Workshop anfragen</a>
+      <a href="/kontakt?topic=general" class="btn">Workshop anfragen</a>
     </div>
 
     <div class="engage-card featured">
@@ -522,7 +523,7 @@
         <li>Patch- &amp; Update-Plan</li>
         <li>Quartals-Review</li>
       </ul>
-      <a href="mailto:hello@example.com?subject=Retainer" class="btn">Retainer anfragen</a>
+      <a href="/kontakt?topic=general" class="btn">Retainer anfragen</a>
     </div>
 
     <div class="engage-card">
@@ -536,7 +537,7 @@
         <li>Risiko-Matrix</li>
         <li>Auditor-tauglich</li>
       </ul>
-      <a href="mailto:hello@example.com?subject=Audit" class="btn">Audit anfragen</a>
+      <a href="/kontakt?topic=general" class="btn">Audit anfragen</a>
     </div>
   </div>
 </section>
@@ -659,7 +660,7 @@
           <li>✓ Sender-Inventar als Doku</li>
           <li>✓ 30 Tage Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=DMARC-Quickstart" class="btn-primary">Buchen</a>
+        <a href="/kontakt?topic=dmarc-quickstart" class="btn-primary">Buchen</a>
       </div>
 
       <div class="pkg featured">
@@ -676,7 +677,7 @@
           <li>✓ Abschluss-Audit-Bericht</li>
           <li>✓ 3 Monate Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=DMARC-Reise" class="btn-primary">Buchen</a>
+        <a href="/kontakt?topic=dmarc-reise" class="btn-primary">Buchen</a>
       </div>
 
       <div class="pkg">
@@ -691,7 +692,7 @@
           <li>✓ Migration von Exchange / IONOS / etc. (optional)</li>
           <li>✓ Doku &amp; Runbook</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Mailcow-Setup" class="btn">Anfragen</a>
+        <a href="/kontakt?topic=general" class="btn">Anfragen</a>
       </div>
 
       <div class="pkg">
@@ -706,7 +707,7 @@
           <li>✓ Quarantine-Policies &amp; User-Self-Service</li>
           <li>✓ Doku &amp; Compliance-Nachweis</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=M365-Threat-Hardening" class="btn">Buchen</a>
+        <a href="/kontakt?topic=m365-threat" class="btn">Buchen</a>
       </div>
 
       <div class="pkg">
@@ -721,7 +722,7 @@
           <li>✓ Reputation- &amp; RBL-Integration</li>
           <li>✓ Monitoring-Hook (Prometheus/Grafana)</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Mail-Gateway" class="btn">Anfragen</a>
+        <a href="/kontakt?topic=general" class="btn">Anfragen</a>
       </div>
 
       <div class="pkg">
@@ -736,7 +737,7 @@
           <li>✓ DNS-Vorschläge zum Copy-Paste</li>
           <li>✓ 30 Tage Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=SPF-DKIM-Audit" class="btn">Buchen</a>
+        <a href="/kontakt?topic=spf-dkim" class="btn">Buchen</a>
       </div>
 
       <div class="pkg">
@@ -750,7 +751,7 @@
           <li>✓ DNS-Records inkl. Validierung</li>
           <li>✓ Doku für Compliance-Nachweis</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=MTA-STS" class="btn">Buchen</a>
+        <a href="/kontakt?topic=general" class="btn">Buchen</a>
       </div>
 
       <div class="pkg">
@@ -765,7 +766,7 @@
           <li>✓ VMC-Beratung (Entrust/DigiCert)</li>
           <li>✓ Validierung in Gmail/Yahoo/Apple</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=BIMI" class="btn">Buchen</a>
+        <a href="/kontakt?topic=general" class="btn">Buchen</a>
       </div>
 
       <div class="pkg pkg-dark">
@@ -780,7 +781,7 @@
           <li>✓ Begleitung im externen Audit (optional)</li>
           <li>✓ <a href="/compliance" style="color: rgba(255,255,255,0.85);">Standards-Übersicht →</a></li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Compliance-Audit" class="btn-primary">Anfragen</a>
+        <a href="/kontakt?topic=general" class="btn-primary">Anfragen</a>
       </div>
     </div>
 
@@ -802,7 +803,7 @@
           <li><strong>Co-Branding bei Audits</strong> — wir treten als dein Partner auf, nicht als Konkurrenz</li>
           <li><strong>Wiederkehrende Provision</strong> auf Service-Pakete im Reseller+-Plan</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=MSP-Partnerschaft" class="btn-primary big">Partner werden</a>
+        <a href="/kontakt?topic=general" class="btn-primary big">Partner werden</a>
       </div>
       <div class="msp-partner-quote">
         <div class="quote-icon">"</div>
@@ -865,7 +866,7 @@
     <h2>Erstgespräch ist gratis.</h2>
     <p>30 Minuten Video-Call, danach weißt du wo dein Setup steht und was es kostet.</p>
     <div class="cta-buttons">
-      <a href="mailto:hello@example.com?subject=Erstgespr%C3%A4ch" class="btn-primary big">Termin anfragen</a>
+      <a href="/kontakt?topic=general" class="btn-primary big">Termin anfragen</a>
       <a href="/" class="btn big">← zur Startseite</a>
     </div>
   </div>

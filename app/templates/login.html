@@ -10,7 +10,7 @@
   <script>
     (function() {
       const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      if (t === 'dark') {
         document.documentElement.classList.add('dark');
       }
     })();

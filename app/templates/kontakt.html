@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anfrage · DMARC Geeks</title>
+  <meta name="description" content="Demo, Erstgespräch, Reseller-Pilot oder Audit anfragen — Antwort innerhalb 24 Stunden.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <style>
+    .kontakt-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+    .kontakt-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 36px; align-items: start; margin-top: 24px; }
+    @media (max-width: 880px) { .kontakt-grid { grid-template-columns: 1fr; } }
+
+    .kontakt-form-card {
+      background: var(--card, #fff);
+      border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 4px 24px -8px rgba(15,23,42,.08);
+    }
+    .kontakt-form-card h1 { font-size: 28px; line-height: 1.15; margin: 0 0 6px; }
+    .kontakt-form-card .lede { color: var(--muted, #64748b); margin: 0 0 22px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 13px; font-weight: 600; color: var(--text, #0f172a); }
+    .field label .req { color: #ef4444; margin-left: 2px; }
+    .field input, .field textarea, .field select {
+      font: inherit; padding: 10px 12px; border: 1px solid var(--border, #e2e8f0);
+      border-radius: 8px; background: var(--input-bg, #fff); color: inherit;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      outline: 2px solid var(--brand, #2563eb); outline-offset: -1px; border-color: var(--brand, #2563eb);
+    }
+    .field textarea { min-height: 120px; resize: vertical; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
+
+    .honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+    .submit-row { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+    .submit-row .btn-primary { padding: 12px 22px; font-size: 15px; }
+    .submit-row .muted { font-size: 12.5px; }
+
+    .alert-error {
+      background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
+      padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+    }
+    .html.dark .alert-error { background:#3f0d0d; color:#fecaca; border-color:#7f1d1d; }
+
+    .kontakt-side {
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .kontakt-info-card {
+      background: linear-gradient(135deg, rgba(37,99,235,0.07), rgba(124,58,237,0.07));
+      border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px; padding: 22px;
+    }
+    .kontakt-info-card h3 { margin: 0 0 8px; font-size: 17px; }
+    .kontakt-info-card p { margin: 0 0 12px; color: var(--muted, #64748b); font-size: 14px; line-height: 1.6; }
+    .kontakt-info-card ul { margin: 8px 0 0 0; padding: 0 0 0 18px; color: var(--muted, #64748b); font-size: 14px; line-height: 1.7; }
+    .kontakt-trust { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted, #64748b); }
+    .kontakt-trust span { padding: 4px 10px; border: 1px solid var(--border, #e2e8f0); border-radius: 999px; background: var(--card, #fff); }
+
+    .kontakt-thanks {
+      background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(37,99,235,0.06));
+      border: 1px solid #86efac; border-radius: 14px; padding: 28px;
+      text-align: center;
+    }
+    .kontakt-thanks .check {
+      width: 60px; height: 60px; border-radius: 50%; background: #22c55e; color: white;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 800; margin-bottom: 14px;
+    }
+    .kontakt-thanks h1 { margin: 0 0 8px; font-size: 24px; }
+    .kontakt-thanks p { margin: 0 0 12px; color: var(--muted, #64748b); }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/#features">Features</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/#preise">Preise</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+  </div>
+</header>
+
+<main class="kontakt-wrap">
+
+{% if sent %}
+  <div class="kontakt-thanks">
+    <div class="check">✓</div>
+    <h1>Danke — deine Anfrage ist da!</h1>
+    <p>Wir melden uns innerhalb von <strong>24 Stunden</strong> bei dir per E-Mail.</p>
+    <p style="margin-top:18px;">
+      <a href="/" class="btn-link">← Zurück zur Startseite</a>
+      &middot;
+      <a href="/demo" class="btn-link">🎯 Inzwischen die Live-Demo ansehen →</a>
+    </p>
+  </div>
+{% else %}
+
+<div style="text-align:center; max-width:680px; margin: 0 auto 8px;">
+  <span class="eyebrow"><span class="dot-live"></span>Antwort innerhalb 24 Stunden</span>
+  <h1 style="font-size: 36px; line-height: 1.1; margin: 14px 0 8px;">Lass uns reden.</h1>
+  <p class="lede" style="margin: 0;">Demo, Pilot, Audit oder Reseller-Plan — sag uns, was du brauchst, und wir antworten <strong>persönlich</strong>.</p>
+</div>
+
+<div class="kontakt-grid">
+
+  <!-- LEFT: form -->
+  <form class="kontakt-form-card" method="post" action="/kontakt" novalidate>
+    <h1>{{ topic_label }}</h1>
+    <p class="lede">Schreib kurz worum's geht — dann melden wir uns mit konkretem Vorschlag oder einem Slot.</p>
+
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="field">
+      <label for="topic">Thema</label>
+      <select name="topic" id="topic">
+        {% for slug, label in topics.items() %}
+          <option value="{{ slug }}" {% if slug == topic %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="name">Name<span class="req">*</span></label>
+        <input type="text" id="name" name="name" required minlength="2" autocomplete="name" value="{{ posted_name or '' }}">
+      </div>
+      <div class="field">
+        <label for="email">E-Mail<span class="req">*</span></label>
+        <input type="email" id="email" name="email" required autocomplete="email" value="{{ posted_email or '' }}">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="company">Firma</label>
+        <input type="text" id="company" name="company" autocomplete="organization" value="{{ posted_company or '' }}">
+      </div>
+      <div class="field">
+        <label for="phone">Telefon (optional)</label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel" value="{{ posted_phone or '' }}">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="message">Nachricht<span class="req">*</span></label>
+      <textarea id="message" name="message" required minlength="10" placeholder="Kurz beschreiben, worum's geht — wieviele Domains, welche Erwartung, etc.">{{ posted_message or (prefill_domain and ('Hallo,\n\nich interessiere mich für DMARC für ' + prefill_domain + '. ') or '') }}</textarea>
+    </div>
+
+    <!-- Honeypot: bots fuellen das, Menschen sehen es nicht -->
+    <div class="honeypot" aria-hidden="true">
+      <label>Webseite (bitte leer lassen)<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-primary big">Anfrage senden →</button>
+      <span class="muted">Kein Spam. Wir verwenden deine Daten nur für die Antwort auf diese Anfrage.</span>
+    </div>
+  </form>
+
+  <!-- RIGHT: trust / FAQ -->
+  <aside class="kontakt-side">
+    <div class="kontakt-info-card">
+      <h3>Was passiert nach dem Absenden?</h3>
+      <ul>
+        <li>Du bekommst eine E-Mail-Bestätigung (sofort).</li>
+        <li>Wir antworten innerhalb von <strong>24 Stunden</strong> persönlich.</li>
+        <li>Erstgespräch ist <strong>kostenlos</strong> und unverbindlich.</li>
+      </ul>
+    </div>
+
+    <div class="kontakt-info-card">
+      <h3>Lieber direkt selbst klicken?</h3>
+      <p>Probier die Live-Demo — kein Login, sofort ein voll bespieltes Dashboard mit 30 Tagen Reports.</p>
+      <a href="/demo" class="btn-primary">🎯 Live-Demo öffnen</a>
+    </div>
+
+    <div class="kontakt-trust">
+      <span>🇨🇭 Made in Switzerland</span>
+      <span>DSG &amp; DSGVO</span>
+      <span>Antwort &lt; 24h</span>
+    </div>
+  </aside>
+</div>
+
+{% endif %}
+
+</main>
+
+<footer class="mkt-footer">
+  <div class="mkt-footer-inner">
+    <div class="mkt-footer-brand">
+      <strong>DMARC<span style="color:var(--brand)">Geeks</span></strong>
+      <p class="muted small">© 2026 · Made in Switzerland</p>
+    </div>
+    <div class="mkt-footer-links">
+      <a href="/">Start</a>
+      <a href="/services">Services</a>
+      <a href="/wissen">Wissen</a>
+      <a href="/compliance">Compliance</a>
+      <a href="/login">Login</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

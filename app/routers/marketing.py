@@ -59,11 +59,163 @@ def demo_signin(request: Request, db: Session = Depends(get_db)):
     user = _ensure_demo(db)
     request.session.clear()
     request.session["user_id"] = user.id
-    request.session["flash"] = (
-        "🎯 Demo-Modus aktiv. Du siehst 3 Beispiel-Domains mit 30 Tagen Reports. "
-        "Klick dich durch, alles ist live. Logout via Profil-Menue."
-    )
+    request.session["flash"] = {
+        "kind": "ok",
+        "text": "🎯 Demo-Modus aktiv. Du siehst 3 Beispiel-Domains mit 30 Tagen Reports. "
+                "Klick dich durch, alles ist live. Logout via Profil-Menue.",
+    }
     return RedirectResponse("/dashboard", status_code=303)
+
+
+# ============================================================================
+# Lead-Formular -- ersetzt die mailto: Buttons quer durch die Marketing-Site.
+# ============================================================================
+
+# Vordefinierte Topics (URL: /kontakt?topic=demo) -- erlauben pre-fill von der
+# CTA-Stelle. Default = "Anfrage" wenn nicht angegeben.
+_TOPIC_LABELS = {
+    "demo": "Persönliche Demo",
+    "dmarc": "DMARC-Einrichtung",
+    "dmarc-quickstart": "DMARC Quickstart",
+    "dmarc-reise": "Vollständige DMARC-Reise",
+    "spf-dkim": "SPF/DKIM-Audit",
+    "m365": "Microsoft 365 Hardening",
+    "m365-threat": "M365 Threat-Hardening",
+    "seppmail": "SEPPmail",
+    "hin": "HIN-Einrichtung",
+    "hin-stack": "Gesundheits-Stack komplett",
+    "agency": "Agency-Plan",
+    "reseller": "Reseller-Plan",
+    "enterprise": "Enterprise-Plan",
+    "reseller-pilot": "Reseller-Pilot",
+    "dpa": "AVV / DPA / Auftragsverarbeitung",
+    "mail-check": "Mail-Health-Check Erstgespräch",
+    "general": "Anfrage",
+}
+
+
+def _topic_label(slug: str) -> str:
+    return _TOPIC_LABELS.get((slug or "").strip().lower(), _TOPIC_LABELS["general"])
+
+
+@router.get("/kontakt")
+def contact_form(request: Request, topic: str = "general", domain: str = "", sent: int = 0):
+    """Lead-Formular -- ersetzt mailto:-Links quer durch die Marketing-Site."""
+    return render(
+        request, "kontakt.html",
+        user=None, tenant=None, active=None,
+        topic=topic.strip().lower() or "general",
+        topic_label=_topic_label(topic),
+        prefill_domain=(domain or "").strip(),
+        topics=_TOPIC_LABELS,
+        sent=bool(sent), error=None,
+    )
+
+
+@router.post("/kontakt")
+async def contact_submit(request: Request, db: Session = Depends(get_db)):
+    """Sendet die Anfrage an SMTP_FROM (Operator-Postfach)."""
+    from .. import mail as mail_mod
+    from ..config import get_settings
+    from ..rate_limit import mail_limiter
+
+    form = await request.form()
+    name = (form.get("name") or "").strip()
+    email = (form.get("email") or "").strip().lower()
+    company = (form.get("company") or "").strip()
+    phone = (form.get("phone") or "").strip()
+    message = (form.get("message") or "").strip()
+    topic = (form.get("topic") or "general").strip().lower()
+    honeypot = (form.get("website") or "").strip()  # bots fill this
+
+    # Honeypot: Bots tappen rein
+    if honeypot:
+        return RedirectResponse("/kontakt?sent=1", status_code=303)
+
+    # Validierung
+    errors = []
+    if len(name) < 2:
+        errors.append("Bitte Namen angeben.")
+    if "@" not in email or "." not in email or len(email) < 6:
+        errors.append("Bitte gültige E-Mail-Adresse angeben.")
+    if len(message) < 10:
+        errors.append("Nachricht zu kurz (mind. 10 Zeichen).")
+    if errors:
+        return render(
+            request, "kontakt.html",
+            user=None, tenant=None, active=None,
+            topic=topic, topic_label=_topic_label(topic),
+            prefill_domain="", topics=_TOPIC_LABELS,
+            sent=False, error=" ".join(errors),
+            posted_name=name, posted_email=email,
+            posted_company=company, posted_phone=phone, posted_message=message,
+        )
+
+    # Rate-Limit pro IP -- 5 Mails / 10 min
+    ip = request.client.host if request.client else "anon"
+    if not mail_limiter.take(f"contact:{ip}"):
+        return render(
+            request, "kontakt.html",
+            user=None, tenant=None, active=None,
+            topic=topic, topic_label=_topic_label(topic),
+            prefill_domain="", topics=_TOPIC_LABELS,
+            sent=False, error="Zu viele Anfragen von dieser IP — bitte einen Moment warten.",
+            posted_name=name, posted_email=email,
+            posted_company=company, posted_phone=phone, posted_message=message,
+        )
+
+    # Mail bauen + an Operator (SMTP_FROM) schicken
+    s = get_settings()
+    op_recipient = s.smtp_from or "operator@localhost"
+    subject = f"[Anfrage: {_topic_label(topic)}] {name}"
+    text_body = (
+        f"Neue Anfrage über dmarc-geeks.ch\n\n"
+        f"Thema:    {_topic_label(topic)} ({topic})\n"
+        f"Name:     {name}\n"
+        f"E-Mail:   {email}\n"
+        f"Firma:    {company or '—'}\n"
+        f"Telefon:  {phone or '—'}\n"
+        f"IP:       {ip}\n\n"
+        f"Nachricht:\n"
+        f"-----------\n"
+        f"{message}\n"
+        f"-----------\n"
+    )
+    html_body = (
+        f"<h2>Neue Anfrage über dmarc-geeks.ch</h2>"
+        f"<p><strong>Thema:</strong> {_topic_label(topic)} <code>({topic})</code></p>"
+        f"<table style='border-collapse:collapse;font:14px sans-serif'>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Name</td><td>{name}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>E-Mail</td><td><a href='mailto:{email}'>{email}</a></td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Firma</td><td>{company or '—'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Telefon</td><td>{phone or '—'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>IP</td><td>{ip}</td></tr>"
+        f"</table>"
+        f"<p><strong>Nachricht:</strong></p>"
+        f"<blockquote style='border-left:3px solid #2563eb;padding:8px 16px;background:#f1f5f9;color:#0f172a;white-space:pre-wrap'>{message}</blockquote>"
+    )
+
+    # Reply-To = lead's mail -> Operator kann direkt aus dem Postfach antworten
+    sent = mail_mod.send_mail(to=op_recipient, subject=subject,
+                               text=text_body, html=html_body, reply_to=email)
+
+    if not sent:
+        # SMTP nicht konfiguriert oder fehlgeschlagen -> wir loggen's, zeigen aber
+        # dem User keinen 500er, sondern eine ehrliche "wir konnten gerade nicht
+        # zustellen" Antwort. Audit-Trail im Log.
+        return render(
+            request, "kontakt.html",
+            user=None, tenant=None, active=None,
+            topic=topic, topic_label=_topic_label(topic),
+            prefill_domain="", topics=_TOPIC_LABELS,
+            sent=False,
+            error="Mail-Versand temporaer nicht moeglich. Bitte schreib uns direkt an "
+                  + op_recipient + " — wir melden uns innerhalb 24h.",
+            posted_name=name, posted_email=email,
+            posted_company=company, posted_phone=phone, posted_message=message,
+        )
+
+    return RedirectResponse(f"/kontakt?sent=1&topic={topic}", status_code=303)
 
 
 @router.get("/")

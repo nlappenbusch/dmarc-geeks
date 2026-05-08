@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/marketing.css">
   <script>
     (function() { const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+      if (t === 'dark')
         document.documentElement.classList.add('dark'); })();
   </script>
   <script src="/static/mailcheck-loader.js" defer></script>
@@ -35,6 +35,7 @@
       <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
     <a href="/signup" class="btn-primary">Tool starten</a>
   </div>
 </header>
@@ -119,7 +120,7 @@
         {% if score.grade not in ('A',) %}
         <div class="score-cta">
           <a href="/services/dmarc" class="btn btn-on-dark">→ DMARC-Service</a>
-          <a href="mailto:hello@example.com?subject=Mail-Check%20{{ query_domain }}" class="btn btn-on-dark">Erstgespräch buchen</a>
+          <a href="/kontakt?topic=mail-check" class="btn btn-on-dark">Erstgespräch buchen</a>
         </div>
         {% endif %}
       </div>
@@ -336,7 +337,7 @@
         <p>Wir machen genau das: DMARC, SPF, DKIM, Mailcow, M365-EOP — Festpreis-Pakete oder als Workshop. Erstgespräch ist gratis.</p>
         <div class="cta-buttons">
           <a href="/services/dmarc" class="btn-primary big">→ DMARC-Service ab CHF 690</a>
-          <a href="mailto:hello@example.com?subject=Mail-Check%20{{ query_domain }}" class="btn big">Erstgespräch buchen</a>
+          <a href="/kontakt?topic=mail-check" class="btn big">Erstgespräch buchen</a>
           <a href="/signup" class="btn big">DMARC-Tool gratis starten</a>
         </div>
       {% endif %}

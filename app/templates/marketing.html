@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/static/marketing.css">
   <script>
     (function() { const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+      if (t === 'dark')
         document.documentElement.classList.add('dark'); })();
   </script>
   <script src="/static/mailcheck-loader.js" defer></script>
@@ -49,7 +49,7 @@
       <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <a href="/login" class="btn-link">Login</a>
-    <a href="/signup" class="btn-primary">Kostenlos starten</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
   </div>
 </header>
 
@@ -75,11 +75,11 @@
       <h1>Schluss mit XML.<br><span class="grad-text">Verstehe</span> deine DMARC-Reports.</h1>
       <p class="lede">Sammelt RUA-Reports automatisch aus deinem Postfach, parst sie, und macht <strong>auf einen Blick sichtbar wer in deinem Namen sendet, wo Spoofing herkommt, und wann du sicher auf <code>p=reject</code> gehen kannst</strong>. Cloud-gehostet oder auf deinem eigenen Server. Plus: täglicher <strong>DNSBL-Check</strong> auf deine Sender-IPs, damit du nicht durch eine Blacklist-Listung im Spam landest.</p>
       <div class="hero-cta">
-        <a href="/demo" class="btn-primary big">🎯 Live-Demo ansehen</a>
-        <a href="/signup" class="btn-ghost-arrow">Eigenen Tenant anlegen <span>→</span></a>
+        <a href="/kontakt?topic=demo" class="btn-primary big">📅 Demo-Termin anfragen</a>
+        <a href="/demo" class="btn-ghost-arrow">🎯 Oder Live-Demo sofort öffnen <span>→</span></a>
       </div>
       <div class="hero-trust" style="margin-top:8px;">
-        <span class="muted small">Demo: ein Klick &middot; ohne Anmeldung &middot; 3 Domains &middot; 30 Tage Reports</span>
+        <span class="muted small">Antwort innerhalb 24 Stunden &middot; kostenlos &middot; unverbindlich</span>
       </div>
       <div class="hero-trust">
         <span><svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg> <strong>Made in Switzerland</strong></span>
@@ -245,7 +245,7 @@
             <li><strong>API für Onboarding-Automation</strong> — neue Endkunden via Skript anlegen</li>
             <li><strong>Marge bis 80 %</strong> — fix 199 €/Mo zahlen, an 25 Endkunden je 49 € weiterverkaufen → 1.026 €/Mo plus</li>
           </ul>
-          <a href="mailto:hello@example.com?subject=Reseller-Pilot" class="btn-primary big">Reseller-Pilot anfragen</a>
+          <a href="/kontakt?topic=reseller-pilot" class="btn-primary big">Reseller-Pilot anfragen</a>
           <a href="#roi" class="btn-ghost-arrow">ROI-Rechner <span>→</span></a>
         </div>
         <div class="aud-visual">
@@ -611,7 +611,7 @@
           <span class="muted small">Marge / Jahr</span>
           <strong id="roi-margin-year">+12.312 €</strong>
         </div>
-        <a href="mailto:hello@example.com?subject=Reseller-Pilot" class="btn-primary big roi-cta">Reseller-Pilot anfragen</a>
+        <a href="/kontakt?topic=reseller-pilot" class="btn-primary big roi-cta">Reseller-Pilot anfragen</a>
       </div>
     </div>
 
@@ -704,7 +704,7 @@
           <li>✓ Priority-Support 4h</li>
           <li>✓ Onboarding-Call</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Agency" class="btn-primary">Anfragen</a>
+        <a href="/kontakt?topic=agency" class="btn-primary">Anfragen</a>
       </div>
 
       <div class="plan plan-dark">
@@ -720,7 +720,7 @@
           <li>✓ Mail-Branding</li>
           <li>✓ Pro Zusatz-Tenant: 5 €</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Reseller" class="btn-primary">Anfragen</a>
+        <a href="/kontakt?topic=reseller" class="btn-primary">Anfragen</a>
       </div>
 
       <div class="plan">
@@ -735,7 +735,7 @@
           <li>✓ Dedicated CSM</li>
           <li>✓ DPA, AVV</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=Enterprise" class="btn">Anfragen</a>
+        <a href="/kontakt?topic=enterprise" class="btn">Anfragen</a>
       </div>
     </div>
 
@@ -791,7 +791,7 @@
 
     <div class="comp-cta">
       <a href="/compliance" class="btn-primary big">Alle Compliance-Details</a>
-      <a href="mailto:dpa@example.com?subject=AVV-Anfrage" class="btn-ghost-arrow">AVV/DPA anfordern <span>→</span></a>
+      <a href="/kontakt?topic=dpa" class="btn-ghost-arrow">AVV/DPA anfordern <span>→</span></a>
     </div>
   </div>
 </section>
@@ -865,7 +865,7 @@
     <p>30 Tage gratis. Keine Kreditkarte. Setup in fünf Minuten.</p>
     <div class="cta-buttons">
       <a href="/signup" class="btn-primary big">Kostenlos starten</a>
-      <a href="mailto:hello@example.com?subject=Demo" class="btn big">Persönliche Demo</a>
+      <a href="/kontakt?topic=demo" class="btn big">Persönliche Demo</a>
     </div>
   </div>
 </section>
@@ -900,7 +900,7 @@
           <li><a href="#how">So funktioniert's</a></li>
           <li><a href="#vergleich">Vergleich</a></li>
           <li><a href="#faq">FAQ</a></li>
-          <li><a href="mailto:hello@example.com">Kontakt</a></li>
+          <li><a href="/kontakt?topic=general">Kontakt</a></li>
         </ul>
       </div>
       <div>
@@ -909,7 +909,7 @@
           <li><a href="/about#datenschutz">Datenschutz</a></li>
           <li><a href="/about#impressum">Impressum</a></li>
           <li><a href="/about#agb">AGB</a></li>
-          <li><a href="mailto:dpa@example.com">DPA / AVV</a></li>
+          <li><a href="/kontakt?topic=general">DPA / AVV</a></li>
         </ul>
       </div>
     </div>

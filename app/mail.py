@@ -38,7 +38,8 @@ def smtp_configured() -> bool:
     return bool(s.smtp_host)
 
 
-def send_mail(*, to: Iterable[str] | str, subject: str, text: str, html: Optional[str] = None) -> bool:
+def send_mail(*, to: Iterable[str] | str, subject: str, text: str,
+              html: Optional[str] = None, reply_to: Optional[str] = None) -> bool:
     """Send an email via SMTP. Returns True on success, False otherwise.
 
     Verhandelt EHLO-Capabilities: opportunistic STARTTLS wenn der Server's
@@ -58,6 +59,8 @@ def send_mail(*, to: Iterable[str] | str, subject: str, text: str, html: Optiona
     msg["From"] = s.smtp_from
     msg["To"] = ", ".join(recipients)
     msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(text)
     if html:
         msg.add_alternative(html, subtype="html")

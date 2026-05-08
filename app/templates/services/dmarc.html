@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/marketing.css">
   <script>
     (function() { const t = localStorage.getItem('theme');
-      if (t === 'dark' || (t === null && matchMedia('(prefers-color-scheme: dark)').matches))
+      if (t === 'dark')
         document.documentElement.classList.add('dark'); })();
   </script>
   <script src="/static/mailcheck-loader.js" defer></script>
@@ -35,6 +35,7 @@
       <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
     <a href="/signup" class="btn-primary">Tool starten</a>
   </div>
 </header>
@@ -47,7 +48,7 @@
     <h1 class="svc-h1">DMARC, SPF, DKIM —<br><span class="grad-text">richtig aufgesetzt.</span></h1>
     <p class="lede">Wir bringen deine Domain Schritt für Schritt von <code>v=DMARC1; p=none</code> auf eine durchgesetzte <code>p=reject</code>-Policy. Datengetrieben, mit Reports im Aggregator-Tool, ohne dass deine legitimen Mails (Mailchimp, Salesforce, eigener Mailserver, &hellip;) im Spam landen.</p>
     <div class="svc-hero-cta">
-      <a href="mailto:hello@example.com?subject=DMARC-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/kontakt?topic=dmarc" class="btn-primary big">Erstgespräch buchen</a>
       <a href="/check" class="btn-ghost-arrow">Erst meine Domain checken <span>→</span></a>
     </div>
     <div class="svc-hero-meta">
@@ -288,7 +289,7 @@
           <li>✓ Sender-Inventar als Doku</li>
           <li>✓ 30 Tage Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=DMARC-Quickstart" class="btn-primary">Buchen</a>
+        <a href="/kontakt?topic=dmarc-quickstart" class="btn-primary">Buchen</a>
       </div>
 
       <div class="pkg pkg-featured">
@@ -305,7 +306,7 @@
           <li>✓ Abschluss-Audit-Bericht</li>
           <li>✓ 3 Monate Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=DMARC-Reise" class="btn-primary">Buchen</a>
+        <a href="/kontakt?topic=dmarc-reise" class="btn-primary">Buchen</a>
       </div>
 
       <div class="pkg">
@@ -320,7 +321,7 @@
           <li>✓ DNS-Vorschläge zum Copy-Paste</li>
           <li>✓ 30 Tage Mail-Support</li>
         </ul>
-        <a href="mailto:hello@example.com?subject=SPF-DKIM-Audit" class="btn-primary">Buchen</a>
+        <a href="/kontakt?topic=spf-dkim" class="btn-primary">Buchen</a>
       </div>
     </div>
 
@@ -419,7 +420,7 @@
     <h2>Reden wir 30 Min — ist gratis.</h2>
     <p>Du bringst deinen Status (oder einfach den Domain-Namen). Wir bringen 7 Jahre DMARC-Erfahrung. Am Ende des Calls weißt du was zu tun ist — entweder selbst oder mit uns.</p>
     <div class="cta-buttons">
-      <a href="mailto:hello@example.com?subject=DMARC-Erstgespräch" class="btn-primary big">Erstgespräch buchen</a>
+      <a href="/kontakt?topic=dmarc" class="btn-primary big">Erstgespräch buchen</a>
       <a href="/check" class="btn big">Erst meine Domain checken</a>
     </div>
   </div>
@@ -438,7 +439,7 @@
 <!-- STICKY-CTA -->
 <div class="svc-sticky-cta" id="stickyCta" role="region" aria-label="Schnellkontakt">
   <span class="svc-sticky-cta-text">DMARC-Reise — Festpreis ab CHF 690</span>
-  <a href="mailto:hello@example.com?subject=DMARC-Erstgespräch" class="btn-primary">Erstgespräch →</a>
+  <a href="/kontakt?topic=dmarc" class="btn-primary">Erstgespräch →</a>
 </div>
 
 <script>
