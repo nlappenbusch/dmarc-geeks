@@ -9,10 +9,8 @@ cd "$REPO_DIR"
 git fetch origin main
 git reset --hard origin/main
 
-# WICHTIG: Compose-Variablen aus der Shell-Env loeschen.
-# docker compose's Variablen-Resolution gibt Shell-Env Vorrang vor .env-File.
-# Ohne diesen unset koennen Reste aus anderen Runner-Jobs oder system-weiten
-# Configs die .env ueberschreiben (kostete uns einen Abend Port-8085-Konflikte).
+# Compose-Variablen aus der Shell-Env loeschen, damit /opt/dmarc-geeks/.env
+# nicht von Shell-Vars ueberschrieben wird.
 unset \
   APP_PORT \
   POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
@@ -26,14 +24,34 @@ unset \
   SPAMHAUS_DQS_KEY DNSBL_STABILITY_THRESHOLD \
   HETZNER_DNS_TOKEN HETZNER_DNS_ZONE
 
-# Image bauen waehrend alter Container weiterlaeuft
 docker compose pull || true
 docker compose build
 
-# Sauber stoppen, kurz warten bis docker-proxy die Ports freigibt, dann hoch
+# Vollstaendiger Teardown: compose down + harter rm aller leftovers
 docker compose down --remove-orphans
+docker rm -f $(docker ps -aq --filter name=dmarc-geeks) 2>/dev/null || true
+
+# Kernel-Pause damit docker-proxy die Ports wirklich freigibt
 sleep 3
+
 docker compose up -d
 
-# Alte Images aufraeumen
+# Selbst-heilung: in dieser LXC laesst `compose up -d` den App-Container
+# manchmal in "Created" haengen. Wenn ja: explicit starten.
+sleep 3
+if ! docker ps --filter name=dmarc-geeks-app-1 --filter status=running -q | grep -q .; then
+  echo "WARN: app container not running after 'compose up -d', forcing start..."
+  docker start dmarc-geeks-app-1 || true
+  sleep 3
+fi
+
+# Final Health-Check, sonst Job rot melden
+if ! docker ps --filter name=dmarc-geeks-app-1 --filter status=running -q | grep -q .; then
+  echo "ERROR: app container still not running"
+  docker logs dmarc-geeks-app-1 --tail=40 || true
+  docker inspect dmarc-geeks-app-1 --format 'State.Error: {{.State.Error}} | Exit: {{.State.ExitCode}}' || true
+  exit 1
+fi
+
+echo "OK: dmarc-geeks-app is running"
 docker image prune -f
