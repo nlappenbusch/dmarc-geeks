@@ -19,6 +19,7 @@ _CSP = (
     "font-src 'self' https://fonts.gstatic.com; "
     "img-src 'self' data: https:; "          # allow whitelabel logos from any HTTPS host
     "connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com; "  # sourcemaps from CDNs
+    "frame-src https://www.youtube-nocookie.com https://www.youtube.com; "  # YT-Embed im Marketing
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
     "form-action 'self'"

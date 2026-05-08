@@ -164,40 +164,81 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
             posted_company=company, posted_phone=phone, posted_message=message,
         )
 
-    # Mail bauen + an Operator (SMTP_FROM) schicken
+    # === Mail 1: Operator-Notification ===
+    # Empfaenger: SMTP_FROM (Postfach) + SUPERADMIN_EMAIL falls abweichend.
+    # User-Setup: SMTP_FROM=service@dmarc-geeks.ch, SUPERADMIN_EMAIL=nlappenbusch@gmail.com
+    # -> beide bekommen die Anfrage, Operator UND Inhaber.
     s = get_settings()
-    op_recipient = s.smtp_from or "operator@localhost"
-    subject = f"[Anfrage: {_topic_label(topic)}] {name}"
-    text_body = (
-        f"Neue Anfrage über dmarc-geeks.ch\n\n"
+    op_recipients: list[str] = []
+    if s.smtp_from:
+        op_recipients.append(s.smtp_from)
+    if s.superadmin_email and s.superadmin_email.lower() not in (r.lower() for r in op_recipients):
+        op_recipients.append(s.superadmin_email)
+    if not op_recipients:
+        op_recipients = ["operator@localhost"]
+
+    op_subject = f"[Anfrage: {_topic_label(topic)}] {name}"
+    op_text = (
+        f"Neue Anfrage ueber dmarc-geeks.ch\n\n"
         f"Thema:    {_topic_label(topic)} ({topic})\n"
         f"Name:     {name}\n"
         f"E-Mail:   {email}\n"
-        f"Firma:    {company or '—'}\n"
-        f"Telefon:  {phone or '—'}\n"
+        f"Firma:    {company or '-'}\n"
+        f"Telefon:  {phone or '-'}\n"
         f"IP:       {ip}\n\n"
-        f"Nachricht:\n"
-        f"-----------\n"
-        f"{message}\n"
-        f"-----------\n"
+        f"Nachricht:\n-----------\n{message}\n-----------\n\n"
+        f"Antworten an diese Mail gehen direkt an: {email}\n"
     )
-    html_body = (
-        f"<h2>Neue Anfrage über dmarc-geeks.ch</h2>"
-        f"<p><strong>Thema:</strong> {_topic_label(topic)} <code>({topic})</code></p>"
+    op_html = (
+        f"<h2 style='margin:0 0 14px 0'>Neue Anfrage ueber dmarc-geeks.ch</h2>"
+        f"<p style='margin:0 0 14px 0'><strong>Thema:</strong> {_topic_label(topic)} "
+        f"<code>({topic})</code></p>"
         f"<table style='border-collapse:collapse;font:14px sans-serif'>"
         f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Name</td><td>{name}</td></tr>"
-        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>E-Mail</td><td><a href='mailto:{email}'>{email}</a></td></tr>"
-        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Firma</td><td>{company or '—'}</td></tr>"
-        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Telefon</td><td>{phone or '—'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>E-Mail</td>"
+        f"<td><a href='mailto:{email}'>{email}</a></td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Firma</td><td>{company or '-'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Telefon</td><td>{phone or '-'}</td></tr>"
         f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>IP</td><td>{ip}</td></tr>"
         f"</table>"
-        f"<p><strong>Nachricht:</strong></p>"
-        f"<blockquote style='border-left:3px solid #2563eb;padding:8px 16px;background:#f1f5f9;color:#0f172a;white-space:pre-wrap'>{message}</blockquote>"
+        f"<p style='margin:18px 0 6px 0'><strong>Nachricht:</strong></p>"
+        f"<blockquote style='border-left:3px solid #2563eb;padding:10px 16px;"
+        f"background:#f1f5f9;color:#0f172a;white-space:pre-wrap;"
+        f"font:14px sans-serif;border-radius:0 6px 6px 0'>{message}</blockquote>"
     )
 
-    # Reply-To = lead's mail -> Operator kann direkt aus dem Postfach antworten
-    sent = mail_mod.send_mail(to=op_recipient, subject=subject,
-                               text=text_body, html=html_body, reply_to=email)
+    op_sent = mail_mod.send_mail(
+        to=op_recipients, subject=op_subject,
+        text=op_text, html=op_html, reply_to=email,
+    )
+
+    # === Mail 2: Lead-Confirmation (fancy HTML mit Branding) ===
+    lead_html = mail_mod.render_email(
+        "contact_confirmation",
+        name=name, email=email, company=company,
+        topic_label=_topic_label(topic), message=message,
+        base_url=s.base_url.rstrip("/"),
+        brand_name="DMARC Geeks", brand_color="#2563eb", brand_logo=None,
+    )
+    lead_text = (
+        f"Hallo {name},\n\n"
+        f"danke fuer deine Anfrage zu \"{_topic_label(topic)}\" auf dmarc-geeks.ch!\n"
+        f"Wir melden uns innerhalb von 24 Stunden bei dir per E-Mail.\n\n"
+        f"Deine Nachricht:\n-----------\n{message}\n-----------\n\n"
+        f"Inzwischen kannst du dir die Live-Demo ansehen:\n"
+        f"{s.base_url.rstrip('/')}/demo\n\n"
+        f"Antworten auf diese Mail gehen direkt in unser Postfach -- schreib einfach "
+        f"zurueck wenn du etwas vergessen hast.\n\n"
+        f"Liebe Gruesse\nDMARC Geeks\n"
+    )
+    # Lead-Confirmation: kein Reply-To noetig, Replies gehen via SMTP_FROM zurueck an uns.
+    mail_mod.send_mail(
+        to=email, subject="Wir haben deine Anfrage erhalten - DMARC Geeks",
+        text=lead_text, html=lead_html,
+    )
+
+    # Operator-Mail ist die "Pflicht-Sendung" -- wenn die scheitert, Fehler zeigen.
+    sent = op_sent
 
     if not sent:
         # SMTP nicht konfiguriert oder fehlgeschlagen -> wir loggen's, zeigen aber

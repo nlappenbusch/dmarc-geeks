@@ -142,6 +142,115 @@
   </div>
 </section>
 
+<!-- ============== VIDEO SHOWCASE (klick-to-play, lazy iframe) ============== -->
+<section class="video-showcase">
+  <div class="container-mkt">
+    <div class="vs-head">
+      <span class="eyebrow"><span class="dot-live"></span>2 Minuten Erklaervideo</span>
+      <h2>Sieh's in Aktion.</h2>
+      <p class="lede">Ein kurzer Walkthrough durch das Dashboard, den DMARC-Generator und die Managed-DMARC-Delegation.</p>
+    </div>
+    <div class="vs-player" data-yt="IOeKjtEocpk" role="button" tabindex="0"
+         aria-label="Video abspielen: DMARC Geeks Erklaervideo">
+      <img class="vs-thumb"
+           src="https://i.ytimg.com/vi/IOeKjtEocpk/maxresdefault.jpg"
+           onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/IOeKjtEocpk/hqdefault.jpg';"
+           alt="" loading="lazy" decoding="async">
+      <div class="vs-glow" aria-hidden="true"></div>
+      <button class="vs-play" type="button" aria-label="Abspielen">
+        <svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true">
+          <circle cx="40" cy="40" r="40" fill="#ffffff"/>
+          <path d="M32 26 L58 40 L32 54 Z" fill="#ef4444"/>
+        </svg>
+      </button>
+      <div class="vs-meta">
+        <span class="vs-badge">▶ Walkthrough</span>
+        <span class="muted small">Klick zum Abspielen &middot; ~2 min</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.video-showcase { padding: 64px 0 32px; }
+.vs-head { text-align: center; max-width: 640px; margin: 0 auto 28px; }
+.vs-head h2 { font-size: 32px; line-height: 1.15; margin: 14px 0 8px; }
+.vs-head .lede { color: var(--muted, #64748b); margin: 0; }
+.vs-player {
+  position: relative; max-width: 920px; margin: 0 auto;
+  aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden;
+  cursor: pointer; box-shadow: 0 20px 60px -20px rgba(15,23,42,.35);
+  border: 1px solid var(--border, #e2e8f0); background: #0f172a;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.vs-player:hover { transform: translateY(-2px); box-shadow: 0 28px 70px -20px rgba(37,99,235,.45); }
+.vs-player:focus-visible { outline: 3px solid var(--brand, #2563eb); outline-offset: 3px; }
+.vs-thumb {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  filter: brightness(.78) saturate(1.05);
+  transition: filter .25s ease;
+}
+.vs-player:hover .vs-thumb { filter: brightness(.62) saturate(1.1); }
+.vs-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 60% at 50% 55%, rgba(124,58,237,.35), transparent 70%),
+              radial-gradient(40% 40% at 30% 30%, rgba(37,99,235,.25), transparent 70%);
+  mix-blend-mode: screen;
+}
+.vs-play {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 80px; height: 80px; border: 0; padding: 0; background: transparent;
+  cursor: pointer; transition: transform .25s ease, filter .25s ease;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.4));
+}
+.vs-player:hover .vs-play { transform: translate(-50%, -50%) scale(1.06); }
+.vs-meta {
+  position: absolute; left: 18px; bottom: 16px; right: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  color: rgba(255,255,255,.85); pointer-events: none;
+}
+.vs-badge {
+  background: rgba(255,255,255,.15); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.25);
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  color: #ffffff;
+}
+.vs-meta .muted { color: rgba(255,255,255,.75); }
+.vs-player iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+}
+@media (max-width: 640px) {
+  .vs-head h2 { font-size: 24px; }
+  .vs-play { width: 60px; height: 60px; }
+  .vs-meta { left: 12px; right: 12px; bottom: 10px; }
+}
+</style>
+<script>
+(function() {
+  function activate(el) {
+    if (el.dataset.activated) return;
+    el.dataset.activated = '1';
+    var id = el.getAttribute('data-yt');
+    if (!id) return;
+    var iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube-nocookie.com/embed/' + id +
+                 '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true;
+    iframe.title = 'DMARC Geeks Erklaervideo';
+    el.innerHTML = '';
+    el.appendChild(iframe);
+  }
+  document.querySelectorAll('.vs-player').forEach(function(el) {
+    el.addEventListener('click', function() { activate(el); });
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(el); }
+    });
+  });
+})();
+</script>
+
 <!-- ============== DOMAIN-CHECK HERO ============== -->
 <section class="domain-check-band">
   <div class="container-mkt">

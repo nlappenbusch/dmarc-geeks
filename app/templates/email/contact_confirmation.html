@@ -1,0 +1,57 @@
+{% extends "email/_base.html" %}
+{% block footer %}Antworten gehen direkt an unser Postfach &middot; wir melden uns innerhalb 24h bei {{ email }}.{% endblock %}
+{% block body %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+  <tr><td align="center" style="padding:8px 0 24px 0;">
+    <div style="width:64px; height:64px; border-radius:50%;
+                background:linear-gradient(135deg,#22c55e,#10b981);
+                color:white; font-size:32px; font-weight:800;
+                line-height:64px; text-align:center;">✓</div>
+  </td></tr>
+</table>
+
+<h1 style="font-size:22px; margin:0 0 8px 0; color:#0f172a; text-align:center;">
+  Danke für deine Anfrage, {{ name }}!
+</h1>
+<p style="text-align:center; color:#64748b; margin:0 0 28px 0; font-size:14px;">
+  Wir haben sie erhalten und melden uns innerhalb von <strong>24 Stunden</strong> persönlich.
+</p>
+
+<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px 20px; margin-bottom:24px;">
+  <div style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Deine Anfrage</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13.5px; line-height:1.7;">
+    <tr><td style="color:#64748b; padding-right:14px; vertical-align:top;">Thema</td>
+        <td style="color:#0f172a; font-weight:600;">{{ topic_label }}</td></tr>
+    {% if company %}<tr><td style="color:#64748b; padding-right:14px; vertical-align:top;">Firma</td>
+        <td style="color:#0f172a;">{{ company }}</td></tr>{% endif %}
+    <tr><td style="color:#64748b; padding-right:14px; vertical-align:top;">E-Mail</td>
+        <td style="color:#0f172a;">{{ email }}</td></tr>
+  </table>
+  <div style="margin-top:14px; padding-top:14px; border-top:1px dashed #cbd5e1;">
+    <div style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">Nachricht</div>
+    <div style="color:#0f172a; white-space:pre-wrap; font-size:13.5px;">{{ message }}</div>
+  </div>
+</div>
+
+<div style="background:linear-gradient(135deg, rgba(37,99,235,0.07), rgba(124,58,237,0.07));
+            border:1px solid #e2e8f0; border-radius:10px; padding:18px 20px; margin-bottom:24px;">
+  <div style="font-weight:700; color:#0f172a; margin-bottom:10px;">Was passiert jetzt?</div>
+  <ol style="margin:0; padding-left:18px; color:#334155; font-size:13.5px; line-height:1.7;">
+    <li>Wir lesen deine Anfrage und schauen uns deine Domain (falls genannt) kurz an.</li>
+    <li>Wir antworten innerhalb von <strong>24 Stunden</strong> mit einem Vorschlag oder Slot.</li>
+    <li>Erstgespräch kostet <strong>nichts</strong> und ist unverbindlich.</li>
+  </ol>
+</div>
+
+<p style="margin:24px 0 8px 0; text-align:center;">
+  <a href="{{ base_url }}/demo" style="background:{{ brand_color }}; color:white; text-decoration:none;
+     padding:12px 22px; border-radius:8px; font-weight:600; display:inline-block; font-size:14px;">
+    🎯 Inzwischen die Live-Demo ansehen
+  </a>
+</p>
+
+<p style="color:#94a3b8; font-size:12px; text-align:center; margin:24px 0 0 0;">
+  Diese Bestätigung kommt automatisch. Antworten landen in unserem Posteingang —
+  schreib einfach zurück, wenn du etwas vergessen hast.
+</p>
+{% endblock %}

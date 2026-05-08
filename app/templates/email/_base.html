@@ -15,7 +15,7 @@
         {% block body %}{% endblock %}
       </td></tr>
       <tr><td style="padding:16px 28px; background:#fafbfd; color:#6b7280; font-size:12px;">
-        Diese Mail kommt von deinem DMARC-Aggregator. Antworten gehen ins Leere.
+        {% block footer %}Diese Mail kommt von deinem DMARC-Aggregator. Antworten gehen ins Leere.{% endblock %}
       </td></tr>
     </table>
   </td></tr>
