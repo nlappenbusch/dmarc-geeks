@@ -31,6 +31,8 @@ services:
       RESOLVE_PTR: ${RESOLVE_PTR:-true}
     ports:
       - "${APP_PORT:-8000}:8000"
+    volumes:
+      - ./.env:/app/.env
 
 volumes:
   dmarc_db:
