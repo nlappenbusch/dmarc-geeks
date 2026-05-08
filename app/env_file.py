@@ -65,7 +65,7 @@ EDITABLE_FIELDS: list[dict] = [
      "hint": "Spamhaus' offizieller <strong>Data Query Service</strong>-Key. Kostenlos für non-commercial Nutzung bis 100k Queries/Tag, kommerziell ab Volumen-Plan. Mit Key gehen Spamhaus-Lookups über <code>&lt;key&gt;.zen.dq.spamhaus.net</code> statt der rate-limited Public-Zone — keine NXDOMAIN-Fluctuations mehr. Account: <a href='https://www.spamhaus.com/product/data-query-service/' target='_blank'>spamhaus.com/product/data-query-service</a>.",
      "kind": "secret"},
     {"key": "DNSBL_STABILITY_THRESHOLD", "label": "Stability-Threshold für Alerts", "group": "Blacklist-Monitoring",
-     "hint": "Anti-Flapping: nur als „gelistet" werten wenn <strong>N aufeinander folgende Checks</strong> die gleiche Listung zeigen. <code>1</code> = sofort alarmieren (alte Logik), <code>2</code> = nur wenn 2× in Folge gelistet (Default, empfohlen). Schützt vor One-off-Rate-Limit-Antworten.",
+     "hint": "Anti-Flapping: nur als „gelistet“ werten wenn <strong>N aufeinander folgende Checks</strong> die gleiche Listung zeigen. <code>1</code> = sofort alarmieren (alte Logik), <code>2</code> = nur wenn 2x in Folge gelistet (Default, empfohlen). Schützt vor One-off-Rate-Limit-Antworten.",
      "kind": "number"},
     {"key": "HETZNER_DNS_TOKEN", "label": "Hetzner DNS API-Token", "group": "Managed DMARC (Hetzner DNS)",
      "hint": "Aktiviert <strong>DMARC-as-a-Service</strong>: Auto-Authorization-Records (für RUA-Reports an unsere Mailbox) und CNAME-Delegation (Kunde setzt einen CNAME, wir managen die Policy). Token erstellen: <a href='https://dns.hetzner.com/settings/api-token' target='_blank'>dns.hetzner.com/settings/api-token</a>.",
