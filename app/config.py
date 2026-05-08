@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # Beispiel: "dmarc-geeks.ch". Die Zone muss bereits in Hetzner DNS existieren.
     hetzner_dns_zone: str = Field(default="", alias="HETZNER_DNS_ZONE")
 
+    # Debug: bei 500ern den vollen Stacktrace im Browser zeigen statt nur die
+    # generische Fehler-Seite. NICHT in Produktion anlassen — gibt internals preis.
+    debug_traceback: bool = Field(default=False, alias="DEBUG_TRACEBACK")
+
 
 @lru_cache()
 def get_settings() -> Settings:

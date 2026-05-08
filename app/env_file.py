@@ -34,6 +34,9 @@ EDITABLE_FIELDS: list[dict] = [
     {"key": "TRUSTED_PROXIES", "label": "ProxyHeaders auswerten", "group": "App",
      "hint": "True wenn ein Reverse-Proxy (Caddy, nginx, Traefik) X-Forwarded-* Header setzt.",
      "kind": "bool"},
+    {"key": "DEBUG_TRACEBACK", "label": "Stacktrace bei 500 anzeigen", "group": "App",
+     "hint": "Wenn aktiv, rendert die App bei einem internen Fehler den vollen Python-Stacktrace direkt im Browser statt nur „Da ist etwas schiefgelaufen“. <strong>Nur in Dev/Staging anlassen</strong> — gibt internals + ggf. Pfade preis. Default: aus.",
+     "kind": "bool"},
 
     # ----- Database -----
     {"key": "DATABASE_URL", "label": "Database-URL", "group": "Datenbank",

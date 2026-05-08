@@ -209,6 +209,39 @@ def create_app() -> FastAPI:
     async def generic_exc_handler(request: Request, exc: Exception):
         log.exception("Unhandled error: %s", exc)
         accept = request.headers.get("accept", "")
+        # Debug-Mode: kompletter Traceback in der Browser-Antwort
+        if get_settings().debug_traceback and "text/html" in accept:
+            import html as _html
+            import traceback as _tb
+            from fastapi.responses import HTMLResponse
+            tb_text = "".join(_tb.format_exception(type(exc), exc, exc.__traceback__))
+            rid = request.headers.get("x-request-id", "-")
+            body = (
+                "<!doctype html><html><head><meta charset='utf-8'>"
+                f"<title>500 - {_html.escape(type(exc).__name__)}</title>"
+                "<style>"
+                "body{font:14px/1.5 -apple-system,Inter,sans-serif;background:#0f172a;"
+                "color:#f1f5f9;margin:0;padding:24px}"
+                "h1{color:#f87171;margin:0 0 4px;font-size:20px}"
+                "h2{color:#fbbf24;font-size:13px;text-transform:uppercase;"
+                "letter-spacing:.05em;margin:24px 0 8px}"
+                "pre{background:#1e293b;border-radius:6px;padding:16px;overflow:auto;"
+                "border-left:3px solid #f87171;white-space:pre-wrap;"
+                "font:12px/1.5 Menlo,Consolas,monospace}"
+                ".meta{color:#94a3b8;font-size:12px;margin-bottom:16px}"
+                ".warn{background:#7c2d12;color:#fed7aa;padding:8px 12px;border-radius:4px;"
+                "display:inline-block;margin-bottom:16px;font-size:12px}"
+                "</style></head><body>"
+                "<div class='warn'>DEBUG_TRACEBACK ist aktiv -- in Produktion ausschalten</div>"
+                f"<h1>500 - {_html.escape(type(exc).__name__)}</h1>"
+                f"<div class='meta'>{_html.escape(str(exc))[:500]}</div>"
+                f"<div class='meta'>{_html.escape(request.method)} "
+                f"{_html.escape(request.url.path)} &middot; request-id: "
+                f"{_html.escape(rid)}</div>"
+                f"<h2>Traceback</h2><pre>{_html.escape(tb_text)}</pre>"
+                "</body></html>"
+            )
+            return HTMLResponse(body, status_code=500)
         if "text/html" in accept:
             resp = render(request, "error.html", status_code=500,
                           detail="Interner Fehler.", user=None, tenant=None, active=None)
