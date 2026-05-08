@@ -271,6 +271,43 @@ def _operator_recipients(s) -> list[str]:
     return rec or ["operator@localhost"]
 
 
+def _reverse_dns(ip: str) -> str:
+    """Best-effort PTR-Lookup mit kurzem Timeout. Gibt '-' zurueck wenn fehlt."""
+    if not ip or ip in ("-", "127.0.0.1", "::1") or ip.startswith("192.168.") or ip.startswith("10."):
+        return "-"
+    try:
+        import dns.resolver, dns.reversename
+        rev = dns.reversename.from_address(ip)
+        r = dns.resolver.Resolver(configure=False)
+        r.nameservers = ["1.1.1.1", "8.8.8.8"]
+        r.lifetime = 2.0
+        r.timeout = 1.5
+        ans = r.resolve(rev, "PTR", lifetime=2.0)
+        return str(ans[0]).rstrip(".")
+    except Exception:  # noqa: BLE001
+        return "-"
+
+
+def _parse_ua(ua: str) -> str:
+    """Sehr leichtgewichtige UA-Parse: Browser + OS in Kurzform."""
+    if not ua or ua == "-":
+        return "-"
+    ua_low = ua.lower()
+    browser = "?"
+    if "edg/" in ua_low: browser = "Edge"
+    elif "chrome/" in ua_low and "chromium" not in ua_low: browser = "Chrome"
+    elif "firefox/" in ua_low: browser = "Firefox"
+    elif "safari/" in ua_low and "chrome" not in ua_low: browser = "Safari"
+    elif "bot" in ua_low or "crawl" in ua_low or "spider" in ua_low: browser = "Bot"
+    os_ = "?"
+    if "windows" in ua_low: os_ = "Windows"
+    elif "mac os x" in ua_low or "macintosh" in ua_low: os_ = "macOS"
+    elif "android" in ua_low: os_ = "Android"
+    elif "iphone" in ua_low or "ipad" in ua_low: os_ = "iOS"
+    elif "linux" in ua_low: os_ = "Linux"
+    return f"{browser} on {os_}"
+
+
 def notify_domain_check(request: Request, tool: str, domain: str) -> None:
     """Schickt Lead-Notification ans Operator-Postfach, wenn jemand in einem
     oeffentlichen Tool eine Domain eingibt. Session-dedup: pro Browser-Session
@@ -289,32 +326,90 @@ def notify_domain_check(request: Request, tool: str, domain: str) -> None:
     request.session[session_key] = list(notified)[-50:]  # cap session size
 
     try:
+        from datetime import datetime, timezone
         from .. import mail as mail_mod
         from ..config import get_settings
         s = get_settings()
+
+        # Header-Mining: alle relevanten Infos aus dem Request ziehen
         ip = request.client.host if request.client else "-"
-        ua = request.headers.get("user-agent", "-")
+        # Hinter NPM/Reverse-Proxy steht die echte IP in X-Forwarded-For
+        xff = request.headers.get("x-forwarded-for", "")
+        if xff:
+            real_ip = xff.split(",")[0].strip()
+        else:
+            real_ip = ip
+        ua_raw = request.headers.get("user-agent", "-")
+        ua_short = _parse_ua(ua_raw)
         ref = request.headers.get("referer", "-")
-        subject = f"[Lead] {domain} im {tool} geprüft"
+        lang = request.headers.get("accept-language", "-")
+        host_hdr = request.headers.get("host", "-")
+        ptr = _reverse_dns(real_ip)
+        ts = datetime.now(timezone.utc)
+        ts_iso = ts.isoformat(timespec="seconds")
+        ts_local = ts.strftime("%d.%m.%Y %H:%M UTC")
+
+        subject = f"[Lead] {domain} - {tool}"
         text = (
-            f"Jemand hat im Tool '{tool}' eine Domain eingegeben:\n\n"
-            f"  Domain:   {domain}\n"
-            f"  IP:       {ip}\n"
-            f"  Referer:  {ref}\n"
-            f"  User-Agent: {ua}\n\n"
-            f"Schau dir die Domain an: https://dmarc-geeks.ch/check?domain={domain}\n"
+            f"Lead-Signal: jemand hat im Tool '{tool}' eine Domain getestet.\n\n"
+            f"  Zeitpunkt:   {ts_local}\n"
+            f"  Domain:      {domain}\n"
+            f"  Tool:        {tool}\n"
+            f"  IP:          {real_ip}\n"
+            f"  PTR (rDNS):  {ptr}\n"
+            f"  Browser/OS:  {ua_short}\n"
+            f"  Sprache:     {lang}\n"
+            f"  Referer:     {ref}\n"
+            f"  User-Agent:  {ua_raw}\n"
+            f"  Host:        {host_hdr}\n"
+            f"  Direct IP:   {ip}{' (=XFF)' if ip == real_ip else ' (Reverse-Proxy)'}\n\n"
+            f"-> Resultat oeffnen: https://dmarc-geeks.ch/check?domain={domain}\n"
+            f"-> WHOIS:           https://www.whois.com/whois/{domain}\n"
+            f"-> IP-Lookup:       https://www.abuseipdb.com/check/{real_ip}\n"
         )
         html = (
-            f"<h2 style='margin:0 0 12px 0'>Lead-Signal: Domain-Check</h2>"
-            f"<p>Jemand hat im Tool <strong>{tool}</strong> die Domain "
-            f"<strong>{domain}</strong> geprueft.</p>"
-            f"<table style='border-collapse:collapse;font:14px sans-serif'>"
-            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Domain</td>"
-            f"<td><a href='https://dmarc-geeks.ch/check?domain={domain}'>{domain}</a></td></tr>"
-            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>IP</td><td>{ip}</td></tr>"
-            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>Referer</td><td>{ref}</td></tr>"
-            f"<tr><td style='padding:4px 12px 4px 0;color:#64748b'>User-Agent</td><td>{ua}</td></tr>"
-            f"</table>"
+            f"<table role='presentation' width='100%' cellpadding='0' cellspacing='0' "
+            f"style='border-collapse:collapse;font:14px -apple-system,Inter,sans-serif;color:#0f172a'>"
+            f"<tr><td style='padding:0 0 12px 0'>"
+            f"<div style='display:inline-block;background:linear-gradient(135deg,#2563eb,#7c3aed);"
+            f"color:white;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;"
+            f"letter-spacing:.04em;text-transform:uppercase'>Lead-Signal</div></td></tr>"
+            f"<tr><td style='padding:0 0 16px 0'><h2 style='margin:0;font-size:20px'>"
+            f"<a href='https://dmarc-geeks.ch/check?domain={domain}' "
+            f"style='color:#2563eb;text-decoration:none'>{domain}</a> "
+            f"im <code style='background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px'>"
+            f"{tool}</code> geprueft</h2>"
+            f"<div style='color:#64748b;font-size:13px;margin-top:4px'>{ts_local}</div></td></tr>"
+            f"<tr><td><table style='border-collapse:collapse;font-size:13.5px;width:100%'>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;width:130px;vertical-align:top'>IP</td>"
+            f"<td style='padding:6px 0;font-family:monospace'>{real_ip}</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>Reverse-DNS</td>"
+            f"<td style='padding:6px 0;font-family:monospace'>{ptr}</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>Browser/OS</td>"
+            f"<td style='padding:6px 0'>{ua_short}</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>Sprache</td>"
+            f"<td style='padding:6px 0'>{lang}</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>Referer</td>"
+            f"<td style='padding:6px 0'>"
+            + (f"<a href='{ref}' style='color:#2563eb'>{ref}</a>" if ref.startswith("http") else ref)
+            + f"</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>User-Agent</td>"
+            f"<td style='padding:6px 0;font-family:monospace;font-size:11.5px;color:#475569'>{ua_raw}</td></tr>"
+            f"<tr><td style='padding:6px 14px 6px 0;color:#64748b;vertical-align:top'>Zeitpunkt</td>"
+            f"<td style='padding:6px 0;font-family:monospace'>{ts_iso}</td></tr>"
+            f"</table></td></tr>"
+            f"<tr><td style='padding:18px 0 6px 0'>"
+            f"<a href='https://dmarc-geeks.ch/check?domain={domain}' "
+            f"style='display:inline-block;background:#2563eb;color:white;padding:10px 18px;"
+            f"border-radius:8px;text-decoration:none;font-weight:600;margin-right:8px'>"
+            f"-> Resultat ansehen</a>"
+            f"<a href='https://www.whois.com/whois/{domain}' "
+            f"style='display:inline-block;color:#64748b;padding:10px 12px;text-decoration:none;font-size:13px'>"
+            f"WHOIS</a>"
+            f"<a href='https://www.abuseipdb.com/check/{real_ip}' "
+            f"style='display:inline-block;color:#64748b;padding:10px 12px;text-decoration:none;font-size:13px'>"
+            f"IP-Lookup</a>"
+            f"</td></tr></table>"
         )
         mail_mod.send_mail(
             to=_operator_recipients(s),
