@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docker Auto-Deploy Pipeline · How-To</title>
+  <style>
+    :root {
+      --bg: #ffffff; --fg: #0f172a; --muted: #64748b;
+      --brand: #2563eb; --brand-2: #7c3aed; --accent: #f59e0b;
+      --border: #e2e8f0; --card: #f8fafc; --code-bg: #0f172a; --code-fg: #e2e8f0;
+      --ok: #16a34a; --warn: #f59e0b; --err: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font: 15px/1.6 -apple-system, "Inter", "Segoe UI", system-ui, sans-serif;
+      color: var(--fg); background: var(--bg);
+    }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 32px 24px 80px; }
+    /* Cover */
+    .cover {
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white; padding: 48px 40px; border-radius: 18px;
+      margin-bottom: 36px; position: relative; overflow: hidden;
+    }
+    .cover::after {
+      content: ""; position: absolute; right: -80px; bottom: -80px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
+    }
+    .cover .tag {
+      display: inline-block; background: rgba(255,255,255,0.2);
+      padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .cover h1 { font-size: 36px; line-height: 1.15; margin: 0 0 10px; }
+    .cover p { font-size: 17px; opacity: 0.92; margin: 0; max-width: 580px; }
+
+    h2 { font-size: 26px; line-height: 1.2; margin: 56px 0 12px; padding-top: 6px; border-top: 1px solid var(--border); padding-bottom: 8px; }
+    h2:first-of-type { border-top: 0; padding-top: 0; }
+    h3 { font-size: 18px; margin: 28px 0 8px; }
+    h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    p { margin: 0 0 12px; }
+    .muted { color: var(--muted); }
+
+    /* TOC */
+    .toc {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 24px; margin-bottom: 32px;
+    }
+    .toc h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .toc ol { margin: 0; padding-left: 22px; columns: 2; }
+    .toc li { line-height: 1.85; }
+    .toc a { color: var(--fg); text-decoration: none; border-bottom: 1px dotted var(--border); }
+    .toc a:hover { color: var(--brand); border-bottom-color: var(--brand); }
+
+    /* Architecture */
+    .arch {
+      background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(124,58,237,0.05));
+      border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+      font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px; line-height: 1.6; white-space: pre; overflow-x: auto;
+    }
+
+    /* Variable table */
+    .vartab {
+      width: 100%; border-collapse: collapse; margin: 12px 0 22px;
+      font-size: 13.5px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .vartab th, .vartab td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    .vartab th { background: var(--card); font-weight: 600; }
+    .vartab tr:last-child td { border-bottom: 0; }
+    .vartab code { font-size: 12.5px; }
+
+    /* Steps */
+    .step {
+      display: flex; gap: 18px; align-items: flex-start;
+      padding: 18px 0; border-bottom: 1px dashed var(--border);
+    }
+    .step:last-child { border-bottom: 0; }
+    .step-num {
+      flex: 0 0 36px; height: 36px; width: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+    }
+    .step-body { flex: 1; min-width: 0; }
+    .step-body h3 { margin-top: 0; }
+
+    /* Code blocks */
+    pre {
+      background: var(--code-bg); color: var(--code-fg);
+      padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+      font: 12.5px/1.6 "JetBrains Mono", Menlo, Consolas, monospace;
+      margin: 12px 0;
+    }
+    code { font: 0.92em "JetBrains Mono", Menlo, Consolas, monospace;
+      background: rgba(15,23,42,0.06); padding: 1.5px 6px; border-radius: 4px; }
+    pre code { background: transparent; padding: 0; border-radius: 0; color: inherit; }
+
+    /* Callouts */
+    .callout {
+      border-left: 3px solid var(--brand); background: var(--card);
+      padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0;
+      font-size: 14px;
+    }
+    .callout.warn { border-color: var(--warn); background: #fff7ed; }
+    .callout.err { border-color: var(--err); background: #fef2f2; }
+    .callout.ok { border-color: var(--ok); background: #f0fdf4; }
+    .callout strong { color: inherit; }
+
+    /* Pitfall cards */
+    .pitfall-grid { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 16px 0 28px; }
+    @media (min-width: 720px) { .pitfall-grid { grid-template-columns: 1fr 1fr; } }
+    .pitfall {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .pitfall h4 { margin: 0 0 4px; color: var(--err); text-transform: none; letter-spacing: 0; font-size: 14.5px; font-weight: 700; }
+    .pitfall p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); }
+    .pitfall .fix { color: var(--ok); font-weight: 600; font-size: 12.5px; margin-top: 6px; display: block; }
+
+    /* Inline kbd */
+    kbd {
+      background: var(--card); border: 1px solid var(--border); border-bottom-width: 2px;
+      border-radius: 4px; padding: 1px 6px; font-size: 12px; font-family: "JetBrains Mono", monospace;
+    }
+
+    /* Print */
+    @media print {
+      .wrap { max-width: none; padding: 0; }
+      .cover { color: black; background: white; border: 1px solid var(--border); }
+      .cover::after { display: none; }
+      pre { font-size: 10px; }
+      h2 { break-after: avoid; }
+      .step { break-inside: avoid; }
+    }
+
+    /* Header bar */
+    .header-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .header-bar .logo {
+      display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px;
+    }
+    .header-bar .logo svg { flex: 0 0 28px; }
+    .header-bar .meta {
+      color: var(--muted); font-size: 12.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="header-bar">
+      <span class="logo">
+        <svg viewBox="0 0 40 40" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2563eb"/>
+              <stop offset="100%" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" rx="9" fill="url(#g)"/>
+          <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
+          <circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+          <circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+          <line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/>
+        </svg>
+        Pipeline How-To
+      </span>
+      <span class="meta">v1.0 &middot; Stand 2026-05-08 &middot; Nils Lappenbusch</span>
+    </div>
+
+    <div class="cover">
+      <span class="tag">Self-Hosted Docker Auto-Deploy</span>
+      <h1>Vom <code>git push</code> zum laufenden Container.<br>In 30 Minuten reproduzierbar.</h1>
+      <p>Battle-tested Pipeline-Recipe: GitHub Actions Self-Hosted Runner trifft Docker-Compose-Stack auf einem internen Proxmox-LXC, vor dem ein Nginx Proxy Manager und Let's Encrypt steht. Du editierst lokal — Push fertig, Deploy automatisch.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Inhalt</h3>
+      <ol>
+        <li><a href="#tldr">TL;DR (10 Befehle)</a></li>
+        <li><a href="#architektur">Architektur</a></li>
+        <li><a href="#prereq">Prerequisites</a></li>
+        <li><a href="#vars">Variablen-Cheatsheet</a></li>
+        <li><a href="#step1-repo">1. Repo &amp; lokal vorbereiten</a></li>
+        <li><a href="#step2-files">2. Pipeline-Files anlegen</a></li>
+        <li><a href="#step3-server">3. Server-Setup</a></li>
+        <li><a href="#step4-runner">4. GitHub-Runner registrieren</a></li>
+        <li><a href="#step5-firstrun">5. Erstes Deployment</a></li>
+        <li><a href="#step6-npm">6. NPM &amp; DNS</a></li>
+        <li><a href="#step7-test">7. Pipeline testen</a></li>
+        <li><a href="#pitfalls">Stolperfallen &amp; Fixes</a></li>
+        <li><a href="#harden">Hardening</a></li>
+      </ol>
+    </div>
+
+    <h2 id="tldr">TL;DR — 10 Befehle</h2>
+    <p>Wenn du die Pipeline schon kennst und nur die Hand-On-Sequenz willst:</p>
+    <pre><code># Lokal
+git init -b main &amp;&amp; git add . &amp;&amp; git commit -m "init"
+git remote add origin https://github.com/USER/PROJECT.git
+git push -u origin main
+
+# Server (LXC/VM, Docker installiert, User 'actions' existiert)
+sudo mkdir -p /opt/PROJECT &amp;&amp; sudo chown actions:actions /opt/PROJECT
+sudo -u actions git clone https://github.com/USER/PROJECT.git /opt/PROJECT
+sudo -u actions git config --global --add safe.directory /opt/PROJECT
+sudo chmod +x /opt/PROJECT/deploy.sh
+
+# Runner (Tar aus benachbartem Runner kopiert oder fresh download)
+cd /opt/actions-runner-PROJECT
+sudo -u actions ./config.sh --url https://github.com/USER/PROJECT \
+  --token TOKEN --name LABEL --labels LABEL --unattended --replace
+sudo ./svc.sh install actions &amp;&amp; sudo ./svc.sh start
+</code></pre>
+
+    <h2 id="architektur">Architektur</h2>
+    <pre class="arch">┌──────────────────┐        ┌──────────────────┐        ┌──────────────────┐
+│  PC (Dev)        │        │   GitHub         │        │  Internet        │
+│  git push origin │  ───►  │   Repo + Actions │   ◄──  │  User-Browser    │
+└──────────────────┘        └────────┬─────────┘        └────────▲─────────┘
+                                     │ Job                       │
+                                     ▼                           │
+                          ┌──────────────────────┐               │
+                          │ Self-Hosted Runner   │               │
+                          │ (intern, outbound)   │               │
+                          └────────┬─────────────┘               │
+                                   │ deploy.sh                   │ TLS
+                                   ▼                             │
+                          ┌──────────────────────┐               │
+                          │ Docker Host (LXC/VM) │               │
+                          │ /opt/PROJECT         │               │
+                          │ docker compose       │               │
+                          │  up -d --build       │               │
+                          └────────┬─────────────┘               │
+                                   │ host:PORT                   │
+                                   ▼                             │
+                          ┌──────────────────────┐               │
+                          │ Nginx Proxy Manager  │   ◄───────────┘
+                          │ TLS via Let's Encrypt│
+                          │ Forward → host:PORT  │
+                          └──────────────────────┘</pre>
+
+    <h2 id="prereq">Prerequisites</h2>
+    <ul>
+      <li><strong>Lokal:</strong> Python 3.12+, Git, Docker (für lokale Tests).</li>
+      <li><strong>GitHub:</strong> Account, leeres Repo (privat empfohlen).</li>
+      <li><strong>Server (Proxmox LXC oder VM):</strong> Linux mit Docker + docker-compose-Plugin, User <code>actions</code> in der <code>docker</code>-Gruppe.</li>
+      <li><strong>Reverse-Proxy:</strong> Nginx Proxy Manager (NPM) oder Caddy/Traefik auf separater VM mit Public-IP, Port 80/443 von außen erreichbar.</li>
+      <li><strong>DNS:</strong> Zone bei einem Provider, A-Record auf NPM-Public-IP setzbar.</li>
+    </ul>
+
+    <h2 id="vars">Variablen-Cheatsheet</h2>
+    <p>Alles unten ist mit Platzhaltern. Tabelle unten ausfüllen, dann konsistent über alle Schritte ersetzen.</p>
+    <table class="vartab">
+      <thead><tr><th>Platzhalter</th><th>Beispiel (DMARC Geeks)</th><th>Was es ist</th></tr></thead>
+      <tbody>
+        <tr><td><code>USER</code></td><td><code>nlappenbusch</code></td><td>GitHub-Username</td></tr>
+        <tr><td><code>PROJECT</code></td><td><code>dmarc-geeks</code></td><td>Repo-Name + Verzeichnis-Name</td></tr>
+        <tr><td><code>LABEL</code></td><td><code>dmarc-prod-01</code></td><td>Runner-Label (im Workflow)</td></tr>
+        <tr><td><code>PORT</code></td><td><code>8086</code></td><td>Host-Port (Compose-Mapping)</td></tr>
+        <tr><td><code>DOMAIN</code></td><td><code>dmarc-geeks.ch</code></td><td>öffentliche Domain</td></tr>
+        <tr><td><code>SERVER_LAN_IP</code></td><td><code>192.168.50.126</code></td><td>LAN-IP des Docker-Hosts</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="step1-repo">Schritte</h2>
+
+    <div class="step" id="step1">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Repo &amp; lokal vorbereiten</h3>
+        <p>Im Projekt-Root, lokal:</p>
+        <pre><code>git init -b main
+git config user.email "you@example.com"
+git config user.name "Your Name"</code></pre>
+        <h4>.gitignore (mindestens)</h4>
+        <pre><code>.env
+*.pyc
+__pycache__/
+.venv/
+venv/
+*.db
+*.log
+.idea/
+.vscode/
+.DS_Store
+.claude/</code></pre>
+        <p>Auf GitHub: <strong>https://github.com/new</strong> → Name <code>PROJECT</code> → <strong>Private</strong> → keine Initial-Files anhaken → Create.</p>
+      </div>
+    </div>
+
+    <div class="step" id="step2-files">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Pipeline-Files anlegen</h3>
+        <h4>deploy.sh (im Repo-Root, executable)</h4>
+        <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+REPO_DIR="/opt/PROJECT"
+cd "$REPO_DIR"
+
+git fetch origin main
+git reset --hard origin/main
+
+# Compose-Vars aus der Shell raus (sonst koennen Reste aus anderen
+# Runner-Jobs die .env ueberschreiben -- siehe Stolperfalle 2)
+unset APP_PORT POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
+      DATABASE_URL SECRET_KEY \
+      # ... alle Variablen die in compose oder pydantic-Settings auftauchen
+
+docker compose pull || true
+docker compose build
+docker compose down --remove-orphans
+sleep 3
+docker compose up -d
+
+# Self-healing: in manchen LXCs bleibt Container in "Created"
+sleep 3
+if ! docker ps --filter name=PROJECT-app-1 --filter status=running -q | grep -q .; then
+  docker start PROJECT-app-1 || true
+  sleep 3
+fi
+if ! docker ps --filter name=PROJECT-app-1 --filter status=running -q | grep -q .; then
+  echo "ERROR: app container not running"
+  docker logs PROJECT-app-1 --tail=40 || true
+  exit 1
+fi
+
+docker image prune -f</code></pre>
+        <p>In Git als executable markieren — wichtig wenn du auf Windows entwickelst:</p>
+        <pre><code>git update-index --add --chmod=+x deploy.sh</code></pre>
+
+        <h4>.github/workflows/deploy.yml</h4>
+        <pre><code>name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-PROJECT
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64, LABEL]
+    steps:
+      - name: Run deploy script
+        run: bash /opt/PROJECT/deploy.sh</code></pre>
+
+        <h4>docker-compose.yml-Pattern (Auszug)</h4>
+        <pre><code>services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: [.env]
+    ports:
+      - "${APP_PORT:-8000}:8000"   # Host-Port aus .env
+    volumes:
+      - ./.env:/app/.env           # NUR wenn die App die .env zur Laufzeit
+                                   # editieren koennen muss (z.B. Admin-Panel).
+                                   # Beachte: rename() funktioniert auf einem
+                                   # bind-mount-File nicht -- App muss
+                                   # in-place schreiben koennen.
+    depends_on:
+      db: { condition: service_healthy }
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  data:</code></pre>
+        <p>Commit + Push:</p>
+        <pre><code>git add .
+git commit -m "init: pipeline files"
+git remote add origin https://github.com/USER/PROJECT.git
+git push -u origin main</code></pre>
+      </div>
+    </div>
+
+    <div class="step" id="step3-server">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Server-Setup (Docker-Host)</h3>
+        <p>Auf der LXC/VM, einmalig:</p>
+        <pre><code>sudo mkdir -p /opt/PROJECT
+sudo chown actions:actions /opt/PROJECT
+sudo -u actions git clone https://github.com/USER/PROJECT.git /opt/PROJECT
+sudo -u actions git config --global --add safe.directory /opt/PROJECT
+sudo chmod +x /opt/PROJECT/deploy.sh</code></pre>
+
+        <p>Bei privaten Repos: PAT erstellen (GitHub → Settings → Developer settings → Personal access tokens → "repo"-Scope) und beim ersten <code>git clone</code> als Passwort eingeben. Git merkt's sich.</p>
+
+        <h4>.env auf dem Server (NIE im Repo!)</h4>
+        <pre><code>cd /opt/PROJECT
+[ -f .env ] &amp;&amp; mv .env ".env.bak.$(date +%s)"
+
+# Generieren mit openssl statt Python -- weniger Abhaengigkeiten
+SECRET_KEY=$(openssl rand -base64 64 | tr -d '\n')
+FERNET_KEY=$(openssl rand 32 | openssl base64 -A | tr '+/' '-_')
+PG_PASS=$(openssl rand -base64 32 | tr -d '\n=+/' | head -c 32)
+ADMIN_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)
+
+cat &gt; .env &lt;&lt;EOF
+POSTGRES_USER=appuser
+POSTGRES_PASSWORD=${PG_PASS}
+POSTGRES_DB=appdb
+APP_PORT=PORT
+SECRET_KEY=${SECRET_KEY}
+FERNET_KEY=${FERNET_KEY}
+SUPERADMIN_EMAIL=admin@DOMAIN
+SUPERADMIN_PASSWORD=${ADMIN_PASS}
+BASE_URL=https://DOMAIN
+COOKIE_SECURE=true
+TRUSTED_PROXIES=true
+EOF
+
+chown actions:actions .env
+chmod 600 .env
+
+clear
+echo "Login: admin@DOMAIN / ${ADMIN_PASS}"
+# Kopier dir das ins Passwort-Manager, dann:
+clear; history -c</code></pre>
+        <div class="callout warn"><strong>Wichtig:</strong> nie SECRET_KEY/FERNET_KEY/Passwörter in den Chat oder ein Ticket pasten. Direkt im Terminal generieren, sofort in den PW-Manager, dann <code>clear; history -c</code>. Wenn doch geleaked: <code>.env</code> wegwerfen + neu generieren BEVOR ein User den ersten Login gemacht hat — danach würden gespeicherte verschlüsselte Werte den FERNET_KEY brauchen.</div>
+      </div>
+    </div>
+
+    <div class="step" id="step4-runner">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>GitHub-Runner registrieren</h3>
+        <p>Im GitHub-Repo: <strong>Settings → Actions → Runners → New self-hosted runner → Linux x64</strong>. Den Token aus der angezeigten <code>./config.sh ...</code>-Zeile rauskopieren. Token läuft ~1h, also gleich weiter.</p>
+        <pre><code># Verzeichnis fuer diesen Runner
+sudo mkdir -p /opt/actions-runner-PROJECT
+sudo chown actions:actions /opt/actions-runner-PROJECT
+cd /opt/actions-runner-PROJECT
+
+# Tar aus benachbartem Runner kopieren spart Download
+sudo -u actions cp /opt/actions-runner-OTHER/actions-runner-linux-x64-*.tar.gz . 2>/dev/null \
+  || sudo -u actions curl -o runner.tar.gz -L \
+       https://github.com/actions/runner/releases/download/v2.334.0/actions-runner-linux-x64-2.334.0.tar.gz
+
+sudo -u actions tar xzf actions-runner-linux-x64-*.tar.gz
+
+# Konfigurieren
+sudo -u actions ./config.sh \
+  --url https://github.com/USER/PROJECT \
+  --token TOKEN_AUS_GITHUB \
+  --name LABEL \
+  --labels LABEL \
+  --unattended --replace
+
+# Service installieren + starten
+sudo ./svc.sh install actions
+sudo ./svc.sh start
+systemctl status 'actions.runner.USER-PROJECT.LABEL.service' --no-pager</code></pre>
+        <p>Auf GitHub im Runners-Tab muss <code>LABEL</code> jetzt grün und <code>Idle</code> stehen.</p>
+      </div>
+    </div>
+
+    <div class="step" id="step5-firstrun">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Erstes Deployment manuell ziehen</h3>
+        <pre><code>sudo -u actions bash /opt/PROJECT/deploy.sh
+docker ps --filter name=PROJECT
+curl -i http://127.0.0.1:PORT/healthz   # oder gleicher Endpoint deiner App</code></pre>
+        <p>Beide Container <code>Up</code>, healthz <code>200</code> → Stack steht. Dann LAN-Test:</p>
+        <pre><code>LAN_IP=$(ip -4 -o addr show | awk '$2 != "lo" {print $4}' | cut -d/ -f1 | head -n1)
+curl -i http://$LAN_IP:PORT/healthz</code></pre>
+        <div class="callout warn"><strong>Wenn LAN-Test fehlschlägt:</strong> Firewall (ufw/Proxmox-LXC-Firewall) blockt. <code>ufw allow PORT/tcp</code> oder im Proxmox-UI Container → Firewall → Rule hinzufügen.</div>
+      </div>
+    </div>
+
+    <div class="step" id="step6-npm">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h3>NPM &amp; DNS</h3>
+        <p><strong>1) DNS zuerst</strong>: A-Record <code>DOMAIN</code> auf Public-IP der NPM-VM. TTL 300s. Verify: <code>nslookup DOMAIN</code>.</p>
+        <p><strong>2) NPM Proxy Host</strong> (Hosts → Proxy Hosts → Add):</p>
+        <ul>
+          <li>Domain Names: <code>DOMAIN</code></li>
+          <li>Scheme: <code>http</code></li>
+          <li>Forward Hostname / IP: <code>SERVER_LAN_IP</code></li>
+          <li>Forward Port: <code>PORT</code></li>
+          <li>"Block Common Exploits" + "Websockets Support" ✓</li>
+          <li>SSL-Tab: "Request a new SSL Certificate" + "Force SSL" + "HTTP/2" + LE ToS ✓</li>
+        </ul>
+        <p>Verify vom PC: <code>curl.exe -I https://DOMAIN</code> → <code>HTTP/2 200</code>.</p>
+      </div>
+    </div>
+
+    <div class="step" id="step7-test">
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <h3>Pipeline live testen</h3>
+        <p>Lokal eine triviale Änderung:</p>
+        <pre><code>git commit --allow-empty -m "test deploy"
+git push</code></pre>
+        <p>Auf GitHub <strong>Actions</strong>-Tab: Workflow muss starten und nach 30–90s grün werden. Auf dem Server:</p>
+        <pre><code>sudo -u actions git -C /opt/PROJECT log -1 --oneline
+journalctl -u actions.runner.USER-PROJECT.LABEL --no-pager -n 4 | tail -2</code></pre>
+        <div class="callout ok"><strong>Wenn der Job grün läuft:</strong> Pipeline ist live. Ab jetzt deployt jeder <code>git push</code> auf <code>main</code> automatisch.</div>
+      </div>
+    </div>
+
+    <h2 id="pitfalls">Stolperfallen &amp; Fixes</h2>
+    <p>Aus echtem Schmerz extrahiert. Wenn du auf einen davon stößt, ist die Lösung 30 Sekunden weg.</p>
+    <div class="pitfall-grid">
+      <div class="pitfall">
+        <h4>Port-Kollision</h4>
+        <p>Anderer Container bindet schon den Port. Compose-up scheitert mit <em>"port is already allocated"</em>.</p>
+        <span class="fix">→ Anderen <code>APP_PORT</code> in <code>.env</code>, NPM-Forward anpassen.</span>
+      </div>
+      <div class="pitfall">
+        <h4>Shell-Env überschreibt .env</h4>
+        <p>Compose nimmt Shell-Env vor <code>.env</code>-Datei. Wenn der Runner-Shell <code>APP_PORT=ALT</code> hat, bleibt der falsche Port aktiv.</p>
+        <span class="fix">→ <code>unset APP_PORT POSTGRES_*</code> am Anfang von <code>deploy.sh</code>.</span>
+      </div>
+      <div class="pitfall">
+        <h4>Container in "Created", nicht "Up"</h4>
+        <p>Compose-up schließt mit Erfolg ab, aber Container startet nicht (Race-Condition mit docker-proxy auf manchen LXCs).</p>
+        <span class="fix">→ Self-healing-Block in <code>deploy.sh</code>: <code>docker start</code> als Fallback.</span>
+      </div>
+      <div class="pitfall">
+        <h4>NAT-Loopback zu eigenem Mailserver</h4>
+        <p>Container will <code>mail.firma.ch</code> erreichen, DNS löst auf Public-IP, Router routed nicht zurück.</p>
+        <span class="fix">→ <code>extra_hosts</code> in compose mit FQDN→LAN-IP, oder <code>SMTP_HOST</code> = LAN-IP + <code>SMTP_TLS_VERIFY=false</code>.</span>
+      </div>
+      <div class="pitfall">
+        <h4>nft DOCKER-Chain hat kein DNAT für den neuen Port</h4>
+        <p>Compose-up scheinbar ok, aber externe Verbindung läuft ins Leere.</p>
+        <span class="fix">→ <code>docker compose down + sleep 3 + up -d</code>; im Notfall <code>systemctl restart docker</code>.</span>
+      </div>
+      <div class="pitfall">
+        <h4>Bind-mounted .env, atomic-rename fail</h4>
+        <p>Wenn die App <code>.env</code> editierbar braucht: Linux verbietet <code>rename()</code> auf eine bind-gemountete Single-File. <code>os.replace</code> wirft OSError.</p>
+        <span class="fix">→ App muss in-place schreiben (Schreiben in temp + Fallback auf <code>p.write_text()</code>).</span>
+      </div>
+      <div class="pitfall">
+        <h4>YouTube/iframe-Embed Error 153</h4>
+        <p>Wenn deine App YouTube-Embeds zeigt und Player-Config-Error wirft.</p>
+        <span class="fix">→ <code>www.youtube.com/embed</code> statt <code>-nocookie</code>; <code>modestbranding</code>-Param raus; CSP <code>frame-src</code> erweitern.</span>
+      </div>
+      <div class="pitfall">
+        <h4>Pydantic crasht weil Number-Field leer</h4>
+        <p>Admin-Panel speichert leeren String in <code>.env</code>, beim nächsten <code>get_settings()</code> wirft Pydantic <em>"Input should be a valid integer"</em>.</p>
+        <span class="fix">→ Im Save-Handler leere number/url/email-Felder skippen, nicht als <code>""</code> persistieren.</span>
+      </div>
+    </div>
+
+    <h2 id="harden">Hardening (sobald produktiv)</h2>
+    <ul>
+      <li><strong>Postgres-Backup automatisieren:</strong> <code>docker exec ... pg_dump</code> via cron, off-site verschlüsselt.</li>
+      <li><strong>Container-Updates:</strong> Renovate/Dependabot für <code>requirements.txt</code> + <code>docker-compose.yml</code>.</li>
+      <li><strong>Read-only-Container:</strong> <code>read_only: true</code> in compose, Schreib-Pfade explizit als <code>tmpfs</code>/Volume.</li>
+      <li><strong>Dockerfile-Healthcheck:</strong> <code>HEALTHCHECK --interval=30s CMD curl -f http://localhost:8000/healthz</code>.</li>
+      <li><strong>Secrets-Rotation:</strong> SECRET_KEY/SMTP-Passwort in 6-Monats-Rhythmus.</li>
+      <li><strong>NPM-Backups:</strong> SSL-Configs + Forward-Hosts gehen sonst verloren wenn die NPM-VM stirbt.</li>
+      <li><strong>Monitor:</strong> simpler Cron auf dem Host: <code>curl -sf http://127.0.0.1:PORT/healthz || alert</code>.</li>
+      <li><strong>Audit-Log auf der App:</strong> Login/Logout, Settings-Änderungen, Privilegierte Aktionen.</li>
+    </ul>
+
+    <p style="margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px;">
+      Diese Recipe wurde in einer Live-Session zwischen Mensch + Claude entwickelt während wir
+      <a href="https://dmarc-geeks.ch" style="color: var(--brand);">dmarc-geeks.ch</a> aufgesetzt haben.
+      Die genannten Stolperfallen sind alle echt passiert — nichts hypothetisch. Stand: 2026-05-08.
+    </p>
+
+  </div>
+</body>
+</html>
