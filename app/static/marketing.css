@@ -21,8 +21,24 @@ body.mkt-v3 { overflow-x: hidden; }
 body.mkt h3 { text-transform: none; color: var(--text); letter-spacing: -0.01em; }
 
 /* Swiss flag — inline SVG so it renders consistently across OS (Windows-Emoji-Set has no proper flag) */
-.ch-flag { display: inline-block; width: 1.05em; height: 1.05em; vertical-align: -3px; border-radius: 3px;
-  flex-shrink: 0; }
+.ch-flag { display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; border-radius: 3px;
+  flex-shrink: 0; box-shadow: 0 0 0 0.5px rgba(0,0,0,.06); }
+
+/* Konsistente :focus-visible-Ringe quer durch die Marketing-Site */
+.mkt a:focus-visible,
+.mkt button:focus-visible,
+.mkt input:focus-visible,
+.mkt textarea:focus-visible,
+.mkt select:focus-visible {
+  outline: 2px solid var(--brand, #2563eb);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* CTA-Buttons sollen einheitlich an Hover/Focus reagieren */
+.mkt .btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.mkt .btn-primary { transition: transform .15s, filter .15s, box-shadow .15s; }
+.mkt .btn-primary:active { transform: translateY(0); }
 
 /* ============== TOPNAV ============== */
 .mkt-nav { display: flex; align-items: center; gap: 32px; padding: 16px 32px; max-width: 1280px; margin: 0 auto;
