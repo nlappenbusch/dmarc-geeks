@@ -97,16 +97,16 @@
     <div class="hero-text">
       <span class="eyebrow">
         <span class="dot-live"></span>
-        🤓 DMARC-Nerds aus der Schweiz · Self-hosted · Multi-Tenant · Whitelabel
+        🇨🇭 Mail-Security &amp; Deliverability &middot; aus der Schweiz für DACH
       </span>
-      <h1>Schluss mit XML.<br><span class="grad-text">Verstehe</span> deine DMARC-Reports.</h1>
-      <p class="lede">Sammelt RUA-Reports automatisch aus deinem Postfach, parst sie, und macht <strong>auf einen Blick sichtbar wer in deinem Namen sendet, wo Spoofing herkommt, und wann du sicher auf <code>p=reject</code> gehen kannst</strong>. Cloud-gehostet oder auf deinem eigenen Server. Plus: täglicher <strong>DNSBL-Check</strong> auf deine Sender-IPs, damit du nicht durch eine Blacklist-Listung im Spam landest.</p>
+      <h1><span class="grad-text">Sicher senden.</span><br>Zuverlässig ankommen.</h1>
+      <p class="lede">Wir machen <strong>Mail-Authentifizierung und Zustellbarkeit</strong> für Schweizer KMU und MSPs: DMARC, SPF, DKIM, BIMI, M365-Hardening — als Komplettpaket mit Festpreis. Damit deine Rechnungen ankommen, keine Phishing-Mails mit deinem Logo rausgehen, und du NIS2/ISO-Audit gelassen abhakst. <em>Tool inklusive — wir bauen unser eigenes Multi-Tenant-Dashboard, das du im Alltag selbst nutzt.</em></p>
       <div class="hero-cta">
-        <a href="/kontakt?topic=demo" class="btn-primary big">📅 Demo-Termin anfragen</a>
-        <a href="/demo" class="btn-ghost-arrow">🎯 Oder Live-Demo sofort öffnen <span>→</span></a>
+        <a href="#pakete" class="btn-primary big">→ Pakete &amp; Festpreise</a>
+        <a href="/check" class="btn-ghost-arrow">🔍 Gratis Mail-Health-Check <span>→</span></a>
       </div>
       <div class="hero-trust" style="margin-top:8px;">
-        <span class="muted small">Antwort innerhalb 24 Stunden &middot; kostenlos &middot; unverbindlich</span>
+        <span class="muted small">Festpreise · Erstgespräch gratis · 1–4 Wochen bis live</span>
       </div>
       <div class="hero-trust">
         <span><svg class="ch-flag" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Schweiz" role="img"><rect width="32" height="32" fill="#da291c" rx="3"/><rect x="13" y="6" width="6" height="20" fill="white"/><rect x="6" y="13" width="20" height="6" fill="white"/></svg> <strong>Made in Switzerland</strong></span>
@@ -168,6 +168,258 @@
     <span class="trust-pill">Mailchimp · SendGrid · Klaviyo</span>
   </div>
 </section>
+
+<!-- ============== AUDIENCE-SWITCHER + PAKETE (NEU v2, Service-first) ============== -->
+<section id="pakete" class="pos-section">
+  <div class="container-mkt">
+    <div class="pos-head">
+      <span class="eyebrow"><span class="dot-live"></span>Komplettpaket statt Stundenzettel</span>
+      <h2>Festpreise. Klare Pakete. Keine Überraschungen.</h2>
+      <p class="lede">Wähle deine Rolle — Pakete und Preise unterscheiden sich, weil die Use-Cases es tun.</p>
+    </div>
+
+    <!-- Tab-Switcher -->
+    <div class="aud-tabs" role="tablist" aria-label="Audience-Auswahl">
+      <button role="tab" aria-selected="true" class="aud-tab active" data-aud="kmu" type="button">
+        <span class="aud-tab-ico">🏢</span>
+        <span class="aud-tab-body">
+          <strong>Für KMU &amp; Inhouse-IT</strong>
+          <small>Du bist verantwortlich für eine (oder ein paar) eigene Domains.</small>
+        </span>
+      </button>
+      <button role="tab" aria-selected="false" class="aud-tab" data-aud="msp" type="button">
+        <span class="aud-tab-ico">🛠</span>
+        <span class="aud-tab-body">
+          <strong>Für MSPs &amp; Agenturen</strong>
+          <small>Du verwaltest Mail-Security für mehrere Endkunden.</small>
+        </span>
+      </button>
+    </div>
+
+    <!-- KMU-Pakete -->
+    <div class="aud-panel" data-aud="kmu" role="tabpanel">
+      <div class="pkg-grid-v2">
+        <article class="pkg-v2">
+          <header>
+            <span class="pkg-tag">Starter</span>
+            <h3>Mail-Security Foundation</h3>
+            <p class="pkg-sub">DMARC-Inventur, SPF/DKIM sauber, Reise auf <code>p=quarantine</code>.</p>
+          </header>
+          <div class="pkg-price">CHF 2'990<small>einmalig &middot; inkl. 60 Tage Begleitung</small></div>
+          <ul class="pkg-list">
+            <li>Vollständige Sender-Inventur (auch Mailchimp, M365, SendGrid &amp; Co.)</li>
+            <li>SPF saniert (10-Lookup-Grenze gefixt, Flattening wenn nötig)</li>
+            <li>DKIM-Selektoren angelegt, rotiert, dokumentiert</li>
+            <li>DMARC-Reise <code>none → quarantine</code> mit Monitoring</li>
+            <li>Onboarding ins Tool — du siehst täglich was passiert</li>
+            <li>Quartals-Review (1× nach 90 Tagen)</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: Schweizer KMU, 1–3 Mail-Domains, kein dedizierter Mail-Admin.</p>
+          <a href="/kontakt?topic=starter" class="btn-primary pkg-cta">Starter anfragen</a>
+        </article>
+
+        <article class="pkg-v2 pkg-featured">
+          <span class="pkg-badge">Empfohlen</span>
+          <header>
+            <span class="pkg-tag">Pro</span>
+            <h3>Mail-Security Pro mit BIMI</h3>
+            <p class="pkg-sub">Foundation + harte <code>p=reject</code>-Policy + dein Logo neben jeder Mail.</p>
+          </header>
+          <div class="pkg-price">CHF 7'490<small>einmalig &middot; inkl. 12 Monate Begleitung + CMC-Zertifikat</small></div>
+          <ul class="pkg-list">
+            <li>Alles aus Starter, plus:</li>
+            <li>DMARC-Reise bis <code>p=reject</code> (mit Sub-Domain-Strategie)</li>
+            <li><strong>BIMI Setup</strong> inkl. SVG-Vorbereitung &amp; CMC-Zertifikat (1 Jahr)</li>
+            <li>Logo neben Mails in Apple Mail, Yahoo, Fastmail, Zoho</li>
+            <li>Spike-Alerts + DNSBL-Monitoring (24/7 vollautomatisch)</li>
+            <li>4 Quartals-Reviews (1 Jahr lang)</li>
+            <li>VMC-Upgrade-Option (Trademark-validiert, blauer Tick in Gmail)</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: KMU mit Newsletter/Marketing-Mail-Volumen, Brand-Bewusstsein, Compliance-Druck.</p>
+          <a href="/kontakt?topic=pro" class="btn-primary pkg-cta">Pro anfragen</a>
+        </article>
+
+        <article class="pkg-v2">
+          <header>
+            <span class="pkg-tag">Enterprise</span>
+            <h3>Mail-Security Enterprise</h3>
+            <p class="pkg-sub">Pro + M365-Hardening + Compliance-Doku für NIS2/ISO 27001.</p>
+          </header>
+          <div class="pkg-price">CHF 14'990<small>einmalig &middot; inkl. 12 Monate Premium-Support</small></div>
+          <ul class="pkg-list">
+            <li>Alles aus Pro, plus:</li>
+            <li><strong>M365 Threat-Hardening</strong> (EOP, Defender for Office 365 P1/P2)</li>
+            <li>Anti-Phishing-Policies, Quarantäne-UX, Strict-Preset+</li>
+            <li>VMC-Zertifikat (1 Jahr) statt CMC — blauer Verified-Tick in Gmail</li>
+            <li>Compliance-Dokumentation: NIS2-tauglich, ISO 27001-Annex-A8</li>
+            <li>Audit-Logbook für interne Revision</li>
+            <li>Premium-Support: 4h-SLA für Mail-Incidents</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: Regulierte Branchen (Health, Finanz, kritische Infrastruktur), 5+ Domains, Compliance-Druck.</p>
+          <a href="/kontakt?topic=enterprise" class="btn-primary pkg-cta">Enterprise anfragen</a>
+        </article>
+      </div>
+
+      <p class="pkg-foot muted small">Alle Preise in CHF, exkl. MwSt. Renewal-Zertifikate (Folgejahre) zu Marktpreisen. Multi-Domain &amp; Group-Konditionen ab 5+ Domains auf Anfrage.</p>
+    </div>
+
+    <!-- MSP-Pakete -->
+    <div class="aud-panel" data-aud="msp" role="tabpanel" hidden>
+      <div class="pkg-grid-v2">
+        <article class="pkg-v2">
+          <header>
+            <span class="pkg-tag">Pilot</span>
+            <h3>MSP-Whitelabel-Pilot</h3>
+            <p class="pkg-sub">Test mit 3 deiner Kunden. Unser Tool, dein Branding.</p>
+          </header>
+          <div class="pkg-price">CHF 1'490<small>einmalig &middot; 3 Tenants &middot; 6 Monate</small></div>
+          <ul class="pkg-list">
+            <li>Multi-Tenant-Dashboard mit <strong>deinem Logo, deinen Farben</strong></li>
+            <li>3 Endkunden-Tenants vorab eingerichtet</li>
+            <li>Reseller-Mailbox: zentrale Inbox routet automatisch je Domain</li>
+            <li>Managed-DMARC via CNAME-Delegation (Kunde setzt 1× CNAME, Rest macht Tool)</li>
+            <li>Onboarding-Session (2h) zum Verkaufs-Pitch deiner Kunden</li>
+            <li>Bei Erfolg: Upgrade auf Reseller-Plus mit Volumen-Konditionen</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: MSPs/Agenturen mit 5+ KMU-Kunden, die DMARC erstmal validieren wollen.</p>
+          <a href="/kontakt?topic=reseller-pilot" class="btn-primary pkg-cta">Pilot anfragen</a>
+        </article>
+
+        <article class="pkg-v2 pkg-featured">
+          <span class="pkg-badge">Skalier-Modell</span>
+          <header>
+            <span class="pkg-tag">Reseller</span>
+            <h3>Reseller-Plus mit Whitelabel-Domain</h3>
+            <p class="pkg-sub">Volle Whitelabel-Brand auf eigener Domain, Volumen-Konditionen.</p>
+          </header>
+          <div class="pkg-price">ab CHF 199<small>pro Monat &middot; inkl. 25 Tenants</small></div>
+          <ul class="pkg-list">
+            <li>Tool unter <strong>dein-name.deine-domain.ch</strong> (eigenes SSL)</li>
+            <li>Custom-Domain für RUA-Auth-Records (Managed-DMARC funktioniert auch unter deinem Brand)</li>
+            <li>API für Auto-Provisioning aus deinem CRM/Ticket-System</li>
+            <li>Pro Tenant ab dem 26. nur noch CHF 7/Monat</li>
+            <li>Quartals-Strategy-Call mit uns (DMARC-Trends, neue Features)</li>
+            <li>Co-Marketing &amp; Lead-Sharing möglich</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: Mail-Agenturen, IT-Dienstleister, Cybersecurity-Boutiquen mit 10+ aktiven Mandaten.</p>
+          <a href="/kontakt?topic=reseller" class="btn-primary pkg-cta">Reseller-Plus anfragen</a>
+        </article>
+
+        <article class="pkg-v2">
+          <header>
+            <span class="pkg-tag">Enterprise / Self-Host</span>
+            <h3>MSP-Enterprise &amp; Self-Hosting</h3>
+            <p class="pkg-sub">Tool als On-Premise-Stack auf deiner Infrastruktur.</p>
+          </header>
+          <div class="pkg-price">Quote<small>typischerweise CHF 12k–24k einmalig + Wartung</small></div>
+          <ul class="pkg-list">
+            <li>Source-Lizenz oder Container-Stack auf deinem Cluster</li>
+            <li>Tenant-Limits aufgehoben — beliebige Skalierung</li>
+            <li>Eigener SLA-Support direkt von uns (Vier-Augen-Code-Review, Migrationen)</li>
+            <li>Roadmap-Influence: priorisierte Feature-Requests</li>
+            <li>Optional: White-Label-Code-Anpassungen für vertikalen Markt</li>
+          </ul>
+          <p class="pkg-fit muted small">Passt für: Große MSP-Verbünde, Banken/Versicherer, regulierte Sektoren mit On-Premise-Pflicht.</p>
+          <a href="/kontakt?topic=msp-enterprise" class="btn-primary pkg-cta">Quote anfragen</a>
+        </article>
+      </div>
+
+      <p class="pkg-foot muted small">Whitelabel-Brand-Setup im Pilot- &amp; Reseller-Paket inklusive. SLA-Verträge ab Reseller-Tier verhandelbar.</p>
+    </div>
+
+  </div>
+</section>
+
+<style>
+.pos-section { padding: 56px 0 32px; }
+.pos-head { text-align: center; max-width: 720px; margin: 0 auto 28px; }
+.pos-head h2 { font-size: 32px; line-height: 1.18; margin: 12px 0 8px; }
+.pos-head .lede { color: var(--muted, #64748b); margin: 0; }
+
+.aud-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            max-width: 880px; margin: 0 auto 30px; }
+@media (max-width: 640px) { .aud-tabs { grid-template-columns: 1fr; } }
+.aud-tab { display: flex; align-items: center; gap: 14px;
+           padding: 18px 22px; border-radius: 14px;
+           background: var(--card, #fff); border: 1.5px solid var(--border, #e2e8f0);
+           cursor: pointer; font: inherit; color: inherit; text-align: left;
+           transition: border-color .15s, transform .15s, box-shadow .15s; }
+.aud-tab:hover { transform: translateY(-1px); border-color: rgba(37,99,235,.4); }
+.aud-tab.active { border-color: var(--brand, #2563eb);
+                  box-shadow: 0 0 0 3px rgba(37,99,235,.12), 0 8px 24px -10px rgba(37,99,235,.25);
+                  background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.04)); }
+.aud-tab-ico { font-size: 28px; flex-shrink: 0; }
+.aud-tab-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.aud-tab-body strong { font-size: 15px; }
+.aud-tab-body small { color: var(--muted, #64748b); font-size: 12.5px; }
+
+.pkg-grid-v2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+               max-width: 1200px; margin: 0 auto; }
+@media (max-width: 960px) { .pkg-grid-v2 { grid-template-columns: 1fr; } }
+
+.pkg-v2 {
+  background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px; padding: 26px; position: relative;
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 16px -8px rgba(15,23,42,.08);
+  transition: box-shadow .25s, transform .25s, border-color .25s;
+}
+.pkg-v2:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -16px rgba(37,99,235,.18); }
+.pkg-v2.pkg-featured {
+  border-color: rgba(37,99,235,.5);
+  box-shadow: 0 12px 32px -12px rgba(37,99,235,.22);
+}
+.pkg-badge {
+  position: absolute; top: -12px; right: 24px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 999px;
+}
+.pkg-v2 header { margin-bottom: 14px; }
+.pkg-v2 .pkg-tag {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--brand, #2563eb);
+  background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(124,58,237,.10));
+  padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(37,99,235,.25);
+}
+.pkg-v2 h3 { font-size: 20px; line-height: 1.2; margin: 12px 0 4px; }
+.pkg-v2 .pkg-sub { color: var(--muted, #64748b); font-size: 13.5px; margin: 0 0 14px; line-height: 1.5; }
+.pkg-v2 .pkg-price {
+  font-size: 28px; font-weight: 800; color: var(--text, #0f172a); line-height: 1.1; margin-bottom: 16px;
+}
+.pkg-v2 .pkg-price small {
+  display: block; font-size: 12.5px; font-weight: 500; color: var(--muted, #64748b);
+  margin-top: 6px;
+}
+.pkg-v2 .pkg-list { list-style: none; padding: 0; margin: 0 0 14px; flex-grow: 1; }
+.pkg-v2 .pkg-list li {
+  padding: 7px 0; border-bottom: 1px dashed var(--border, #e2e8f0);
+  font-size: 13.5px; line-height: 1.55;
+}
+.pkg-v2 .pkg-list li:last-child { border-bottom: 0; }
+.pkg-v2 .pkg-fit { padding-top: 4px; margin-bottom: 14px; font-style: italic; }
+.pkg-v2 .pkg-cta { display: block; text-align: center; padding: 12px 18px; margin-top: auto; }
+
+.pkg-foot { text-align: center; max-width: 760px; margin: 22px auto 0; }
+</style>
+<script>
+(function() {
+  const tabs = document.querySelectorAll('.aud-tab');
+  const panels = document.querySelectorAll('.aud-panel');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    const aud = t.dataset.aud;
+    tabs.forEach(o => { o.classList.toggle('active', o === t); o.setAttribute('aria-selected', o === t); });
+    panels.forEach(p => { p.hidden = (p.dataset.aud !== aud); });
+    // URL-Hash so dass Re-Visit den Tab erinnert
+    try { history.replaceState(null, '', '#pakete-' + aud); } catch(e) {}
+  }));
+  // Deep-Link Support: #pakete-msp aktiviert MSP-Tab
+  if (location.hash === '#pakete-msp') {
+    const t = document.querySelector('.aud-tab[data-aud="msp"]');
+    if (t) t.click();
+  }
+})();
+</script>
 
 <!-- ============== MINI MAIL-CHECK WIDGET (kompakt, fancy, gradient-glow) ============== -->
 <section class="mini-check">
