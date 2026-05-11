@@ -1,16 +1,16 @@
-/* Marketing-Nav Dropdown: Hover (Desktop) + Click/Tap-Toggle (Touch / Tastatur).
+/* Marketing-Nav Dropdown: Hover (Maus/Trackpad) + Click-Toggle (Touch).
  *
- * Verhalten:
- *  - Desktop (mouse): Hover oeffnet/schliesst per CSS, JS ist transparent.
- *  - Touch: erster Tap auf Trigger oeffnet, zweiter Tap navigiert. Tap ausserhalb schliesst.
- *  - Tastatur: Trigger ist <a> -> Enter folgt Link wie immer. Aria-Expanded fuer Reader.
+ * Wir nutzen Pointer-Events um zu erkennen womit der User gerade interagiert
+ * (Maus oder Touch). Das vermeidet das Problem auf Hybrid-Laptops (Surface,
+ * Lenovo Yoga, etc.), wo sowohl Touchscreen ALS AUCH Maus vorhanden sind und
+ * das alte 'ontouchstart' immer truthy ist.
+ *
+ * Maus/Pen: Hover-CSS macht alles. JS ist no-op.
+ * Touch:    erster Tap auf Trigger oeffnet Menu (preventDefault),
+ *           zweiter Tap navigiert.
  */
 (function() {
   'use strict';
-
-  function isTouch() {
-    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  }
 
   const groups = document.querySelectorAll('.mkt-nav-group');
   if (!groups.length) return;
@@ -23,52 +23,55 @@
     trigger.setAttribute('aria-expanded', 'false');
   });
 
-  // Touch: erster Tap oeffnet, zweiter Tap navigiert.
-  // Wir tracken pro Trigger ob er gerade "offen via Tap" ist.
-  if (isTouch()) {
-    groups.forEach(g => {
-      const trigger = g.querySelector('.mkt-nav-trigger');
-      if (!trigger) return;
-      trigger.addEventListener('click', (ev) => {
-        // Falls noch nicht offen -> oeffnen + Navigation verhindern
-        if (!g.classList.contains('is-open')) {
-          // Alle anderen schliessen
-          groups.forEach(other => {
-            if (other !== g) {
-              other.classList.remove('is-open');
-              const ot = other.querySelector('.mkt-nav-trigger');
-              if (ot) ot.setAttribute('aria-expanded', 'false');
-            }
-          });
-          g.classList.add('is-open');
-          trigger.setAttribute('aria-expanded', 'true');
-          ev.preventDefault();
-        }
-        // sonst (schon offen): nichts tun, Browser folgt dem Link
-      });
-    });
+  // Tracke den letzten Pointer-Typ. Mausbewegung setzt auf 'mouse', Touch auf 'touch'.
+  let lastPointerType = 'mouse';
+  if ('PointerEvent' in window) {
+    document.addEventListener('pointerdown', (ev) => {
+      lastPointerType = ev.pointerType || 'mouse';
+    }, true);
+  }
 
-    // Klick ausserhalb der Nav -> alle Dropdowns zu
-    document.addEventListener('click', (ev) => {
-      const inside = ev.target.closest('.mkt-nav-group');
-      if (!inside) {
-        groups.forEach(g => {
-          g.classList.remove('is-open');
-          const t = g.querySelector('.mkt-nav-trigger');
-          if (t) t.setAttribute('aria-expanded', 'false');
-        });
-      }
+  function closeAll() {
+    groups.forEach(g => {
+      g.classList.remove('is-open');
+      const t = g.querySelector('.mkt-nav-trigger');
+      if (t) t.setAttribute('aria-expanded', 'false');
     });
   }
 
-  // Desktop-Keyboard-A11y: Escape schliesst alle offenen Dropdowns
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape') {
-      groups.forEach(g => {
-        g.classList.remove('is-open');
-        const t = g.querySelector('.mkt-nav-trigger');
-        if (t) t.setAttribute('aria-expanded', 'false');
-      });
+  function openOnly(g) {
+    closeAll();
+    g.classList.add('is-open');
+    const t = g.querySelector('.mkt-nav-trigger');
+    if (t) t.setAttribute('aria-expanded', 'true');
+  }
+
+  groups.forEach(g => {
+    const trigger = g.querySelector('.mkt-nav-trigger');
+    if (!trigger) return;
+    trigger.addEventListener('click', (ev) => {
+      // Nur bei TOUCH: erster Tap oeffnet, zweiter navigiert.
+      if (lastPointerType === 'touch' || lastPointerType === 'pen') {
+        if (!g.classList.contains('is-open')) {
+          openOnly(g);
+          ev.preventDefault();
+        }
+        // sonst: schon offen -> Browser folgt dem Link normal
+      }
+      // Bei Maus/Trackpad: nichts machen, Link folgt normal.
+      // Hover-CSS hat schon dafuer gesorgt dass das Menu offen war.
+    });
+  });
+
+  // Klick ausserhalb -> alle Dropdowns zu (nur fuer Touch relevant, schadet aber nicht)
+  document.addEventListener('click', (ev) => {
+    if (!ev.target.closest('.mkt-nav-group')) {
+      closeAll();
     }
+  });
+
+  // Escape schliesst alle offenen Dropdowns
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') closeAll();
   });
 })();
