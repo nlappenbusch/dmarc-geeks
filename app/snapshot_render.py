@@ -10,6 +10,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 
+# Inline-Logo (DMARC Geeks Brille+Envelope, blau-violetter Gradient).
+# Wird in standalone-HTML-Snapshots eingebettet damit sie ohne Internet-Zugriff
+# komplett darstellbar sind (kein <img src="/static/logo.svg"> noetig).
+_LOGO_SVG = """<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DMARC Geeks" width="34" height="34"><defs><linearGradient id="dgGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="40" height="40" rx="9" fill="url(#dgGrad)"/><path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/><circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/><line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/></svg>"""
+
+
 def grade_color(grade: str) -> str:
     return {
         "A": "#16a34a", "B": "#65a30d",
@@ -70,7 +76,7 @@ def render_snapshot_html(domain: str, result: dict, score: dict) -> str:
   *{{box-sizing:border-box}}body{{font-family:-apple-system,Inter,sans-serif;color:var(--text);margin:0;padding:32px 24px;line-height:1.55;background:#f3f4f6}}
   .page{{max-width:760px;margin:0 auto;background:white;padding:42px 48px;border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}}
   .head{{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:3px solid var(--brand);margin-bottom:24px}}
-  .brand{{font-weight:800;font-size:17px;letter-spacing:-0.02em}} .brand span{{color:var(--brand)}}
+  .brand{{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-0.02em}} .brand-name span{{color:var(--brand)}}
   .meta{{text-align:right;font-size:11px;color:var(--muted);line-height:1.6}}
   h1{{margin:0 0 4px 0;font-size:26px;letter-spacing:-0.025em;line-height:1.15}} h1 code{{font-family:inherit;color:var(--brand)}}
   .score-row{{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;padding:22px;border-radius:12px;color:white;background:var(--grade);margin:18px 0 26px 0}}
@@ -94,7 +100,7 @@ def render_snapshot_html(domain: str, result: dict, score: dict) -> str:
 </style></head><body>
 <div class="page">
   <div class="head">
-    <div class="brand">DMARC<span>Geeks</span></div>
+    <div class="brand">{_LOGO_SVG}<span class="brand-name">DMARC<span>Geeks</span></span></div>
     <div class="meta"><strong>Mail-Sicherheits-Snapshot</strong>Erstellt: {ts}<br>dmarc-geeks.ch</div>
   </div>
   <h1>Domain: <code>{domain}</code></h1>

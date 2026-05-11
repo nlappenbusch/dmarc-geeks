@@ -198,7 +198,8 @@ async def snapshot_submit(request: Request, db: Session = Depends(get_db)):
             actions=actions[:3],
             report_url=report_url,
             base_url=base_url,
-            brand_name="DMARC Geeks", brand_color="#2563eb", brand_logo=None,
+            brand_name="DMARC Geeks", brand_color="#2563eb",
+            brand_logo=f"{base_url}/static/logo.svg",
         )
         snapshot_text = (
             f"Hallo{(' ' + first_name) if first_name else ''},\n\n"

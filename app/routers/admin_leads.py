@@ -20,6 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import Integer, case, desc, func, select
 from sqlalchemy.orm import Session
 
+from ..crawler import crawl_domain
 from ..database import get_db
 from ..dependencies import require_superadmin
 from ..dns_utils import full_dns_check, score_check
@@ -377,3 +378,142 @@ def batch_snapshot_coldmail(
     text = render_cold_mail(domain, score, first_name=first_name,
                              company=company, email=email)
     return Response(text, media_type="text/plain; charset=utf-8")
+
+
+# ============================================================================
+# Contact-Crawler (KMU-Email-Adressen ernten)
+# ============================================================================
+
+@router.get("/crawl-contacts")
+def crawl_contacts_form(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """Form-Page fuer den Kontakt-Crawler."""
+    return render(
+        request, "admin_crawl_contacts.html",
+        user=user, tenant=user.tenant, active="admin",
+        results=None, error=None,
+    )
+
+
+@router.post("/crawl-contacts")
+async def crawl_contacts_run(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """Liste von Domains crawlen, fuer jede Domain Emails+Phones+Firma extrahieren."""
+    form = await request.form()
+    paste_text = (form.get("domains") or "").strip()
+    limit_raw = (form.get("limit") or "").strip()
+    try:
+        limit = int(limit_raw) if limit_raw else 25
+    except ValueError:
+        limit = 25
+    limit = max(1, min(limit, 100))  # max 100 pro Run (Performance)
+
+    if not paste_text:
+        return render(
+            request, "admin_crawl_contacts.html",
+            user=user, tenant=user.tenant, active="admin",
+            results=None, error="Bitte mindestens eine Domain eintragen.",
+        )
+
+    # Eine Domain pro Zeile (oder CSV — wir nehmen die erste Spalte)
+    domains = []
+    for line in paste_text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # CSV-Fallback: erste Spalte
+        if "," in line:
+            line = line.split(",", 1)[0].strip()
+        domains.append(line)
+    domains = domains[:limit]
+
+    if not domains:
+        return render(
+            request, "admin_crawl_contacts.html",
+            user=user, tenant=user.tenant, active="admin",
+            results=None, error="Keine validen Domains in deiner Eingabe gefunden.",
+        )
+
+    results = []
+    for d in domains:
+        try:
+            r = crawl_domain(d, rate_limit_seconds=0.7, max_pages=4)
+        except Exception as e:  # noqa: BLE001
+            log.warning("crawl error for %s", d, exc_info=True)
+            r = type("R", (), {})()
+            r.domain = d
+            r.company_name = None
+            r.emails = []
+            r.phones = []
+            r.primary_email = None
+            r.primary_phone = None
+            r.pages_crawled = []
+            r.error = str(e)
+        results.append(r)
+
+    # Stats
+    with_email = sum(1 for r in results if r.primary_email)
+    with_phone = sum(1 for r in results if r.primary_phone)
+    unreachable = sum(1 for r in results if r.error)
+
+    return render(
+        request, "admin_crawl_contacts.html",
+        user=user, tenant=user.tenant, active="admin",
+        results=results, error=None,
+        meta={
+            "total": len(results),
+            "with_email": with_email,
+            "with_phone": with_phone,
+            "unreachable": unreachable,
+        },
+    )
+
+
+@router.post("/crawl-contacts/export-csv")
+async def crawl_contacts_export(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """Crawl-Resultate als CSV runterladen — direkt verwendbar als Input fuer
+    /admin/batch-snapshot (Spalten: domain,email,first_name,company)."""
+    form = await request.form()
+    paste_text = (form.get("domains") or "").strip()
+    limit = 100
+    domains = []
+    for line in paste_text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "," in line:
+            line = line.split(",", 1)[0].strip()
+        domains.append(line)
+    domains = domains[:limit]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["domain", "email", "first_name", "company", "phone", "all_emails"])
+    for d in domains:
+        try:
+            r = crawl_domain(d, rate_limit_seconds=0.7, max_pages=4)
+            writer.writerow([
+                r.domain,
+                r.primary_email or "",
+                "",  # first_name: muss man nachher noch erraten/researchen
+                r.company_name or "",
+                r.primary_phone or "",
+                ";".join(r.emails),
+            ])
+        except Exception as e:  # noqa: BLE001
+            log.warning("export crawl error for %s: %s", d, e)
+            writer.writerow([d, "", "", "", "", ""])
+
+    csv_bytes = output.getvalue().encode("utf-8")
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="crawl-contacts.csv"'},
+    )
