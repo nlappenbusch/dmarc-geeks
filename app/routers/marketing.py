@@ -609,11 +609,17 @@ def api_bimi_check(request: Request, domain: str):
     })
 
 
+@router.get("/wissen")
+def wissen(request: Request):
+    """Mail-Security-Wissen / Glossar (DMARC, SPF, DKIM erklaert)."""
+    return render(request, "wissen.html", user=None, tenant=None, active="wissen")
+
+
 @router.get("/glossar")
-def glossar(request: Request):
-    """Mail-Security-Glossar (DMARC, SPF, DKIM erklaert) -- frueher /wissen,
-    wurde verschoben weil /wissen jetzt die Blog-Liste ist."""
-    return render(request, "wissen.html", user=None, tenant=None, active=None)
+def glossar_alias(request: Request):
+    """Alias auf /wissen -- falls jemand alte Links nutzt."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/wissen", status_code=301)
 
 
 @router.get("/vergleich")

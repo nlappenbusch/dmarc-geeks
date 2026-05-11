@@ -82,7 +82,7 @@
   <nav>
     <a href="/check" class="nav-mailcheck">Mail-Check</a>
     <a href="/mailtest">Mail-Tester</a>
-    <a href="/wissen" class="active-mkt">Wissen</a>
+    <a href="/blog" class="active-mkt">Blog</a>
     <div class="mkt-nav-group" tabindex="0">
       <a class="mkt-nav-trigger" href="/services">Services ▾</a>
       <div class="mkt-nav-flyout">
@@ -116,9 +116,9 @@
 
   {% if all_tags %}
   <div class="wsn-tags">
-    <a class="wsn-tag {% if not active_tag %}active{% endif %}" href="/wissen">Alle <span class="count">({{ articles|length }})</span></a>
+    <a class="wsn-tag {% if not active_tag %}active{% endif %}" href="/blog">Alle <span class="count">({{ articles|length }})</span></a>
     {% for tag, count in all_tags %}
-      <a class="wsn-tag {% if active_tag == tag %}active{% endif %}" href="/wissen?tag={{ tag }}">{{ tag }} <span class="count">({{ count }})</span></a>
+      <a class="wsn-tag {% if active_tag == tag %}active{% endif %}" href="/blog?tag={{ tag }}">{{ tag }} <span class="count">({{ count }})</span></a>
     {% endfor %}
   </div>
   {% endif %}
@@ -126,7 +126,7 @@
   {% if articles %}
   <div class="wsn-grid">
     {% for art in articles %}
-    <a href="/wissen/{{ art.slug }}" class="wsn-card">
+    <a href="/blog/{{ art.slug }}" class="wsn-card">
       <div class="wsn-meta">
         {% if art.date %}<time datetime="{{ art.date.isoformat() }}">{{ art.date.strftime('%d.%m.%Y') }}</time>{% endif %}
         <span>· {{ art.reading_minutes }} Min Lesezeit</span>
@@ -144,7 +144,7 @@
   {% else %}
     <div class="wsn-empty">
       {% if active_tag %}
-      Keine Artikel zum Tag "{{ active_tag }}". → <a href="/wissen">Alle anzeigen</a>
+      Keine Artikel zum Tag "{{ active_tag }}". → <a href="/blog">Alle anzeigen</a>
       {% else %}
       Noch keine Artikel veröffentlicht. Bald mehr — schau gleich wieder vorbei.
       {% endif %}

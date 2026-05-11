@@ -17,7 +17,7 @@ from ..templating import render
 router = APIRouter()
 
 
-@router.get("/wissen")
+@router.get("/blog")
 def wissen_index(request: Request, tag: str = ""):
     """Artikel-Liste, optional nach Tag gefiltert."""
     arts = all_articles()
@@ -25,13 +25,13 @@ def wissen_index(request: Request, tag: str = ""):
     if tag:
         arts = [a for a in arts if tag in [t.lower() for t in a.tags]]
     return render(
-        request, "wissen_index.html",
-        user=None, tenant=None, active="wissen",
+        request, "blog_index.html",
+        user=None, tenant=None, active="blog",
         articles=arts, active_tag=tag, all_tags=all_tags(),
     )
 
 
-@router.get("/wissen/{slug}")
+@router.get("/blog/{slug}")
 def wissen_detail(slug: str, request: Request):
     art = get_article(slug)
     if art is None:
@@ -42,8 +42,8 @@ def wissen_detail(slug: str, request: Request):
     prev_art = arts[idx + 1] if idx is not None and idx + 1 < len(arts) else None
     next_art = arts[idx - 1] if idx is not None and idx > 0 else None
     return render(
-        request, "wissen_article.html",
-        user=None, tenant=None, active="wissen",
+        request, "blog_article.html",
+        user=None, tenant=None, active="blog",
         article=art, prev_article=prev_art, next_article=next_art,
     )
 
@@ -61,7 +61,8 @@ _STATIC_URLS = [
     ("/services/m365", "monthly", 0.8),
     ("/services/seppmail", "monthly", 0.7),
     ("/services/hin", "monthly", 0.7),
-    ("/wissen", "weekly", 0.85),
+    ("/blog", "weekly", 0.85),
+    ("/wissen", "monthly", 0.85),
     ("/vergleich", "monthly", 0.85),
     ("/check", "weekly", 0.85),
     ("/mailtest", "weekly", 0.85),
@@ -97,7 +98,7 @@ def sitemap(request: Request):
     for art in all_articles():
         last = (art.date or datetime.now(timezone.utc).date()).isoformat()
         lines.append("  <url>")
-        lines.append(f"    <loc>{base}/wissen/{art.slug}</loc>")
+        lines.append(f"    <loc>{base}/blog/{art.slug}</loc>")
         lines.append(f"    <lastmod>{last}</lastmod>")
         lines.append("    <changefreq>monthly</changefreq>")
         lines.append("    <priority>0.7</priority>")

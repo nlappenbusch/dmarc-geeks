@@ -119,7 +119,7 @@
   <nav>
     <a href="/check" class="nav-mailcheck">Mail-Check</a>
     <a href="/mailtest">Mail-Tester</a>
-    <a href="/wissen" class="active-mkt">Wissen</a>
+    <a href="/blog" class="active-mkt">Blog</a>
     <div class="mkt-nav-group" tabindex="0">
       <a class="mkt-nav-trigger" href="/services">Services ▾</a>
       <div class="mkt-nav-flyout">
@@ -145,7 +145,7 @@
 
 <article class="art-wrap">
   <header class="art-head">
-    <p class="art-bc"><a href="/wissen">← Wissen</a></p>
+    <p class="art-bc"><a href="/blog">← Wissen</a></p>
     <div class="art-meta">
       {% if article.date %}<time datetime="{{ article.date.isoformat() }}">{{ article.date.strftime('%d.%m.%Y') }}</time>{% endif %}
       <span>· {{ article.reading_minutes }} Min Lesezeit</span>
@@ -155,7 +155,7 @@
     <p class="art-lede">{{ article.description }}</p>
     {% if article.tags %}
     <div class="art-tags">
-      {% for t in article.tags %}<a href="/wissen?tag={{ t }}">#{{ t }}</a>{% endfor %}
+      {% for t in article.tags %}<a href="/blog?tag={{ t }}">#{{ t }}</a>{% endfor %}
     </div>
     {% endif %}
   </header>
@@ -176,13 +176,13 @@
   {% if prev_article or next_article %}
   <nav class="art-nav">
     {% if prev_article %}
-    <a href="/wissen/{{ prev_article.slug }}" class="art-nav-card prev">
+    <a href="/blog/{{ prev_article.slug }}" class="art-nav-card prev">
       <div class="art-nav-label">← Älterer Artikel</div>
       <div class="art-nav-title">{{ prev_article.title }}</div>
     </a>
     {% endif %}
     {% if next_article %}
-    <a href="/wissen/{{ next_article.slug }}" class="art-nav-card next">
+    <a href="/blog/{{ next_article.slug }}" class="art-nav-card next">
       <div class="art-nav-label">Neuerer Artikel →</div>
       <div class="art-nav-title">{{ next_article.title }}</div>
     </a>
