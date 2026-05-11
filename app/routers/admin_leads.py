@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import logging
 import re
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from sqlalchemy import Integer, case, desc, func, select
 from sqlalchemy.orm import Session
 
@@ -516,4 +517,168 @@ async def crawl_contacts_export(
         content=csv_bytes,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="crawl-contacts.csv"'},
+    )
+
+
+# ----------------------------------------------------------------------------
+# Streaming-Endpoint: crawl + DNS-Check + Cold-Mail PRO DOMAIN, live per
+# NDJSON streamen damit User sofort Feedback hat statt einer ewig hängenden
+# Form-Submission. Frontend liest mit ReadableStream und rendert pro Zeile.
+# ----------------------------------------------------------------------------
+
+def _parse_domain_input(paste_text: str, limit: int = 100) -> list[str]:
+    """Aus dem Paste-Field eine saubere Domain-Liste extrahieren."""
+    domains: list[str] = []
+    seen: set[str] = set()
+    for line in paste_text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "," in line:
+            line = line.split(",", 1)[0].strip()
+        d = normalize_domain(line)
+        if d and "." in d and d not in seen:
+            seen.add(d)
+            domains.append(d)
+        if len(domains) >= limit:
+            break
+    return domains
+
+
+@router.post("/crawl-contacts/stream")
+async def crawl_contacts_stream(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """NDJSON-Stream: pro Domain ein JSON-Event mit (crawl + DNS + cold-mail).
+
+    Events:
+      {type:"start", total:N}
+      {type:"progress", i, domain, phase:"crawl"|"dns"|"mail"}
+      {type:"result", i, total, domain, company_name, primary_email, ...,
+                      grade, score, cold_mail}
+      {type:"done", total, with_email, with_phone, unreachable}
+    """
+    form = await request.form()
+    paste_text = (form.get("domains") or "").strip()
+    try:
+        limit = int((form.get("limit") or "25").strip())
+    except ValueError:
+        limit = 25
+    limit = max(1, min(limit, 100))
+    do_dns = bool(form.get("do_dns"))
+    do_mail = bool(form.get("do_mail"))
+
+    domains = _parse_domain_input(paste_text, limit=limit)
+
+    def sse(obj: dict) -> str:
+        return json.dumps(obj, ensure_ascii=False) + "\n"
+
+    def generate():
+        # Initial event
+        yield sse({"type": "start", "total": len(domains)})
+
+        if not domains:
+            yield sse({"type": "done", "total": 0, "with_email": 0,
+                        "with_phone": 0, "unreachable": 0,
+                        "error": "Keine validen Domains gefunden."})
+            return
+
+        with_email = with_phone = unreachable = 0
+
+        for i, d in enumerate(domains):
+            # Progress: crawl
+            yield sse({"type": "progress", "i": i, "total": len(domains),
+                        "domain": d, "phase": "crawl"})
+
+            try:
+                cr = crawl_domain(d, rate_limit_seconds=0.6, max_pages=4)
+            except Exception as e:  # noqa: BLE001
+                log.warning("stream crawl failed for %s", d, exc_info=True)
+                cr = type("R", (), {})()
+                cr.domain = d
+                cr.company_name = None
+                cr.emails = []
+                cr.phones = []
+                cr.primary_email = None
+                cr.primary_phone = None
+                cr.pages_crawled = []
+                cr.error = f"crawl error: {e}"
+
+            grade = None
+            score_total = 0
+            actions: list[str] = []
+            cold_mail = None
+            dns_error = None
+
+            if do_dns and not cr.error:
+                yield sse({"type": "progress", "i": i, "total": len(domains),
+                            "domain": d, "phase": "dns"})
+                try:
+                    dns_result = full_dns_check(d)
+                    score = score_check(dns_result)
+                    grade = score.get("grade")
+                    score_total = score.get("total", 0)
+                    actions = score.get("actions", [])
+                except Exception as e:  # noqa: BLE001
+                    log.warning("stream dns failed for %s: %s", d, e)
+                    dns_error = str(e)
+
+                if do_mail and grade:
+                    yield sse({"type": "progress", "i": i, "total": len(domains),
+                                "domain": d, "phase": "mail"})
+                    try:
+                        cold_mail = render_cold_mail(
+                            d, score,
+                            first_name="",
+                            company=cr.company_name or "",
+                            email=cr.primary_email or "",
+                        )
+                    except Exception as e:  # noqa: BLE001
+                        log.warning("stream mail failed for %s: %s", d, e)
+
+            if cr.primary_email:
+                with_email += 1
+            if cr.primary_phone:
+                with_phone += 1
+            if cr.error:
+                unreachable += 1
+
+            yield sse({
+                "type": "result",
+                "i": i,
+                "total": len(domains),
+                "domain": cr.domain,
+                "company_name": cr.company_name,
+                "primary_email": cr.primary_email,
+                "all_emails": cr.emails[:5],
+                "primary_phone": cr.primary_phone,
+                "phones": cr.phones,
+                "pages_crawled": len(cr.pages_crawled),
+                "error": cr.error,
+                "grade": grade,
+                "grade_color": grade_color(grade) if grade else None,
+                "score": score_total,
+                "top_action": (actions[0] if actions else None),
+                "dns_error": dns_error,
+                "cold_mail": cold_mail,
+            })
+
+        yield sse({
+            "type": "done",
+            "total": len(domains),
+            "with_email": with_email,
+            "with_phone": with_phone,
+            "unreachable": unreachable,
+        })
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson; charset=utf-8",
+        headers={
+            # Wichtig: kein Buffer-Caching durch den Reverse-Proxy (NPM/nginx)
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
     )

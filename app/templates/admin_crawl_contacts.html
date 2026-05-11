@@ -2,164 +2,282 @@
 {% block title %}Kontakt-Crawler · Admin{% endblock %}
 {% block content %}
 <div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Snapshot-Leads</a> · Kontakt-Crawler</div>
-<h1>KMU-Kontakt-Crawler <span class="muted small">— Email + Telefon + Firmenname aus Domain-Listen</span></h1>
+<h1>KMU-Kontakt-Crawler <span class="muted small">— Crawl + DNS-Check + Cold-Mail, live</span></h1>
 <p class="muted">
-  Du gibst eine Liste von Domains rein. Wir crawlen pro Domain die typischen Public-Pages
-  (<code>/</code>, <code>/kontakt</code>, <code>/impressum</code>, <code>/team</code>, <code>/about</code>)
-  und extrahieren Emails, CH-Telefonnummern und Firmenname. Output als CSV, direkt verwendbar
-  als Input fürs <a href="/admin/batch-snapshot">Batch-Snapshot-Tool</a>.
-</p>
-<p class="muted small">
-  📋 <strong>Was wir tun:</strong> Public HTML lesen, User-Agent „DMARCGeeksContactBot", robots.txt respektieren, 1 req/s pro Domain.
-  Impressum-Daten sind in CH per Gesetz öffentlich. Keine Login-Walls, kein Scraping geschützter APIs.
+  Domains rein, pro Domain bekommst du <strong>live</strong>: Firma + Email + Telefon (aus dem Impressum gescrapt), Mail-Sicherheits-Grade A-F (DMARC/SPF/DKIM-Check), und einen <strong>fertigen Cold-Mail-Draft</strong>. Senden tut das Tool NICHTS — du kopierst und schickst manuell.
 </p>
 
-{% if error %}
-<div class="card" style="background:#fef2f2; border-color:#fecaca; color:#991b1b;">{{ error }}</div>
-{% endif %}
-
-{% if not results %}
-<!-- ============== FORM ============== -->
+<!-- Form -->
 <section class="card">
   <h2 style="margin-top:0;">📤 Domains eingeben</h2>
-  <form method="post" action="/admin/crawl-contacts">
+  <form id="crawl-form">
     <label style="display:block;">
-      <textarea name="domains" rows="12" placeholder="Eine Domain pro Zeile:&#10;mueller-treuhand.ch&#10;acme-it.ch&#10;beispiel-ag.ch&#10;&#10;Oder copy-paste aus Excel (erste Spalte = Domain).&#10;Kommentare mit # am Zeilenanfang werden ignoriert." style="width:100%; font-family: ui-monospace, monospace; font-size: 13px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
+      <textarea id="f-domains" name="domains" rows="8" placeholder="Eine Domain pro Zeile:&#10;mueller-treuhand.ch&#10;acme-it.ch&#10;&#10;Tipp: zum Testen erstmal NUR EINE Domain eingeben (Dry-Run)." style="width:100%; font-family: ui-monospace, monospace; font-size: 13px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
     </label>
 
-    <div style="display:grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: end; margin-top: 12px;">
+    <div style="display:grid; grid-template-columns: auto auto auto 1fr auto; gap: 16px; align-items: end; margin-top: 12px;">
       <label>Limit
-        <input type="number" name="limit" value="25" min="1" max="100">
-        <span class="muted small" style="font-size:11px;">max 100 pro Run · ~1 Sek pro Domain</span>
+        <input type="number" id="f-limit" name="limit" value="25" min="1" max="100" style="width: 80px;">
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; padding-top: 22px;">
+        <input type="checkbox" id="f-dns" name="do_dns" value="1" checked>
+        <span>DNS-Check (Grade)</span>
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; padding-top: 22px;">
+        <input type="checkbox" id="f-mail" name="do_mail" value="1" checked>
+        <span>Cold-Mail-Draft</span>
       </label>
       <div></div>
       <div style="display:flex; gap:8px;">
-        <button type="submit" formaction="/admin/crawl-contacts/export-csv" class="btn-link">📥 Direkt als CSV runterladen</button>
-        <button type="submit" class="btn-primary big">🕷 Crawlen + Tabelle zeigen</button>
+        <button type="button" id="btn-stop" class="btn-link" disabled>⏹ Stop</button>
+        <button type="submit" id="btn-start" class="btn-primary big">🕷 Crawl starten</button>
       </div>
     </div>
   </form>
 </section>
 
-<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+<!-- Live-Progress -->
+<section id="progress-card" class="card" style="display:none; background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+  <h2 style="margin-top:0;" id="progress-h">⏳ Läuft …</h2>
+  <div id="progress-status" class="muted small" style="margin-bottom: 10px;">Initialisiere …</div>
+  <div style="background: var(--surface-soft); border-radius: 8px; overflow: hidden; height: 14px; margin-bottom: 12px; border: 1px solid var(--border);">
+    <div id="progress-bar" style="background: linear-gradient(90deg, #2563eb, #7c3aed); height: 100%; width: 0%; transition: width .3s ease;"></div>
+  </div>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px;">
+    <div><div class="muted small">Done</div><div style="font-size:22px; font-weight:800;" id="kpi-done">0</div></div>
+    <div><div class="muted small">Mit Email</div><div style="font-size:22px; font-weight:800; color:#16a34a;" id="kpi-email">0</div></div>
+    <div><div class="muted small">Mit Phone</div><div style="font-size:22px; font-weight:800; color:#0d9488;" id="kpi-phone">0</div></div>
+    <div><div class="muted small">Unerreichbar</div><div style="font-size:22px; font-weight:800; color:#dc2626;" id="kpi-fail">0</div></div>
+  </div>
+</section>
+
+<!-- Live-Results -->
+<section id="results-card" class="card" style="display:none;">
+  <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2 style="margin: 0;">Live-Resultate</h2>
+    <div>
+      <button type="button" class="btn-link" onclick="copyAllAsCsv()">📋 Alle als CSV kopieren</button>
+      <a href="/admin/batch-snapshot" target="_blank" class="btn-link">→ Batch-Snapshot öffnen</a>
+    </div>
+  </div>
+  <p class="muted small">Klick auf eine Zeile → Cold-Mail-Draft + Detail-Daten. „📋 Mail kopieren" packt den Draft in deine Zwischenablage.</p>
+  <div id="results-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+</section>
+
+<!-- Tipps (nur sichtbar wenn kein Result) -->
+<section id="tips-card" class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
   <h2 style="margin-top:0;">💡 Wo bekommst du Domain-Listen her?</h2>
   <ul style="padding-left: 20px; line-height: 1.8;">
-    <li><strong>Moneyhouse</strong> — Branche eingrenzen (Treuhand / IT / Healthcare), CSV-Export</li>
-    <li><strong>Zefix</strong> (Handelsregister) — by location filtern, Domain ist oft im Eintrag</li>
-    <li><strong>LinkedIn Sales Navigator</strong> — 1-Monat-Trial → Search by Industry → Domain-Liste exportieren</li>
+    <li><strong>Moneyhouse</strong> — Branche filtern (Treuhand / IT / Healthcare), CSV-Export</li>
+    <li><strong>Zefix</strong> (Handelsregister) — by location, Domain oft im Eintrag</li>
+    <li><strong>LinkedIn Sales Navigator</strong> — 1-Monat-Trial → Industry-Filter → Domains exportieren</li>
     <li><strong>Branchenverzeichnis.ch / local.ch</strong> — KMU mit Website</li>
-    <li><strong>Google-Maps</strong> Filterung („IT-Beratung Zürich") + Tools wie OutScraper</li>
+    <li><strong>Google Maps</strong> + OutScraper für „IT-Beratung Zürich"-artige Queries</li>
     <li><strong>Open-Data-CH</strong> — <code>opendata.swiss</code> hat Firmen-Datasets</li>
   </ul>
   <p class="muted small">Tipp: Pro Run eine Nische — z.B. „Treuhand-Büros Kt. Zürich 5-20 MA". Saubere Targets &gt; viele.</p>
 </section>
 
-<section class="card">
-  <h2 style="margin-top:0;">🔄 Pipeline-Workflow</h2>
-  <ol style="padding-left: 20px; line-height: 1.9;">
-    <li><strong>Hier</strong>: Domains → Crawler → CSV mit Emails+Firma</li>
-    <li><a href="/admin/batch-snapshot">/admin/batch-snapshot</a>: CSV → DNS-Check → Grade A-F + Cold-Mail-Drafts</li>
-    <li>Cold-Mails kopieren → in Outlook senden</li>
-    <li>Leads landen in <a href="/admin/leads">/admin/leads</a> (wenn „persist" gewählt)</li>
-    <li>Nachfass-Calls + Conversion-Tracking direkt im Lead-Detail</li>
-  </ol>
-</section>
-
-{% else %}
-<!-- ============== RESULTS ============== -->
-<section class="card" style="background: linear-gradient(135deg, rgba(22,163,74,0.05), rgba(13,148,136,0.05)); border-color: rgba(22,163,74,0.3);">
-  <h2 style="margin-top:0;">✓ Crawl fertig: {{ meta.total }} Domains</h2>
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
-    <div><div class="muted small">Total</div><div style="font-size:24px; font-weight:800;">{{ meta.total }}</div></div>
-    <div><div class="muted small">Mit Email</div><div style="font-size:24px; font-weight:800; color:#16a34a;">{{ meta.with_email }}</div></div>
-    <div><div class="muted small">Mit Telefon</div><div style="font-size:24px; font-weight:800; color:#0d9488;">{{ meta.with_phone }}</div></div>
-    <div><div class="muted small">Unerreichbar</div><div style="font-size:24px; font-weight:800; color:#dc2626;">{{ meta.unreachable }}</div></div>
-  </div>
-  <div style="margin-top: 16px;">
-    <a href="/admin/crawl-contacts" class="btn-link">↺ Neuer Run</a>
-    <button type="button" class="btn-link" onclick="copyTableAsCsv()">📋 Als CSV in Zwischenablage</button>
-  </div>
-</section>
-
-<section class="card">
-  <h2 style="margin-top:0;">Resultate</h2>
-  <p class="muted small">Klick auf eine Domain → öffnet im neuen Tab. „→ DNS-Check" macht direkt einen Mail-Health-Check.</p>
-
-  <table class="data" id="crawl-results">
-    <thead><tr>
-      <th>Domain</th>
-      <th>Firma</th>
-      <th>Primary Email</th>
-      <th>Telefon</th>
-      <th>Alle Emails</th>
-      <th>Status</th>
-      <th></th>
-    </tr></thead>
-    <tbody>
-    {% for r in results %}
-      <tr>
-        <td><a href="https://{{ r.domain }}" target="_blank" rel="noopener" style="font-family: ui-monospace, monospace; font-size: 13px;">{{ r.domain }}</a></td>
-        <td>{{ r.company_name or '—' }}</td>
-        <td>
-          {% if r.primary_email %}
-          <strong><a href="mailto:{{ r.primary_email }}">{{ r.primary_email }}</a></strong>
-          {% else %}
-          <span class="muted">—</span>
-          {% endif %}
-        </td>
-        <td>{% if r.primary_phone %}<a href="tel:{{ r.primary_phone|replace(' ', '') }}">{{ r.primary_phone }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
-        <td class="small" style="max-width: 280px; font-family: ui-monospace, monospace; font-size: 11.5px;">
-          {% for e in r.emails[:5] %}<div>{{ e }}</div>{% endfor %}
-          {% if r.emails|length > 5 %}<div class="muted">… +{{ r.emails|length - 5 }} weitere</div>{% endif %}
-        </td>
-        <td class="small">
-          {% if r.error %}
-          <span class="badge danger">{{ r.error }}</span>
-          {% elif r.primary_email %}
-          <span class="badge ok">✓ verwertbar</span>
-          {% else %}
-          <span class="badge warn">keine Email</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="/check?domain={{ r.domain }}" target="_blank" class="btn-link small">→ DNS</a>
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</section>
-
-<section class="card">
-  <h2 style="margin-top:0;">→ Nächster Schritt</h2>
-  <p>Diese Liste in den <strong>Batch-Snapshot-Workflow</strong> einspeisen:</p>
-  <ol style="padding-left: 20px; line-height: 1.8;">
-    <li>Klick „📋 Als CSV in Zwischenablage" (Button oben)</li>
-    <li><a href="/admin/batch-snapshot" class="btn-link" target="_blank">/admin/batch-snapshot →</a> öffnen</li>
-    <li>Im „Oder einfügen"-Feld den CSV-Inhalt einfügen</li>
-    <li>Min-Grade = D, „Als Leads speichern" aktivieren, Run starten</li>
-    <li>Cold-Mails sind dann auf einer einzigen Seite — copy&paste in Outlook</li>
-  </ol>
-</section>
-
 <script>
-function copyTableAsCsv() {
-  const table = document.getElementById('crawl-results');
-  if (!table) return;
-  const lines = ['domain,email,first_name,company,phone'];
-  for (const tr of table.tBodies[0].rows) {
-    const domain = tr.cells[0].innerText.trim();
-    const company = tr.cells[1].innerText.trim().replace(/—/, '');
-    const email = tr.cells[2].innerText.trim().replace(/—/, '');
-    const phone = tr.cells[3].innerText.trim().replace(/—/, '');
-    const safe = s => s.includes(',') ? `"${s.replace(/"/g, '""')}"` : s;
-    lines.push([domain, email, '', company, phone].map(safe).join(','));
+let abortCtrl = null;
+const results = []; // alle Resultate seit Form-Submit
+const tipsCard = document.getElementById('tips-card');
+const resCard  = document.getElementById('results-card');
+const progCard = document.getElementById('progress-card');
+const resList  = document.getElementById('results-list');
+const startBtn = document.getElementById('btn-start');
+const stopBtn  = document.getElementById('btn-stop');
+
+document.getElementById('crawl-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  results.length = 0;
+  resList.innerHTML = '';
+  setKpi('done', 0); setKpi('email', 0); setKpi('phone', 0); setKpi('fail', 0);
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-h').textContent = '⏳ Läuft …';
+  document.getElementById('progress-status').textContent = 'Domains werden verarbeitet …';
+  tipsCard.style.display = 'none';
+  progCard.style.display = '';
+  resCard.style.display  = '';
+  startBtn.disabled = true; stopBtn.disabled = false;
+
+  abortCtrl = new AbortController();
+  const fd = new FormData();
+  fd.append('domains', document.getElementById('f-domains').value);
+  fd.append('limit',   document.getElementById('f-limit').value);
+  if (document.getElementById('f-dns').checked)  fd.append('do_dns',  '1');
+  if (document.getElementById('f-mail').checked) fd.append('do_mail', '1');
+
+  try {
+    const r = await fetch('/admin/crawl-contacts/stream', {
+      method: 'POST',
+      body: fd,
+      signal: abortCtrl.signal,
+    });
+    if (!r.ok || !r.body) {
+      document.getElementById('progress-h').textContent = '❌ Fehler';
+      document.getElementById('progress-status').textContent = `HTTP ${r.status}`;
+      return;
+    }
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try { handleEvent(JSON.parse(line)); }
+        catch (err) { console.error('bad event:', line, err); }
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      document.getElementById('progress-h').textContent = '⏹ Abgebrochen';
+    } else {
+      console.error(err);
+      document.getElementById('progress-h').textContent = '❌ Fehler: ' + err.message;
+    }
+  } finally {
+    startBtn.disabled = false; stopBtn.disabled = true;
+    abortCtrl = null;
+  }
+});
+
+stopBtn.addEventListener('click', () => { if (abortCtrl) abortCtrl.abort(); });
+
+function setKpi(key, val) {
+  const el = document.getElementById('kpi-' + key);
+  if (el) el.textContent = val;
+}
+
+let kpiState = { done: 0, email: 0, phone: 0, fail: 0 };
+
+function handleEvent(ev) {
+  if (ev.type === 'start') {
+    document.getElementById('progress-status').textContent = `${ev.total} Domain${ev.total === 1 ? '' : 's'} in der Queue`;
+  } else if (ev.type === 'progress') {
+    const phaseLabel = {crawl: '🕷 crawlen', dns: '🔍 DNS', mail: '📝 Mail-Draft'}[ev.phase] || ev.phase;
+    document.getElementById('progress-status').textContent =
+      `[${ev.i + 1}/${ev.total}] ${ev.domain} — ${phaseLabel} …`;
+  } else if (ev.type === 'result') {
+    results.push(ev);
+    kpiState.done++;
+    if (ev.primary_email) kpiState.email++;
+    if (ev.primary_phone) kpiState.phone++;
+    if (ev.error)         kpiState.fail++;
+    setKpi('done', kpiState.done);
+    setKpi('email', kpiState.email);
+    setKpi('phone', kpiState.phone);
+    setKpi('fail', kpiState.fail);
+    document.getElementById('progress-bar').style.width = (100 * (ev.i + 1) / ev.total) + '%';
+    renderResult(ev);
+  } else if (ev.type === 'done') {
+    document.getElementById('progress-h').textContent = `✓ Fertig: ${ev.total} verarbeitet`;
+    document.getElementById('progress-status').textContent =
+      `${ev.with_email} mit Email · ${ev.with_phone} mit Phone · ${ev.unreachable} unerreichbar`;
+    document.getElementById('progress-bar').style.width = '100%';
+  }
+}
+
+function renderResult(r) {
+  const div = document.createElement('div');
+  div.className = 'crawl-row';
+  div.style.cssText = 'border:1px solid var(--border); border-radius:10px; padding:14px 16px; background: var(--card);';
+
+  const gradeColor = r.grade_color || '#94a3b8';
+  const statusBadge = r.error
+    ? `<span class="badge danger">${esc(r.error)}</span>`
+    : (r.primary_email ? `<span class="badge ok">✓ verwertbar</span>` : `<span class="badge warn">keine Email</span>`);
+  const gradeHtml = r.grade
+    ? `<span style="display:inline-block; padding: 4px 10px; border-radius: 6px; color: white; font-weight: 700; font-size: 13px; background: ${gradeColor};">${r.grade} <span style="opacity:.7; font-weight: 400; font-size: 11px;">${r.score || 0}</span></span>`
+    : `<span class="muted small">— DNS aus</span>`;
+
+  const mailBtnHtml = r.cold_mail
+    ? `<button type="button" class="btn-link" data-toggle-mail>📝 Mail-Draft</button>`
+    : '';
+
+  const mailToBtnHtml = r.primary_email
+    ? `<a href="mailto:${esc(r.primary_email)}?subject=${encodeURIComponent('Kurzer Mail-Sicherheits-Check für ' + r.domain)}" class="btn-link">📧 In Outlook starten</a>`
+    : '';
+
+  div.innerHTML = `
+    <div style="display:grid; grid-template-columns: auto auto 1fr auto; gap: 14px; align-items: center;">
+      <div>${gradeHtml}</div>
+      <div style="min-width: 200px;">
+        <div style="font-weight: 700; font-size: 14px; font-family: ui-monospace, monospace;">
+          <a href="https://${esc(r.domain)}" target="_blank" rel="noopener">${esc(r.domain)}</a>
+        </div>
+        <div class="muted small">${esc(r.company_name || '—')}</div>
+      </div>
+      <div style="font-size: 13px;">
+        ${r.primary_email ? `<div>📧 <a href="mailto:${esc(r.primary_email)}"><strong>${esc(r.primary_email)}</strong></a></div>` : '<div class="muted small">📧 —</div>'}
+        ${r.primary_phone ? `<div>📞 <a href="tel:${esc(r.primary_phone.replace(/\s/g,''))}">${esc(r.primary_phone)}</a></div>` : ''}
+        ${r.top_action ? `<div class="muted small">${esc(r.top_action)}</div>` : ''}
+        <div style="margin-top:4px;">${statusBadge}</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+        ${mailBtnHtml}
+        ${mailToBtnHtml}
+        <a href="/check?domain=${encodeURIComponent(r.domain)}" target="_blank" class="btn-link small">🔍 Live-Check</a>
+      </div>
+    </div>
+    ${r.cold_mail ? `
+    <div data-mail-pre style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="font-size: 12px; color: var(--muted);">COLD-MAIL-DRAFT (Dry-Run, nicht gesendet)</strong>
+        <button type="button" class="btn-link" data-copy>📋 In Zwischenablage</button>
+      </div>
+      <pre style="background: var(--surface-soft); padding: 14px 16px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12.5px; white-space: pre-wrap; line-height: 1.55; max-height: 360px; overflow: auto;">${esc(r.cold_mail)}</pre>
+    </div>` : ''}
+  `;
+
+  // Toggle Cold-Mail
+  const tBtn = div.querySelector('[data-toggle-mail]');
+  const pre  = div.querySelector('[data-mail-pre]');
+  if (tBtn && pre) {
+    tBtn.addEventListener('click', () => {
+      pre.style.display = (pre.style.display === 'none') ? '' : 'none';
+    });
+  }
+  // Copy
+  const cBtn = div.querySelector('[data-copy]');
+  if (cBtn && pre) {
+    cBtn.addEventListener('click', () => {
+      const text = pre.querySelector('pre').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = cBtn.textContent;
+        cBtn.textContent = '✓ Kopiert!';
+        setTimeout(() => { cBtn.textContent = orig; }, 1500);
+      });
+    });
+  }
+
+  resList.appendChild(div);
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function copyAllAsCsv() {
+  const lines = ['domain,email,first_name,company,phone,grade,score'];
+  for (const r of results) {
+    const safe = s => {
+      s = (s == null ? '' : String(s));
+      return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    lines.push([r.domain, r.primary_email || '', '', r.company_name || '', r.primary_phone || '', r.grade || '', r.score || ''].map(safe).join(','));
   }
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    alert('✓ ' + (lines.length - 1) + ' Zeilen kopiert. Jetzt in /admin/batch-snapshot einfügen.');
+    alert('✓ ' + (lines.length - 1) + ' Zeilen in Zwischenablage. Einfügbar in Batch-Snapshot oder Excel.');
   });
 }
 </script>
-{% endif %}
 
 {% endblock %}
