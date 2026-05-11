@@ -173,9 +173,9 @@
 <section id="pakete" class="pos-section">
   <div class="container-mkt">
     <div class="pos-head">
-      <span class="eyebrow"><span class="dot-live"></span>Komplettpaket statt Stundenzettel</span>
-      <h2>Festpreise. Klare Pakete. Keine Überraschungen.</h2>
-      <p class="lede">Wähle deine Rolle — Pakete und Preise unterscheiden sich, weil die Use-Cases es tun.</p>
+      <span class="eyebrow"><span class="dot-live"></span>Realitäts-Check</span>
+      <h2>80&nbsp;% aller KMU haben kein funktionierendes DMARC.</h2>
+      <p class="lede">SPF irgendwie, DKIM halbgar, DMARC nie gesetzt oder bei <code>p=none</code> versumpft. Phishing-Mails gehen in deinem Namen raus, Newsletter landen in Spam — und keiner sieht's. Wir machen daraus etwas, das funktioniert. Drei Pakete, klare Festpreise.</p>
     </div>
 
     <!-- Tab-Switcher -->
@@ -196,71 +196,77 @@
       </button>
     </div>
 
-    <!-- KMU-Pakete -->
+    <!-- KMU-Pakete (realistisch: Audit-Tripwire + saubere Foundation + Pro-Tier) -->
     <div class="aud-panel" data-aud="kmu" role="tabpanel">
       <div class="pkg-grid-v2">
+
+        <!-- 1) Audit als Tripwire — niedrige Hürde, viele finden hier rein -->
         <article class="pkg-v2">
           <header>
-            <span class="pkg-tag">Starter</span>
-            <h3>Mail-Security Foundation</h3>
-            <p class="pkg-sub">DMARC-Inventur, SPF/DKIM sauber, Reise auf <code>p=quarantine</code>.</p>
+            <span class="pkg-tag">Audit</span>
+            <h3>Mail-Health-Check</h3>
+            <p class="pkg-sub">Erstmal wissen <em>wo</em> du stehst. 1 Tag, schriftlicher Befund, Roadmap.</p>
           </header>
-          <div class="pkg-price">CHF 2'990<small>einmalig &middot; inkl. 60 Tage Begleitung</small></div>
+          <div class="pkg-price">CHF 490<small>Festpreis &middot; voll anrechenbar auf grössere Pakete</small></div>
           <ul class="pkg-list">
-            <li>Vollständige Sender-Inventur (auch Mailchimp, M365, SendGrid &amp; Co.)</li>
-            <li>SPF saniert (10-Lookup-Grenze gefixt, Flattening wenn nötig)</li>
-            <li>DKIM-Selektoren angelegt, rotiert, dokumentiert</li>
-            <li>DMARC-Reise <code>none → quarantine</code> mit Monitoring</li>
-            <li>Onboarding ins Tool — du siehst täglich was passiert</li>
-            <li>Quartals-Review (1× nach 90 Tagen)</li>
+            <li>Sender-Inventur: <strong>wer schickt eigentlich in deinem Namen?</strong> (Mail-Server, M365, Mailchimp, CRM, Newsletter-Tools, Drittsender)</li>
+            <li>SPF-Status: vorhanden? gültig? unter 10-Lookup-Grenze?</li>
+            <li>DKIM-Selektoren: aktiv? signieren alle deine Sender?</li>
+            <li>DMARC-Status: konfiguriert? auf <code>p=none</code> oder schärfer? Reports gehen wohin?</li>
+            <li>Schriftlicher Befund (PDF) mit <strong>3 konkreten Quick-Wins</strong> und Reise-Plan</li>
+            <li>30 Tage Tool-Demo-Zugang (du siehst deine echten Reports laufen)</li>
+            <li>30-Min Call zum Durchsprechen — keine Verkaufsmasche</li>
           </ul>
-          <p class="pkg-fit muted small">Passt für: Schweizer KMU, 1–3 Mail-Domains, kein dedizierter Mail-Admin.</p>
-          <a href="/kontakt?topic=starter" class="btn-primary pkg-cta">Starter anfragen</a>
+          <p class="pkg-fit muted small">Für alle, die ehrlich nicht wissen, ob ihre Mails authentifiziert rausgehen. Tripwire, kein Sales-Trick.</p>
+          <a href="/kontakt?topic=audit" class="btn-primary pkg-cta">Audit buchen</a>
         </article>
 
+        <!-- 2) Foundation — das was 80% wirklich brauchen -->
         <article class="pkg-v2 pkg-featured">
-          <span class="pkg-badge">Empfohlen</span>
+          <span class="pkg-badge">Was 80&nbsp;% brauchen</span>
           <header>
-            <span class="pkg-tag">Pro</span>
-            <h3>Mail-Security Pro mit BIMI</h3>
-            <p class="pkg-sub">Foundation + harte <code>p=reject</code>-Policy + dein Logo neben jeder Mail.</p>
+            <span class="pkg-tag">Foundation</span>
+            <h3>Mail-Security Foundation</h3>
+            <p class="pkg-sub">SPF, DKIM und DMARC <em>endlich</em> sauber aufgesetzt. Inkl. Tool und Begleitung.</p>
           </header>
-          <div class="pkg-price">CHF 7'490<small>einmalig &middot; inkl. 12 Monate Begleitung + CMC-Zertifikat</small></div>
+          <div class="pkg-price">CHF 1'990<small>einmalig &middot; Tool 12 Monate inklusive &middot; 2 Reviews</small></div>
           <ul class="pkg-list">
-            <li>Alles aus Starter, plus:</li>
-            <li>DMARC-Reise bis <code>p=reject</code> (mit Sub-Domain-Strategie)</li>
-            <li><strong>BIMI Setup</strong> inkl. SVG-Vorbereitung &amp; CMC-Zertifikat (1 Jahr)</li>
-            <li>Logo neben Mails in Apple Mail, Yahoo, Fastmail, Zoho</li>
-            <li>Spike-Alerts + DNSBL-Monitoring (24/7 vollautomatisch)</li>
-            <li>4 Quartals-Reviews (1 Jahr lang)</li>
-            <li>VMC-Upgrade-Option (Trademark-validiert, blauer Tick in Gmail)</li>
+            <li>Alles aus dem Audit, plus die Umsetzung:</li>
+            <li><strong>SPF</strong> repariert / neu (10-Lookup-Grenze gefixt, Flattening wenn nötig)</li>
+            <li><strong>DKIM</strong> für alle deine Sender (M365, Mailchimp, SendGrid, eigener Mailserver…)</li>
+            <li><strong>DMARC</strong> richtig aufgesetzt — Reports kommen in unser Tool, du siehst täglich was passiert</li>
+            <li>DMARC-Reise <code>none → quarantine</code> begleitet (Monitoring vor jeder Verschärfung)</li>
+            <li>DNSBL-Monitoring (deine Sender-IPs auf Blacklists?) — täglich automatisch</li>
+            <li>2 Quartals-Reviews (90 und 180 Tage) mit konkreten Tunings</li>
+            <li>Tool-Zugang 12 Monate inklusive</li>
           </ul>
-          <p class="pkg-fit muted small">Passt für: KMU mit Newsletter/Marketing-Mail-Volumen, Brand-Bewusstsein, Compliance-Druck.</p>
-          <a href="/kontakt?topic=pro" class="btn-primary pkg-cta">Pro anfragen</a>
+          <p class="pkg-fit muted small">Passt für: Schweizer KMU mit 1–3 Mail-Domains. Nach Foundation bist du in der oberen 20&nbsp;% deiner Branche.</p>
+          <a href="/kontakt?topic=foundation" class="btn-primary pkg-cta">Foundation anfragen</a>
         </article>
 
+        <!-- 3) Pro+ — Marken-Branding (BIMI) + p=reject + ggf. M365 -->
         <article class="pkg-v2">
           <header>
-            <span class="pkg-tag">Enterprise</span>
-            <h3>Mail-Security Enterprise</h3>
-            <p class="pkg-sub">Pro + M365-Hardening + Compliance-Doku für NIS2/ISO 27001.</p>
+            <span class="pkg-tag">Pro+</span>
+            <h3>Mail-Security Pro+</h3>
+            <p class="pkg-sub">Foundation auf Premium-Niveau: harte <code>p=reject</code> + Logo neben jeder Mail.</p>
           </header>
-          <div class="pkg-price">CHF 14'990<small>einmalig &middot; inkl. 12 Monate Premium-Support</small></div>
+          <div class="pkg-price">CHF 4'990<small>einmalig &middot; Tool 12 Monate &middot; BIMI inkl. CMC-Jahr-1</small></div>
           <ul class="pkg-list">
-            <li>Alles aus Pro, plus:</li>
-            <li><strong>M365 Threat-Hardening</strong> (EOP, Defender for Office 365 P1/P2)</li>
-            <li>Anti-Phishing-Policies, Quarantäne-UX, Strict-Preset+</li>
-            <li>VMC-Zertifikat (1 Jahr) statt CMC — blauer Verified-Tick in Gmail</li>
-            <li>Compliance-Dokumentation: NIS2-tauglich, ISO 27001-Annex-A8</li>
-            <li>Audit-Logbook für interne Revision</li>
-            <li>Premium-Support: 4h-SLA für Mail-Incidents</li>
+            <li>Alles aus Foundation, plus:</li>
+            <li>DMARC-Reise bis <code>p=reject</code> (Sub-Domain-Strategie mit <code>sp=</code>)</li>
+            <li><strong>BIMI Setup</strong> inkl. SVG-Vorbereitung &amp; CMC-Zertifikat (1 Jahr)</li>
+            <li>Logo neben deinen Mails in Apple Mail, Yahoo, Fastmail, Zoho, La Poste</li>
+            <li>4 Quartals-Reviews (1 Jahr lang)</li>
+            <li>VMC-Upgrade auf Wunsch (Trademark-validiert, blauer Tick in Gmail)</li>
+            <li>M365 Threat-Hardening optional zubuchbar (EOP, Defender)</li>
           </ul>
-          <p class="pkg-fit muted small">Passt für: Regulierte Branchen (Health, Finanz, kritische Infrastruktur), 5+ Domains, Compliance-Druck.</p>
-          <a href="/kontakt?topic=enterprise" class="btn-primary pkg-cta">Enterprise anfragen</a>
+          <p class="pkg-fit muted small">Passt für: KMU mit Newsletter-/Marketing-Mail-Volumen, Brand-Bewusstsein, NIS2-Druck. Compliance-Tier (NIS2/ISO 27001-Doku, 24/7-SLA) gegen Quote dazubuchbar.</p>
+          <a href="/kontakt?topic=pro" class="btn-primary pkg-cta">Pro+ anfragen</a>
         </article>
       </div>
 
-      <p class="pkg-foot muted small">Alle Preise in CHF, exkl. MwSt. Renewal-Zertifikate (Folgejahre) zu Marktpreisen. Multi-Domain &amp; Group-Konditionen ab 5+ Domains auf Anfrage.</p>
+      <p class="pkg-foot muted small">Audit-Preis (CHF 490) wird auf Foundation- oder Pro+-Buchungen voll angerechnet. Alle Preise in CHF, exkl. MwSt. Enterprise-Setups (M365-Hardening + NIS2/ISO 27001-Compliance-Doku + 4h-SLA) gegen Quote — schick eine Anfrage mit deinen Eckdaten.</p>
     </div>
 
     <!-- MSP-Pakete -->

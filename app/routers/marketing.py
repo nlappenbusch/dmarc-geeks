@@ -91,8 +91,10 @@ _TOPIC_LABELS = {
     "enterprise": "Enterprise-Plan",
     "reseller-pilot": "MSP-Whitelabel-Pilot",
     "msp-enterprise": "MSP-Enterprise / Self-Hosting (Quote)",
-    "starter": "Mail-Security Foundation (Starter)",
-    "pro": "Mail-Security Pro mit BIMI",
+    "audit": "Mail-Health-Audit (CHF 490)",
+    "foundation": "Mail-Security Foundation (CHF 1'990)",
+    "pro": "Mail-Security Pro+ mit BIMI",
+    "starter": "Mail-Health-Audit",  # alter Slug -> Audit (Rueckwaerts-Kompat)
     "dpa": "AVV / DPA / Auftragsverarbeitung",
     "mail-check": "Mail-Health-Check Erstgespräch",
     "general": "Anfrage",
