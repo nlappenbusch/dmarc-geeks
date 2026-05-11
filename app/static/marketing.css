@@ -411,20 +411,20 @@ section.container-mkt + section.container-mkt { padding-top: 0; }
 .svc-tile p { color: var(--muted); margin: 0; font-size: 13px; line-height: 1.5; }
 
 /* ============== Marketing-Nav-Flyout (Tools-Dropdown) ============== */
+/* Hover-Bridge-Pattern:
+   - .mkt-nav-group hat padding-bottom: 14px (kompensiert via margin-bottom: -14px),
+     d.h. die Hover-Hitbox geht 14px unter den Trigger.
+   - .mkt-nav-flyout sitzt bei top: 100% (unterhalb der padding-bridge).
+   - KEIN margin-top mehr -> KEINE dead zone zwischen Bridge und Flyout.
+   - Visueller Abstand kommt durch translateY(0) (kein gap) + Box-Shadow. */
 .mkt-nav-group { position: relative; display: inline-flex; outline: none;
-  /* Padding nach unten extends die Hover-Hitbox auf den Gap zum Flyout. negative margin kompensiert layout. */
-  padding-bottom: 10px; margin-bottom: -10px; }
+  padding-bottom: 14px; margin-bottom: -14px; }
 .mkt-nav-trigger { padding: 8px 14px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 14px; cursor: pointer; transition: color .12s, background .12s; user-select: none; text-decoration: none; }
 .mkt-nav-trigger:hover { color: var(--text); background: var(--surface-soft); text-decoration: none; }
-/* Flyout sitzt direkt unter dem Trigger (top: 100%, kein Gap mehr).
-   Das + die padding-Bridge in .mkt-nav-group sorgt fuer durchgehende Hover-Stabilitaet. */
-.mkt-nav-flyout { position: absolute; top: 100%; left: 0; min-width: 280px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 16px 48px -12px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--brand) 8%, transparent); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .15s ease, transform .15s ease; z-index: 50;
-  /* margin-top schliesst die letzten 4px der Bruecke optisch */
-  margin-top: 4px; }
-/* Schliess-Delay: wenn Hover endet, schliesst der Flyout erst nach 150ms (Mauseflucht-Toleranz) */
-.mkt-nav-flyout { transition-delay: 100ms; }
-.mkt-nav-group:hover .mkt-nav-flyout, .mkt-nav-group:focus-within .mkt-nav-flyout, .mkt-nav-group.is-open .mkt-nav-flyout { transition-delay: 0ms; }
-.mkt-nav-group:hover .mkt-nav-flyout, .mkt-nav-group:focus-within .mkt-nav-flyout, .mkt-nav-group.is-open .mkt-nav-flyout { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.mkt-nav-flyout { position: absolute; top: 100%; left: 0; min-width: 280px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 16px 48px -12px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--brand) 8%, transparent); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .15s ease, transform .15s ease, transition-delay 0s; transition-delay: 120ms; z-index: 50; }
+.mkt-nav-group:hover .mkt-nav-flyout,
+.mkt-nav-group:focus-within .mkt-nav-flyout,
+.mkt-nav-group.is-open .mkt-nav-flyout { opacity: 1; transform: translateY(0); pointer-events: auto; transition-delay: 0ms; }
 /* Klickbarer Caret-Indicator fuer Mobile/Touch */
 .mkt-nav-trigger { cursor: pointer; }
 .mkt-nav-trigger:hover, .mkt-nav-trigger:focus-visible { background: var(--surface-soft); color: var(--text); }
