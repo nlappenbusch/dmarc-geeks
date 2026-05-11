@@ -84,6 +84,8 @@ _TOPIC_LABELS = {
     "seppmail": "SEPPmail",
     "hin": "HIN-Einrichtung",
     "hin-stack": "Gesundheits-Stack komplett",
+    "bimi": "BIMI Setup (CMC)",
+    "bimi-vmc": "BIMI Setup mit VMC (Verified-Tick)",
     "agency": "Agency-Plan",
     "reseller": "Reseller-Plan",
     "enterprise": "Enterprise-Plan",
@@ -481,6 +483,125 @@ def services_seppmail(request: Request):
 @router.get("/services/hin")
 def services_hin(request: Request):
     return render(request, "services/hin.html", user=None, tenant=None, active=None)
+
+
+@router.get("/services/bimi")
+def services_bimi(request: Request):
+    return render(request, "services/bimi.html", user=None, tenant=None, active=None)
+
+
+@router.get("/bimi-generator")
+def bimi_generator(request: Request, domain: str = ""):
+    """Public BIMI-Record-Generator + Live-Check."""
+    dom = (domain or "").strip().lower().rstrip(".")
+    if dom and "." in dom:
+        notify_domain_check(request, tool="bimi-generator", domain=dom)
+    return render(request, "bimi_generator.html",
+                   user=None, tenant=None, active=None,
+                   prefill_domain=dom or "")
+
+
+@router.get("/api/bimi-check")
+def api_bimi_check(request: Request, domain: str):
+    """JSON: ist die Domain BIMI-ready? Was fehlt?"""
+    from fastapi.responses import JSONResponse
+    dom = (domain or "").strip().lower().rstrip(".")
+    if not dom or "." not in dom:
+        return JSONResponse({"error": "Bitte eine Domain angeben."}, status_code=400)
+
+    # Lead-Signal
+    notify_domain_check(request, tool="bimi-generator", domain=dom)
+
+    checks: list[dict] = []
+    ready_count = 0
+    fail_count = 0
+
+    try:
+        import dns.exception, dns.resolver
+        r = dns.resolver.Resolver(configure=False)
+        r.nameservers = ["1.1.1.1", "8.8.8.8"]
+        r.lifetime = 4.0
+        r.timeout = 3.0
+
+        # 1) DMARC: muss vorhanden sein UND p=quarantine|reject
+        try:
+            ans = r.resolve(f"_dmarc.{dom}", "TXT")
+            dmarc_text = " ".join("".join(s.decode("utf-8", "replace") for s in rec.strings) for rec in ans).lower()
+            if "v=dmarc1" not in dmarc_text:
+                checks.append({"key": "dmarc", "label": "DMARC vorhanden",
+                                "status": "fail", "detail": "Kein gültiger DMARC-Record."})
+                fail_count += 1
+            elif "p=quarantine" in dmarc_text or "p=reject" in dmarc_text:
+                policy = "reject" if "p=reject" in dmarc_text else "quarantine"
+                checks.append({"key": "dmarc", "label": "DMARC mit Enforcement",
+                                "status": "pass", "detail": f"p={policy} -- BIMI-Voraussetzung erfuellt"})
+                ready_count += 1
+            else:
+                checks.append({"key": "dmarc", "label": "DMARC mit Enforcement",
+                                "status": "fail",
+                                "detail": "DMARC vorhanden aber p=none -- BIMI verlangt p=quarantine oder p=reject"})
+                fail_count += 1
+        except dns.resolver.NXDOMAIN:
+            checks.append({"key": "dmarc", "label": "DMARC vorhanden",
+                            "status": "fail", "detail": "Kein DMARC-Record auf _dmarc-Subdomain."})
+            fail_count += 1
+        except (dns.exception.Timeout, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
+            checks.append({"key": "dmarc", "label": "DMARC-Check",
+                            "status": "warn", "detail": "DNS-Timeout — Lookup wiederholen."})
+
+        # 2) BIMI-Record auf default._bimi
+        try:
+            ans = r.resolve(f"default._bimi.{dom}", "TXT")
+            bimi_text = " ".join("".join(s.decode("utf-8", "replace") for s in rec.strings) for rec in ans)
+            low = bimi_text.lower()
+            if "v=bimi1" in low:
+                has_l = "l=" in low
+                has_a = "a=" in low
+                if has_l:
+                    extra = "mit VMC/CMC (a=)" if has_a else "ohne Cert (a=) -- in Gmail kein blauer Tick"
+                    status = "pass" if has_a else "warn"
+                    checks.append({"key": "bimi", "label": "BIMI-Record",
+                                    "status": status, "detail": f"Vorhanden, {extra}"})
+                    if has_a: ready_count += 1
+                else:
+                    checks.append({"key": "bimi", "label": "BIMI-Record",
+                                    "status": "fail",
+                                    "detail": "Record da, aber kein l= (Logo-URL) -- ungueltig."})
+                    fail_count += 1
+            else:
+                checks.append({"key": "bimi", "label": "BIMI-Record",
+                                "status": "fail", "detail": "Kein gueltiger BIMI-Record."})
+                fail_count += 1
+        except dns.resolver.NXDOMAIN:
+            checks.append({"key": "bimi", "label": "BIMI-Record",
+                            "status": "fail",
+                            "detail": "Kein BIMI-Record gesetzt (auf default._bimi)."})
+            fail_count += 1
+        except (dns.exception.Timeout, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
+            checks.append({"key": "bimi", "label": "BIMI-Record",
+                            "status": "warn", "detail": "DNS-Lookup nicht eindeutig."})
+
+        # 3) MX vorhanden (sonst macht BIMI wenig Sinn)
+        try:
+            r.resolve(dom, "MX")
+            checks.append({"key": "mx", "label": "MX-Record",
+                            "status": "pass", "detail": "Mail-Server fuer diese Domain konfiguriert."})
+            ready_count += 1
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            checks.append({"key": "mx", "label": "MX-Record",
+                            "status": "warn",
+                            "detail": "Kein MX. Domain empfaengt keine Mails -- sendet sie nur?"})
+
+    except Exception as e:  # noqa: BLE001
+        checks.append({"key": "general", "label": "DNS-Lookup",
+                        "status": "fail", "detail": f"Lookup-Fehler: {e}"})
+        fail_count += 1
+
+    return JSONResponse({
+        "domain": dom,
+        "ready": fail_count == 0 and ready_count >= 2,
+        "checks": checks,
+    })
 
 
 @router.get("/wissen")

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BIMI Record Generator &amp; Validator · DMARC Geeks</title>
+  <meta name="description" content="BIMI-TXT-Record klicken statt tippen. Plus Live-Validierung: ist deine Domain BIMI-ready? Was fehlt?">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .bg-wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 64px; }
+    .bg-head { text-align: center; margin-bottom: 24px; }
+    .bg-head h1 { font-size: 32px; line-height: 1.15; margin: 12px 0 8px; }
+
+    .bg-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px; padding: 24px 28px; margin-bottom: 18px;
+      box-shadow: 0 4px 16px -8px rgba(15,23,42,.10);
+    }
+    .bg-row { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 14px; }
+    .bg-row label { font-size: 13px; font-weight: 600; color: var(--text, #0f172a); display: block; margin-bottom: 4px; }
+    .bg-row input {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border, #e2e8f0); border-radius: 8px;
+      font: inherit; background: var(--input-bg, #fff); color: inherit;
+    }
+    .bg-row input:focus { outline: 2px solid var(--brand, #2563eb); outline-offset: -1px; border-color: var(--brand, #2563eb); }
+    .bg-hint { color: var(--muted, #64748b); font-size: 12.5px; margin-top: 4px; }
+
+    .bg-preview {
+      background: #0f172a; color: #e2e8f0; padding: 18px 22px; border-radius: 10px;
+      font: 12.5px/1.6 "JetBrains Mono", Menlo, Consolas, monospace;
+      white-space: pre-wrap; word-break: break-all;
+      border-left: 3px solid var(--brand, #2563eb);
+    }
+    .bg-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .bg-checks { display: grid; gap: 10px; margin-top: 12px; }
+    .bg-check {
+      display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border, #e2e8f0);
+    }
+    .bg-check.pass { background: rgba(34,197,94,.06); border-color: rgba(34,197,94,.3); }
+    .bg-check.fail { background: rgba(239,68,68,.06); border-color: rgba(239,68,68,.3); }
+    .bg-check.warn { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.3); }
+    .bg-check-ico {
+      width: 28px; height: 28px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; color: white; font-weight: 700;
+    }
+    .bg-check.pass .bg-check-ico { background: #22c55e; }
+    .bg-check.fail .bg-check-ico { background: #ef4444; }
+    .bg-check.warn .bg-check-ico { background: #f59e0b; }
+    .bg-check h4 { margin: 0; font-size: 14.5px; }
+    .bg-check p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted, #64748b); }
+
+    .upsell {
+      background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 12px;
+      padding: 20px 24px; margin-top: 18px; text-align: center;
+    }
+    .upsell h3 { margin: 0 0 8px; font-size: 18px; }
+    .upsell p { margin: 0 0 12px; color: var(--muted, #64748b); }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/bimi-generator" class="active-mkt">BIMI</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt?topic=bimi" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="bg-wrap">
+
+  <div class="bg-head">
+    <span class="eyebrow"><span class="dot-live"></span>Kostenlos &middot; ohne Anmeldung</span>
+    <h1>🎨 BIMI Record Generator &amp; Validator</h1>
+    <p class="lede muted">Bau deinen BIMI-Record interaktiv zusammen + prüf live, ob deine Domain ready ist. Setup-Service: siehe <a href="/services/bimi">BIMI-Service</a>.</p>
+  </div>
+
+  <!-- 1) Domain check -->
+  <div class="bg-card">
+    <h2 style="margin-top:0; font-size: 20px;">1. Domain prüfen</h2>
+    <div class="bg-row">
+      <label for="domain">Deine Domain</label>
+      <input type="text" id="domain" placeholder="meinefirma.ch" autocomplete="off" value="{{ prefill_domain or '' }}">
+      <div class="bg-hint">Wir checken DMARC, MX, BIMI-Record und SVG-Erreichbarkeit.</div>
+    </div>
+    <div class="bg-actions">
+      <button class="btn-primary" onclick="runCheck()">Live-Check →</button>
+      <span class="muted small" id="bg-loading" style="display:none;">⏳ Prüfe…</span>
+    </div>
+    <div class="bg-checks" id="bg-checks"></div>
+    <div class="upsell" id="bg-upsell" style="display:none;">
+      <h3>Soll ich dir das End-to-End einrichten?</h3>
+      <p>Wir machen DMARC-Hardening + SVG-Konvertierung + VMC/CMC + DNS in einem Rutsch. Ab CHF 799.</p>
+      <a href="/kontakt?topic=bimi" class="btn-primary">📅 BIMI-Setup anfragen</a>
+    </div>
+  </div>
+
+  <!-- 2) Builder -->
+  <div class="bg-card">
+    <h2 style="margin-top:0; font-size: 20px;">2. BIMI-Record bauen</h2>
+    <div class="bg-row">
+      <label for="logo-url">SVG-Logo URL (l=)</label>
+      <input type="url" id="logo-url" placeholder="https://meinefirma.ch/logo.svg" oninput="updatePreview()">
+      <div class="bg-hint">Pflicht. SVG Tiny PS, 1:1, public via HTTPS erreichbar.</div>
+    </div>
+    <div class="bg-row">
+      <label for="cert-url">VMC/CMC Cert URL (a=)</label>
+      <input type="url" id="cert-url" placeholder="https://meinefirma.ch/vmc.pem" oninput="updatePreview()">
+      <div class="bg-hint">Optional ohne Zertifikat (kein blauer Tick, einige Provider zeigen Logo trotzdem). Pflicht für Gmail.</div>
+    </div>
+
+    <h4 style="margin: 18px 0 6px;">Dein BIMI-DNS-Record</h4>
+    <pre class="bg-preview" id="bg-record">default._bimi.<span style="color:#94a3b8;">deine-domain.ch</span>.   IN TXT  "v=BIMI1; l=<span style="color:#94a3b8;">https://...</span>"</pre>
+    <div class="bg-actions">
+      <button class="btn" onclick="copyRecord()">📋 kopieren</button>
+      <a class="btn-link" href="/services/bimi">Was bedeuten die Parameter? →</a>
+    </div>
+  </div>
+
+  <div class="bg-card">
+    <h2 style="margin-top:0; font-size: 20px;">3. Im DNS setzen</h2>
+    <p class="muted small">In deinem DNS-Provider einen TXT-Record mit Host <code>default._bimi</code> (für die Hauptdomain) und Wert = der String zwischen den Anführungszeichen oben. Propagierung dauert i.d.R. 1–6h.</p>
+    <p class="muted small">→ Nicht sicher wie? <a href="/kontakt?topic=bimi">Wir machen das mit</a> oder schau in den <a href="/wissen">Wissens-Bereich</a>.</p>
+  </div>
+
+</main>
+
+{% include "_marketing_footer.html" %}
+
+<script>
+function updatePreview() {
+  const domain = document.getElementById('domain').value.trim() || 'deine-domain.ch';
+  const logo = document.getElementById('logo-url').value.trim();
+  const cert = document.getElementById('cert-url').value.trim();
+  let rec = `v=BIMI1; l=${logo || 'https://...'}`;
+  if (cert) rec += `; a=${cert}`;
+  const colored = `default._bimi.<span style="color:#94a3b8;">${domain}</span>.   IN TXT  "${rec}"`;
+  document.getElementById('bg-record').innerHTML = colored;
+}
+
+async function copyRecord() {
+  const domain = document.getElementById('domain').value.trim() || 'deine-domain.ch';
+  const logo = document.getElementById('logo-url').value.trim();
+  const cert = document.getElementById('cert-url').value.trim();
+  let rec = `v=BIMI1; l=${logo || 'https://...'}`;
+  if (cert) rec += `; a=${cert}`;
+  const txt = `default._bimi.${domain}.\tIN\tTXT\t"${rec}"`;
+  await navigator.clipboard.writeText(txt);
+  alert('In die Zwischenablage kopiert.');
+}
+
+async function runCheck() {
+  const domain = document.getElementById('domain').value.trim().toLowerCase();
+  if (!domain || !domain.includes('.')) {
+    alert('Bitte eine Domain eingeben.'); return;
+  }
+  document.getElementById('bg-loading').style.display = '';
+  document.getElementById('bg-checks').innerHTML = '';
+  document.getElementById('bg-upsell').style.display = 'none';
+  try {
+    const r = await fetch(`/api/bimi-check?domain=${encodeURIComponent(domain)}`, {cache: 'no-store'});
+    const d = await r.json();
+    renderChecks(d.checks || []);
+    if (d.ready === false) {
+      document.getElementById('bg-upsell').style.display = '';
+    }
+  } catch (e) {
+    document.getElementById('bg-checks').innerHTML = `<div class="bg-check fail"><div class="bg-check-ico">✕</div><div><h4>Fehler</h4><p>${e}</p></div><div></div></div>`;
+  } finally {
+    document.getElementById('bg-loading').style.display = 'none';
+  }
+}
+
+function renderChecks(checks) {
+  const root = document.getElementById('bg-checks');
+  root.innerHTML = '';
+  for (const c of checks) {
+    const div = document.createElement('div');
+    div.className = `bg-check ${c.status}`;
+    div.innerHTML = `<div class="bg-check-ico">${c.status === 'pass' ? '✓' : c.status === 'warn' ? '!' : '✕'}</div>
+      <div><h4>${c.label}</h4><p>${c.detail}</p></div><div></div>`;
+    root.appendChild(div);
+  }
+}
+updatePreview();
+{% if prefill_domain %}runCheck();{% endif %}
+</script>
+
+</body>
+</html>

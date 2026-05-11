@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BIMI Setup &amp; Verified Mark Certificate (VMC) · Logo neben jeder E-Mail · DMARC Geeks</title>
+  <meta name="description" content="BIMI komplett: SVG-Logo-Vorbereitung, DMARC-Enforcement, DNS-Record, VMC/CMC-Zertifikat aus einer Hand. Logo direkt in Gmail, Apple Mail, Yahoo. Plus blauer Verified-Tick für Markenvertrauen.">
+  <meta name="keywords" content="BIMI, Brand Indicators for Message Identification, VMC, Verified Mark Certificate, CMC, Common Mark Certificate, Gmail Logo, Brand Logo Email, SVG Tiny PS, DMARC, Email-Branding">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="BIMI + VMC Setup · Logo neben jeder E-Mail · DMARC Geeks">
+  <meta property="og:description" content="Wir bringen dein Logo neben jede Mail in Gmail, Apple Mail, Yahoo. DMARC-Enforcement + VMC-Zertifikat + DNS-Record aus einer Hand.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    /* BIMI-Page eigene Akzente */
+    .bimi-mock {
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      border-radius: 16px; padding: 24px;
+      max-width: 540px; margin: 0 auto;
+      box-shadow: 0 16px 48px -16px rgba(15,23,42,0.18);
+    }
+    .bimi-mail {
+      background: white; border-radius: 10px; padding: 14px;
+      display: flex; gap: 14px; align-items: flex-start;
+      border-bottom: 1px solid #e2e8f0; margin-bottom: 10px;
+    }
+    .bimi-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand, #2563eb), #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 18px; position: relative; flex: 0 0 44px;
+    }
+    .bimi-avatar.with-bimi { background: white; border: 2px solid #2563eb; padding: 6px; }
+    .bimi-avatar.with-bimi img { width: 100%; height: 100%; object-fit: contain; }
+    .bimi-check {
+      position: absolute; bottom: -4px; right: -4px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #2563eb; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; border: 2px solid white;
+    }
+    .bimi-mail-body { flex: 1; min-width: 0; }
+    .bimi-from { font-weight: 600; font-size: 14px; color: #0f172a; }
+    .bimi-subj { font-size: 13px; color: #334155; margin: 2px 0; }
+    .bimi-preview { font-size: 12px; color: #64748b; line-height: 1.4; }
+    .bimi-mock-label { text-align: center; margin-top: 12px; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+
+    .bimi-vs {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      max-width: 980px; margin: 28px auto;
+    }
+    @media (max-width: 720px) { .bimi-vs { grid-template-columns: 1fr; } }
+    .bimi-vs > div { padding: 20px; border-radius: 14px; }
+    .bimi-vs .without { background: linear-gradient(135deg, rgba(148,163,184,0.08), rgba(100,116,139,0.05)); border: 1px solid #e2e8f0; }
+    .bimi-vs .with { background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(124,58,237,0.06)); border: 1px solid rgba(37,99,235,.25); }
+    .bimi-vs h3 { margin: 0 0 12px; font-size: 16px; }
+    .bimi-vs h3.bad { color: #64748b; }
+    .bimi-vs h3.good { color: #2563eb; }
+
+    .reqgrid { display: grid; gap: 14px; grid-template-columns: 1fr; max-width: 980px; margin: 28px auto; }
+    @media (min-width: 720px) { .reqgrid { grid-template-columns: 1fr 1fr; } }
+    .reqgrid .req {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: 12px; padding: 18px 22px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .reqgrid .req-num {
+      flex: 0 0 32px; height: 32px; width: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand, #2563eb), #7c3aed); color: white;
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+    }
+    .reqgrid .req h4 { margin: 0 0 4px; font-size: 15px; }
+    .reqgrid .req p { margin: 0; color: var(--muted, #64748b); font-size: 13.5px; line-height: 1.5; }
+    .reqgrid .req .by-us { font-size: 12px; color: #22c55e; font-weight: 700; margin-top: 4px; display: inline-block; }
+
+    .pkg-grid { display: grid; gap: 18px; grid-template-columns: 1fr; max-width: 1080px; margin: 28px auto; }
+    @media (min-width: 800px) { .pkg-grid { grid-template-columns: 1fr 1fr; } }
+    .pkg {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: 16px;
+      padding: 28px; position: relative;
+    }
+    .pkg.featured { border-color: rgba(37,99,235,.45); box-shadow: 0 20px 50px -20px rgba(37,99,235,.25); }
+    .pkg.featured::before {
+      content: "Empfohlen"; position: absolute; top: -12px; left: 24px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;
+      padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .pkg h3 { margin: 0 0 4px; font-size: 22px; }
+    .pkg .pkg-sub { color: var(--muted, #64748b); font-size: 14px; margin: 0 0 16px; }
+    .pkg .pkg-price { font-size: 32px; font-weight: 800; line-height: 1.1; }
+    .pkg .pkg-price small { font-size: 13px; color: var(--muted, #64748b); font-weight: 500; display: block; margin-top: 4px; }
+    .pkg ul { padding-left: 22px; margin: 18px 0; }
+    .pkg li { line-height: 1.7; color: var(--text, #0f172a); font-size: 14px; }
+    .pkg .pkg-cta { margin-top: 16px; }
+
+    .ce-row {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 16px 0;
+    }
+    .ce-row span {
+      background: var(--card, #f8fafc); border: 1px solid var(--border, #e2e8f0);
+      padding: 6px 14px; border-radius: 999px; font-size: 12.5px; color: var(--muted, #64748b);
+    }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/#features">Features</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services" class="active-mkt">Services</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt?topic=bimi" class="btn-primary">📅 BIMI anfragen</a>
+  </div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="svc-hero">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico">
+      <span class="svc-eyebrow-ico-glyph" style="background:color-mix(in srgb,#2563eb 14%,transparent);color:#2563eb;">B</span>
+      Service · BIMI &amp; Verified Mark Certificate
+    </span>
+    <h1 class="svc-h1">Dein Logo &mdash; <span class="grad-text">in jeder E-Mail.</span></h1>
+    <p class="lede">BIMI macht aus deinem Markenlogo das Avatar-Icon neben deinen Mails in Gmail, Apple Mail, Yahoo &amp; Co. Mit Verified Mark Certificate (VMC) zusätzlich der <strong>blaue Verified-Tick</strong>, den Empfänger als Trust-Signal sofort erkennen. Wir machen das End-to-End: DMARC-Hardening, SVG-Vorbereitung, VMC/CMC-Zertifikat, DNS-Record, Validierung.</p>
+    <div class="svc-hero-cta">
+      <a href="/kontakt?topic=bimi" class="btn-primary big">📅 Erstgespräch buchen</a>
+      <a href="#pakete" class="btn-ghost-arrow">Pakete &amp; Preise <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>🇨🇭 Made in Switzerland</strong></span>
+      <span class="sep">·</span>
+      <span>Setup in 1–3 Wochen</span>
+      <span class="sep">·</span>
+      <span>VMC ab CHF 749/Jahr</span>
+      <span class="sep">·</span>
+      <span>CMC ab CHF 299/Jahr</span>
+    </div>
+
+    <!-- Inbox-Mockup -->
+    <div class="bimi-mock" style="margin-top: 40px;">
+      <div class="bimi-mail">
+        <div class="bimi-avatar with-bimi">
+          <img src="/static/logo.svg" alt="">
+          <span class="bimi-check">✓</span>
+        </div>
+        <div class="bimi-mail-body">
+          <div class="bimi-from">Deine Firma <span style="color:#64748b; font-weight:400;">&lt;hello@deine-firma.ch&gt;</span></div>
+          <div class="bimi-subj">Deine Bestellung #4571 ist unterwegs</div>
+          <div class="bimi-preview">Hi Anna, deine Bestellung wurde versandt. Folgende Sendung erreicht dich am…</div>
+        </div>
+      </div>
+      <div class="bimi-mock-label">↑ So sieht's mit BIMI + VMC in Gmail aus</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== WHY IT MATTERS (C-Level) ============== -->
+<section style="padding: 60px 0;">
+  <div class="container-mkt">
+    <h2 class="section-h" style="text-align:center;">Warum BIMI sich für dein Unternehmen rechnet</h2>
+    <p class="section-sub" style="text-align:center;">3 messbare Effekte. Keine Marketing-Buzzwords.</p>
+
+    <div class="bimi-vs">
+      <div class="without">
+        <h3 class="bad">Ohne BIMI</h3>
+        <div class="bimi-mail" style="background:#fff; box-shadow: 0 2px 8px rgba(0,0,0,.04);">
+          <div class="bimi-avatar" style="background:#94a3b8;">D</div>
+          <div class="bimi-mail-body">
+            <div class="bimi-from">Deine Firma</div>
+            <div class="bimi-subj">Newsletter Mai 2026</div>
+            <div class="bimi-preview">10 Neuigkeiten aus deinem Service…</div>
+          </div>
+        </div>
+        <p class="muted small" style="margin-top:12px;">Generischer Initial-Avatar. Empfänger sieht „irgendeine Firma".</p>
+      </div>
+      <div class="with">
+        <h3 class="good">Mit BIMI + VMC</h3>
+        <div class="bimi-mail" style="background:#fff; box-shadow: 0 2px 12px rgba(37,99,235,.12);">
+          <div class="bimi-avatar with-bimi"><img src="/static/logo.svg" alt=""><span class="bimi-check">✓</span></div>
+          <div class="bimi-mail-body">
+            <div class="bimi-from">Deine Firma</div>
+            <div class="bimi-subj">Newsletter Mai 2026</div>
+            <div class="bimi-preview">10 Neuigkeiten aus deinem Service…</div>
+          </div>
+        </div>
+        <p class="muted small" style="margin-top:12px;">Logo + blauer Verified-Tick. <strong>Marken-Wiedererkennung in 0,2 Sekunden.</strong></p>
+      </div>
+    </div>
+
+    <div class="reqgrid" style="margin-top: 40px;">
+      <div class="req">
+        <div class="req-num">📈</div>
+        <div>
+          <h4>+10–39 % höhere Open-Rates</h4>
+          <p>Google's eigene Pilot-Studie mit BIMI-Sendern zeigt: Mails mit Markenlogo werden messbar häufiger geöffnet als ohne. Bei großen Versandvolumina ist das direktes Mehrgeschäft.</p>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">🛡</div>
+        <div>
+          <h4>Anti-Phishing-Signal für Kunden</h4>
+          <p>Phishing-Mails können dein Logo nicht zeigen (weil sie keine BIMI/DMARC-Auth-Kette haben). Deine echten Mails dagegen schon. Sieht dein Kunde plötzlich keinen Avatar → Skepsis-Trigger.</p>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">⚖️</div>
+        <div>
+          <h4>Compliance-tauglich</h4>
+          <p>Voraussetzung für BIMI ist <code>p=quarantine</code> oder <code>p=reject</code> in DMARC. Das ist sowieso State-of-the-art für ISO 27001, NIS2 &amp; Co. — BIMI macht es sichtbar.</p>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">💎</div>
+        <div>
+          <h4>Verified-Tick &mdash; Premium-Signal</h4>
+          <p>Mit VMC (statt nur CMC) zeigt Gmail einen <strong>blauen Haken</strong> wie bei verifizierten Twitter-Accounts. Das ist High-End-Branding ab Inbox, kein Banner zum Wegklicken.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============== HOW IT WORKS (DAU-FRIENDLY) ============== -->
+<section style="padding: 60px 0; background: var(--card, #fafbfd);">
+  <div class="container-mkt">
+    <h2 class="section-h" style="text-align:center;">Wie BIMI technisch funktioniert</h2>
+    <p class="section-sub" style="text-align:center;">DAU-verständlich. Wir machen ohnehin den Rest.</p>
+
+    <div class="reqgrid" style="margin-top: 28px;">
+      <div class="req">
+        <div class="req-num">1</div>
+        <div>
+          <h4>DMARC enforcement</h4>
+          <p>Deine Domain muss <code>p=quarantine</code> oder <code>p=reject</code> in DMARC haben. <strong>Das ist die Eintrittskarte</strong> — ohne kein BIMI.</p>
+          <span class="by-us">✓ Machen wir (oder du nutzt unser Managed-DMARC)</span>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">2</div>
+        <div>
+          <h4>SVG-Logo vorbereiten</h4>
+          <p>Quadratisch (1:1), <strong>SVG Tiny PS</strong>-Format (eine sehr enge SVG-Variante). Nicht jedes Logo passt out-of-the-box — wir formen es entsprechend.</p>
+          <span class="by-us">✓ Übernehmen wir</span>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">3</div>
+        <div>
+          <h4>VMC oder CMC erwerben</h4>
+          <p>Für VMC: Trademark deiner Marke nötig (für den blauen Tick). Für CMC: nur Organisations-Validierung (kein Tick, aber Logo). Wir kaufen + verwalten beides als Reseller.</p>
+          <span class="by-us">✓ Wir bestellen für dich</span>
+        </div>
+      </div>
+      <div class="req">
+        <div class="req-num">4</div>
+        <div>
+          <h4>BIMI-Record im DNS</h4>
+          <p>Ein TXT-Record auf <code>default._bimi.deine-domain.ch</code> der Logo-URL + Cert-URL enthält. Empfangende Mailprovider lesen diesen Record bei jedem Mail-Empfang.</p>
+          <span class="by-us">✓ Setzen wir (oder Managed-DNS)</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="/bimi-generator" class="btn-ghost-arrow">DIY-Mode: BIMI-Record-Generator <span>→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============== PRICING (RESELLER) ============== -->
+<section id="pakete" style="padding: 60px 0;">
+  <div class="container-mkt">
+    <h2 class="section-h" style="text-align:center;">Unsere BIMI-Pakete</h2>
+    <p class="section-sub" style="text-align:center;">Wir nehmen dir alles ab — von DMARC-Hardening bis Zertifikat-Setup.</p>
+
+    <div class="pkg-grid">
+      <!-- Paket CMC -->
+      <div class="pkg">
+        <h3>BIMI Basic</h3>
+        <p class="pkg-sub">Mit Common Mark Certificate (CMC) — Logo ohne blauen Tick. Bestens, wenn deine Marke nicht (noch nicht) trademarked ist.</p>
+        <div class="pkg-price">ab CHF 799<small>einmalig Setup + ab CHF 299/Jahr CMC</small></div>
+        <ul>
+          <li>DMARC-Hardening auf <code>p=quarantine/reject</code></li>
+          <li>SVG-Logo-Konvertierung (SVG Tiny PS, 1:1)</li>
+          <li>Common Mark Certificate (Organisation-Validation)</li>
+          <li>BIMI-DNS-Record gesetzt &amp; validiert</li>
+          <li>Funktioniert in: Apple Mail, Yahoo, Fastmail, etc.</li>
+        </ul>
+        <div class="pkg-cta">
+          <a href="/kontakt?topic=bimi" class="btn-primary big" style="display:block; text-align:center;">CMC-Paket anfragen</a>
+        </div>
+      </div>
+
+      <!-- Paket VMC -->
+      <div class="pkg featured">
+        <h3>BIMI Pro mit Verified-Tick</h3>
+        <p class="pkg-sub">Mit Verified Mark Certificate (VMC) — inkl. blauer Verifizierungs-Tick in Gmail. Voraussetzung: registriertes Trademark.</p>
+        <div class="pkg-price">ab CHF 1'299<small>einmalig Setup + ab CHF 749/Jahr VMC</small></div>
+        <ul>
+          <li>Alles aus BIMI Basic plus:</li>
+          <li><strong>Verified Mark Certificate</strong> (Trademark-validiert)</li>
+          <li><strong>Blauer Verified-Tick</strong> in Gmail-Inbox</li>
+          <li>Logo auch in: Gmail, Google Workspace</li>
+          <li>Trademark-Beratung (wenn nötig — extern)</li>
+        </ul>
+        <div class="pkg-cta">
+          <a href="/kontakt?topic=bimi-vmc" class="btn-primary big" style="display:block; text-align:center;">VMC-Paket anfragen</a>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted small" style="text-align:center; max-width: 720px; margin: 20px auto 0;">
+      Preise sind exkl. MwSt. Zertifikate können mehrjährig (2–3 Jahre) günstiger bezogen werden. Für Multi-Domain- oder Reseller-Volumen-Pakete: sprich uns an.
+    </p>
+
+    <div class="ce-row" style="margin-top: 24px;">
+      <span>Issuance via DigiCert</span>
+      <span>oder Prime/SSL2BUY</span>
+      <span>Lieferung 1–10 Werktage</span>
+      <span>Lowest-Price-Guarantee</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============== SUPPORTED MAILBOX PROVIDERS ============== -->
+<section style="padding: 40px 0; background: var(--card, #fafbfd);">
+  <div class="container-mkt">
+    <h2 class="section-h" style="text-align:center;">Wo dein Logo dann erscheint</h2>
+    <div class="ce-row" style="font-size:14px;">
+      <span>📧 Gmail (mit VMC: blauer Tick)</span>
+      <span>🍎 Apple Mail</span>
+      <span>📨 Yahoo</span>
+      <span>🚀 Fastmail</span>
+      <span>🇫🇷 La Poste</span>
+      <span>🇩🇪 Web.de</span>
+      <span>🌐 Zoho Mail</span>
+      <span>📮 Onet Poczta</span>
+      <span>+ weitere</span>
+    </div>
+    <p class="muted small" style="text-align:center; margin-top:16px;">
+      <strong>Microsoft Outlook</strong> hat BIMI angekündigt, ist Stand 2026 noch nicht produktiv ausgerollt. Setup ist trotzdem zukunftssicher.
+    </p>
+  </div>
+</section>
+
+<!-- ============== FAQ ============== -->
+<section style="padding: 60px 0;">
+  <div class="container-mkt">
+    <h2 class="section-h" style="text-align:center;">Häufige Fragen</h2>
+
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Was ist der Unterschied zwischen VMC und CMC?</summary>
+      <p><strong>VMC (Verified Mark Certificate):</strong> erfordert registriertes Trademark, gibt dir den blauen Verified-Tick in Gmail. Höher-wertige Premium-Variante.<br>
+      <strong>CMC (Common Mark Certificate):</strong> nur Organisations-Validierung, kein Trademark nötig, kein blauer Tick — aber Logo erscheint sonst überall wo BIMI unterstützt wird. Günstiger.</p>
+    </details>
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Wir haben kein Trademark — sollen wir CMC nehmen?</summary>
+      <p>Wenn du das Logo schon hast und keinen Premium-Markenauftritt brauchst: CMC reicht. Wenn du ROI-rechnen kannst (=Branding wirklich monetarisierbar): Trademark eintragen + VMC. Trademark-Eintragung dauert in der Schweiz/EU 4–6 Monate; in der Zwischenzeit kannst du erstmal CMC starten und später aufrüsten.</p>
+    </details>
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Welche DMARC-Policy ist Pflicht für BIMI?</summary>
+      <p><code>p=quarantine</code> oder <code>p=reject</code>, plus aktiv ausgerollt (nicht nur in <code>pct=10</code>-Trial-Mode). Außerdem muss <code>sp</code> ebenfalls quarantine/reject sein. Wir setzen das im Rahmen unseres Managed-DMARC ohnehin als Standard.</p>
+    </details>
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Wie lange dauert das Setup?</summary>
+      <p>Ohne Vorarbeit: 1–3 Wochen. CMC oft in 1–3 Tagen ausgestellt, VMC mit Trademark-Check ~5–10 Werktage. DMARC-Hardening kann je nach Ist-Zustand der Domain länger dauern (Monitoring-Phase). Wir machen alle Schritte und sagen dir am Ende: „Live."</p>
+    </details>
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Was passiert wenn das Zertifikat abläuft?</summary>
+      <p>Du buchst Renewal bei uns (1/2/3 Jahre, mehrjährige günstiger). Wir überwachen die Restlaufzeit und melden uns rechtzeitig 60 Tage vor Ablauf. Bei Verspätung: Logo verschwindet bis Renewal durch.</p>
+    </details>
+    <details class="faq" style="margin: 12px auto; max-width: 820px;">
+      <summary>Multi-Domain / Subdomains?</summary>
+      <p>BIMI gilt per Domain. Pro Domain ein Zertifikat (CMC oder VMC). Wir können das mit Multi-Domain-Packs günstiger machen — sprich uns an wenn du 3+ Marken hast.</p>
+    </details>
+
+  </div>
+</section>
+
+<!-- ============== CTA BOTTOM ============== -->
+<section style="padding: 60px 0; background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;">
+  <div class="container-mkt" style="text-align:center;">
+    <h2 style="font-size: 36px; line-height: 1.15; margin: 0 0 12px; color: white;">Bereit für Logo in der Inbox?</h2>
+    <p style="font-size: 17px; opacity: .92; margin: 0 0 24px;">Erstgespräch ist gratis. In 30 Min wissen wir, welches Paket für euch passt.</p>
+    <a href="/kontakt?topic=bimi" style="background: white; color: #2563eb; padding: 14px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; display: inline-block;">📅 Erstgespräch buchen</a>
+    <a href="/bimi-generator" style="margin-left: 12px; color: white; text-decoration: underline; opacity: .9;">Erst selbst rumspielen →</a>
+  </div>
+</section>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>
