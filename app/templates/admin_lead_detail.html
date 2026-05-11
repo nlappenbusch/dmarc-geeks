@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Lead: {{ lead.domain }} · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Snapshot-Leads</a> · {{ lead.domain }}</div>
+<h1>{{ lead.domain }} <span class="muted small">— {{ lead.email }}</span></h1>
+
+{% if request.query_params.get('saved') %}
+<div class="card" style="background:#f0fdf4; border-color:#86efac;">✓ Gespeichert.</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+
+<!-- Linke Spalte: Lead-Details + Aktionen -->
+<div>
+
+<section class="card">
+  <h2 style="margin-top:0;">Lead-Daten</h2>
+  <table class="data" style="margin: 0;">
+    <tr><th style="width: 180px;">Email</th><td><strong><a href="mailto:{{ lead.email }}?subject=Re: Mail-Sicherheits-Snapshot für {{ lead.domain }}">{{ lead.email }}</a></strong></td></tr>
+    <tr><th>Vorname</th><td>{{ lead.first_name or '—' }}</td></tr>
+    <tr><th>Firma</th><td>{{ lead.company or '—' }}</td></tr>
+    <tr><th>Domain</th><td><a href="https://{{ lead.domain }}" target="_blank">{{ lead.domain }}</a> · <a href="/check?domain={{ lead.domain }}" target="_blank">live-check</a></td></tr>
+    <tr><th>Grade (bei Anfrage)</th><td>
+      <span style="display:inline-block; padding: 3px 10px; border-radius: 6px; color: white; font-weight: 700;
+        background: {% if lead.grade == 'A' %}#16a34a{% elif lead.grade == 'B' %}#65a30d{% elif lead.grade == 'C' %}#d97706{% elif lead.grade == 'D' %}#dc2626{% else %}#991b1b{% endif %};">
+        {{ lead.grade or '?' }} ({{ lead.score or 0 }}/100)
+      </span>
+    </td></tr>
+    {% if fresh_score %}
+    <tr><th>Grade (jetzt frisch)</th><td>
+      <span style="display:inline-block; padding: 3px 10px; border-radius: 6px; color: white; font-weight: 700;
+        background: {% if fresh_score.grade == 'A' %}#16a34a{% elif fresh_score.grade == 'B' %}#65a30d{% elif fresh_score.grade == 'C' %}#d97706{% elif fresh_score.grade == 'D' %}#dc2626{% else %}#991b1b{% endif %};">
+        {{ fresh_score.grade }} ({{ fresh_score.total }}/100)
+      </span>
+      {% if fresh_score.grade != lead.grade %}
+      <span class="muted small">⚠ Status hat sich verändert seit Lead-Erstellung!</span>
+      {% endif %}
+    </td></tr>
+    {% endif %}
+    <tr><th>SPF / DKIM / DMARC</th><td>
+      {% if lead.has_spf %}<span style="color:#16a34a;">✓ SPF</span>{% else %}<span style="color:#dc2626;">✗ SPF</span>{% endif %} ·
+      {% if lead.has_dkim %}<span style="color:#16a34a;">✓ DKIM</span>{% else %}<span style="color:#dc2626;">✗ DKIM</span>{% endif %} ·
+      {% if lead.has_dmarc %}<span style="color:#16a34a;">✓ DMARC</span>{% else %}<span style="color:#dc2626;">✗ DMARC</span>{% endif %}
+    </td></tr>
+    <tr><th>Top-Issue</th><td>{{ lead.top_action or '—' }}</td></tr>
+    <tr><th>Quelle</th><td>{{ lead.source or '—' }}{% if lead.utm_campaign %} · {{ lead.utm_campaign }}{% endif %}</td></tr>
+    <tr><th>IP</th><td><code>{{ lead.requester_ip or '—' }}</code></td></tr>
+    <tr><th>Erstellt</th><td>{{ lead.created_at.strftime('%d.%m.%Y %H:%M UTC') }}</td></tr>
+    <tr><th>Kontaktiert</th><td>{{ lead.contacted_at.strftime('%d.%m.%Y %H:%M UTC') if lead.contacted_at else '— offen' }}</td></tr>
+    <tr><th>Convertiert</th><td>{{ lead.converted_at.strftime('%d.%m.%Y %H:%M UTC') if lead.converted_at else '— noch nicht' }}</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2 style="margin-top:0;">Notizen + Status</h2>
+  <form method="post" action="/admin/leads/{{ lead.id }}">
+    <label style="display:block;">Notizen (Call-Protokoll, Einwände, nächste Schritte)
+      <textarea name="notes" rows="8" style="width:100%; font-family: inherit; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">{{ lead.notes or '' }}</textarea>
+    </label>
+    <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+      <button type="submit" name="action" value="save" class="btn-primary">💾 Notizen speichern</button>
+      {% if not lead.contacted_at %}
+      <button type="submit" name="action" value="mark_contacted" class="btn-link">→ als kontaktiert markieren</button>
+      {% else %}
+      <button type="submit" name="action" value="mark_uncontacted" class="btn-link">↺ als nicht kontaktiert</button>
+      {% endif %}
+      {% if not lead.converted_at %}
+      <button type="submit" name="action" value="mark_converted" class="btn-link" style="color: #16a34a;">✓ als convertiert markieren</button>
+      {% else %}
+      <button type="submit" name="action" value="mark_unconverted" class="btn-link">↺ Conversion zurücknehmen</button>
+      {% endif %}
+      <button type="submit" name="action" value="delete" class="btn-link danger" onclick="return confirm('Lead wirklich löschen?')">🗑 Lead löschen</button>
+    </div>
+  </form>
+</section>
+
+</div>
+
+<!-- Rechte Spalte: Aktionen + Quick-Tools -->
+<div>
+
+<section class="card" style="background: linear-gradient(135deg, rgba(22,163,74,0.05), rgba(13,148,136,0.05)); border-color: rgba(22,163,74,0.3);">
+  <h2 style="margin-top:0; color:#0d9488;">Nächste Schritte</h2>
+  <ol style="padding-left: 18px; line-height: 1.8; font-size: 14px;">
+    <li><a href="mailto:{{ lead.email }}?subject=Re: Snapshot für {{ lead.domain }}">📧 E-Mail antworten</a></li>
+    <li><a href="tel:+41779503152">📞 Anrufen (eigene Nummer)</a></li>
+    <li><a href="/admin/batch-snapshot/coldmail/{{ lead.domain }}?first_name={{ lead.first_name or '' }}&amp;company={{ lead.company or '' }}&amp;email={{ lead.email }}" target="_blank">📝 Cold-Mail-Draft öffnen</a></li>
+    <li><a href="/admin/batch-snapshot/snapshot/{{ lead.domain }}" target="_blank">📄 1-Pager-Snapshot öffnen</a></li>
+    <li><a href="/check?domain={{ lead.domain }}&amp;print=true" target="_blank">🔍 Vollständigen Check öffnen</a></li>
+  </ol>
+</section>
+
+<section class="card">
+  <h2 style="margin-top:0;">Recherche</h2>
+  <ul style="padding-left: 18px; line-height: 1.8; font-size: 14px;">
+    <li><a href="https://www.linkedin.com/search/results/all/?keywords={{ lead.first_name or '' }}%20{{ lead.company or lead.domain }}" target="_blank">LinkedIn-Suche</a></li>
+    <li><a href="https://www.zefix.ch/de/search/entity/list?name={{ lead.company or lead.domain }}" target="_blank">Zefix (CH-Handelsregister)</a></li>
+    <li><a href="https://www.moneyhouse.ch/de/search/global?query={{ lead.company or lead.domain }}" target="_blank">Moneyhouse</a></li>
+    <li><a href="https://www.whois.com/whois/{{ lead.domain }}" target="_blank">WHOIS</a></li>
+    <li><a href="https://www.google.com/search?q=%22{{ lead.company or lead.domain }}%22+IT" target="_blank">Google-Suche</a></li>
+  </ul>
+</section>
+
+</div>
+
+</div>
+{% endblock %}

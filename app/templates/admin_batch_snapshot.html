@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Batch-Snapshot-Tool · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Snapshot-Leads</a> · Batch-Tool</div>
+<h1>Batch-Domain-Snapshot <span class="muted small">— Cold-Outreach-Multiplikator</span></h1>
+<p class="muted">Wirf eine Liste von Domains rein, kriegst pro Domain einen Mail-Sicherheits-Snapshot, einen personalisierten Cold-Mail-Draft und optional alles als Lead persistiert. Ideal um 50-200 Domains in 5 Minuten durchzubrennen.</p>
+
+{% if error %}
+<div class="card" style="background:#fef2f2; border-color:#fecaca; color:#991b1b;">{{ error }}</div>
+{% endif %}
+
+{% if not results %}
+<!-- ============== INPUT-FORM ============== -->
+<section class="card">
+  <h2 style="margin-top:0;">📤 Domains hochladen</h2>
+  <form method="post" action="/admin/batch-snapshot" enctype="multipart/form-data">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+      <!-- A: CSV-Upload -->
+      <div>
+        <h3 style="margin-top:0;">A) CSV-Datei hochladen</h3>
+        <label style="display:block;">
+          <input type="file" name="csv_file" accept=".csv,.txt">
+        </label>
+        <p class="muted small" style="margin-top:8px;">
+          Header-Spalten (mind. <code>domain</code>):<br>
+          <code>domain,email,first_name,company</code><br>
+          Beispielzeile: <code>acme.ch,franz@acme.ch,Franz,Acme AG</code>
+        </p>
+      </div>
+
+      <!-- B: Paste -->
+      <div>
+        <h3 style="margin-top:0;">B) Oder einfügen</h3>
+        <label style="display:block;">
+          <textarea name="paste_text" rows="6" placeholder="Eine Domain pro Zeile:&#10;acme.ch&#10;beispiel-firma.com&#10;mueller-it.ch&#10;&#10;...oder als CSV mit Header und Komma-Spalten." style="width:100%; font-family: ui-monospace, monospace; font-size: 13px; padding: 10px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
+        </label>
+      </div>
+    </div>
+
+    <hr style="margin: 20px 0; border:none; border-top: 1px solid var(--border);">
+
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <label>Min-Grade (nur diese und schlechter mit Output rendern)
+        <select name="min_grade">
+          <option value="">alle Grades (kein Filter)</option>
+          <option value="A">A oder schlechter (= alle)</option>
+          <option value="B">B oder schlechter</option>
+          <option value="C">C oder schlechter</option>
+          <option value="D" selected>D oder schlechter (Empfehlung)</option>
+          <option value="F">nur F (akuter Notfall)</option>
+        </select>
+      </label>
+      <label>Limit
+        <input type="number" name="limit" value="50" min="1" max="500">
+        <span class="muted small" style="font-size:11px;">max 500 pro Run</span>
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; padding-top: 22px;">
+        <input type="checkbox" name="persist_leads" value="1">
+        <span>Als Leads in DB speichern <span class="muted small">(nur Zeilen mit Email)</span></span>
+      </label>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button type="submit" class="btn-primary big">🚀 Batch ausführen</button>
+      <span class="muted small" style="margin-left: 14px;">~1-2 Sek pro Domain · DNS-only · keine Mail-Versendung</span>
+    </div>
+  </form>
+</section>
+
+<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+  <h2 style="margin-top:0;">💡 Tipps für effektives Cold-Outreach</h2>
+  <ol style="padding-left: 20px; line-height: 1.8;">
+    <li><strong>Quelle bauen:</strong> 100-200 Domains aus deinem Zielmarkt (LinkedIn Sales Navigator + Moneyhouse). Konzentriere dich auf eine Nische pro Run — z.B. „Schweizer Treuhand-Büros 5-20 MA".</li>
+    <li><strong>Erstmal scannen ohne Mails:</strong> Min-Grade leer, keine Persistierung → siehst Verteilung, identifizierst die F/D-Fälle.</li>
+    <li><strong>Dann gezielt:</strong> Min-Grade = D, Persistieren = ein. Tool rendert nur Cold-Mails für „brennende" Domains, du kannst die Templates anpassen und in Outlook einspielen.</li>
+    <li><strong>Nachfassen:</strong> Lead-Pipeline in <a href="/admin/leads">→ /admin/leads</a> abarbeiten. Notes nutzen, nach 7 Tagen Status auf „nicht erreicht" zurücksetzen.</li>
+  </ol>
+</section>
+
+{% else %}
+<!-- ============== RESULTS ============== -->
+<section class="card" style="background: linear-gradient(135deg, rgba(22,163,74,0.05), rgba(13,148,136,0.05)); border-color: rgba(22,163,74,0.3);">
+  <h2 style="margin-top:0;">✓ Batch fertig: {{ meta.total }} Domains verarbeitet</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
+    <div><div class="muted small">Total</div><div style="font-size:22px; font-weight:800;">{{ meta.total }}</div></div>
+    <div><div class="muted small">Mit Output</div><div style="font-size:22px; font-weight:800;">{{ meta.with_outputs }}</div></div>
+    {% for g in ['F','D','C','B','A'] %}
+    {% if meta.by_grade.get(g) %}
+    <div>
+      <div class="muted small">Grade {{ g }}</div>
+      <div style="font-size:22px; font-weight:800; color:
+        {% if g == 'A' %}#16a34a{% elif g == 'B' %}#65a30d{% elif g == 'C' %}#d97706{% elif g == 'D' %}#dc2626{% else %}#991b1b{% endif %};">{{ meta.by_grade[g] }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div style="margin-top: 14px;">
+    {% if meta.persist_leads %}
+    <span class="badge ok">💾 Leads in DB gespeichert</span>
+    <a href="/admin/leads" class="btn-link">→ Leads ansehen</a>
+    {% endif %}
+    <a href="/admin/batch-snapshot" class="btn-link">↺ Neuer Run</a>
+  </div>
+</section>
+
+<section class="card">
+  <h2 style="margin-top:0;">Resultate (sortiert nach Grade)</h2>
+  <p class="muted small">Klick „📝 Mail" für den Cold-Mail-Draft (zum Copy&Paste in Outlook). Klick „📄 PDF" für den 1-Pager-Bericht (zum Drucken/Speichern).</p>
+
+  {% set sorted_results = results | sort(attribute='grade', reverse=True) %}
+  {% for r in sorted_results %}
+  <div style="background: var(--card); border:1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px;">
+    <div style="display:grid; grid-template-columns: 80px 1fr auto; gap: 16px; align-items: center;">
+      <div style="text-align:center; padding: 10px; border-radius: 8px; color: white;
+                  background: {{ r.grade_color }};">
+        <div style="font-size: 28px; font-weight: 900; line-height: 1;">{{ r.grade }}</div>
+        <div style="font-size: 11px; opacity: 0.85;">{{ r.score }}/100</div>
+      </div>
+      <div>
+        <div style="font-weight: 700; font-size: 16px; margin-bottom: 2px;">
+          <a href="https://{{ r.domain }}" target="_blank" rel="noopener" style="font-family: ui-monospace, monospace;">{{ r.domain }}</a>
+        </div>
+        <div class="muted small" style="margin-bottom: 4px;">
+          {{ r.first_name or '—' }}{% if r.company %} · {{ r.company }}{% endif %}
+          {% if r.email %} · <a href="mailto:{{ r.email }}">{{ r.email }}</a>{% endif %}
+        </div>
+        <div style="font-size: 13px; color: var(--text);">
+          {% if r.has_spf %}<span style="color:#16a34a;">✓ SPF</span>{% else %}<span style="color:#dc2626;">✗ SPF</span>{% endif %} ·
+          {% if r.has_dkim %}<span style="color:#16a34a;">✓ DKIM</span>{% else %}<span style="color:#dc2626;">✗ DKIM</span>{% endif %} ·
+          {% if r.has_dmarc %}<span style="color:#16a34a;">✓ DMARC</span>{% else %}<span style="color:#dc2626;">✗ DMARC</span>{% endif %}
+          {% if r.top_action %}<br><span class="muted small">{{ r.top_action }}</span>{% endif %}
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: 6px; min-width: 180px;">
+        {% if r.cold_mail %}
+        <button type="button" class="btn-link" onclick="toggleMail('mail-{{ loop.index }}')">📝 Cold-Mail anzeigen</button>
+        {% endif %}
+        <a href="/admin/batch-snapshot/snapshot/{{ r.domain }}" target="_blank" class="btn-link">📄 PDF-Snapshot →</a>
+        <a href="/check?domain={{ r.domain }}" target="_blank" class="btn-link">🔍 Live-Check →</a>
+        {% if r.email %}
+        <a href="mailto:{{ r.email }}?subject=Kurzer Mail-Sicherheits-Check für {{ r.domain }}" class="btn-link">📧 Mail starten →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if r.cold_mail %}
+    <div id="mail-{{ loop.index }}" style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="font-size: 12px; color: var(--muted);">COLD-MAIL-DRAFT (Copy&Paste-ready)</strong>
+        <button type="button" class="btn-link" onclick="copyMail(this, 'mailtext-{{ loop.index }}')">📋 In Zwischenablage kopieren</button>
+      </div>
+      <pre id="mailtext-{{ loop.index }}" style="background: var(--surface-soft); padding: 14px 16px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12.5px; white-space: pre-wrap; line-height: 1.55; max-height: 360px; overflow: auto;">{{ r.cold_mail }}</pre>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<script>
+function toggleMail(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+function copyMail(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+}
+</script>
+{% endif %}
+
+{% endblock %}

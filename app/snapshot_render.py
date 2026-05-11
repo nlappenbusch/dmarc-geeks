@@ -1,63 +1,46 @@
-"""Batch Domain Health Snapshot — fuer Cold-Outreach + Lead-Generierung.
+"""Renderfunktionen fuer Domain-Health-Snapshots — gemeinsam genutzt von:
+- scripts/snapshot_batch.py (CLI)
+- app/routers/admin_leads.py (Web-UI Batch-Tool)
 
-Liest eine CSV mit Domain-Listen und macht fuer jede Domain:
-  1. Full DNS-Check (DMARC, SPF, DKIM, MX, MTA-STS, TLS-RPT, BIMI)
-  2. Score + Grade berechnen
-  3. Zeile mit Resultaten in CSV ausgeben (stdout)
-  4. Optional: pro Domain ein standalone-HTML-Snapshot rendern (--out-html DIR)
-  5. Optional: pro Domain ein personalisiertes Cold-Mail-Template rendern (--out-mails DIR)
-
-Use-Cases:
-  # Quick-Scan einer Liste, nur stdout
-  python -m scripts.snapshot_batch domains.csv > results.csv
-
-  # Snapshots + Cold-Mails fuer Outreach generieren
-  python -m scripts.snapshot_batch leads.csv \\
-      --out-html  outputs/snapshots \\
-      --out-mails outputs/cold-mails
-
-CSV-Format (Header erforderlich):
-  domain,email,first_name,company
-  beispiel.ch,franz@beispiel.ch,Franz,Beispiel AG
-  example.com,,,
-  ...
-
-Nur "domain" ist Pflicht. email/first_name/company sind nur fuer
-Cold-Mail-Personalisierung.
+Keine HTTP- oder DB-Abhaengigkeiten -- pure Funktionen die ein
+domain + check-result + score-dict reinkriegen und HTML/Text raus.
 """
 from __future__ import annotations
 
-import argparse
-import csv
-import json
-import os
-import re
-import sys
 from datetime import datetime, timezone
-from pathlib import Path
-
-# Setup imports: das Script wird mit `python -m scripts.snapshot_batch` aufgerufen,
-# also ist app importable.
-from app.dns_utils import full_dns_check, score_check
-from app.snapshot_render import (
-    grade_color as _grade_color,
-    normalize_domain as _normalize_domain,
-    render_cold_mail as _render_cold_mail,
-    render_snapshot_html as _render_snapshot_html,
-)
 
 
-# Render-Funktionen aus app.snapshot_render werden hier per Alias-Import
-# verwendet (siehe oben). Damit teilen CLI und Admin-Web-Tool eine Code-Basis.
+def grade_color(grade: str) -> str:
+    return {
+        "A": "#16a34a", "B": "#65a30d",
+        "C": "#d97706", "D": "#dc2626", "F": "#991b1b",
+    }.get(grade, "#6b7280")
 
-def _UNUSED_render_snapshot_html(domain: str, result: dict, score: dict) -> str:
-    """Standalone-HTML-Snapshot (kein Server, kein Template-Engine noetig)."""
+
+def normalize_domain(raw: str) -> str:
+    d = (raw or "").strip().lower().rstrip(".")
+    for prefix in ("http://", "https://", "www."):
+        if d.startswith(prefix):
+            d = d[len(prefix):]
+    if "/" in d:
+        d = d.split("/", 1)[0]
+    if ":" in d:
+        d = d.split(":", 1)[0]
+    return d
+
+
+def render_snapshot_html(domain: str, result: dict, score: dict) -> str:
+    """Standalone HTML-Snapshot (kein Template-Engine, eigenstaendig druckbar).
+
+    Kann direkt im Browser geoeffnet, gespeichert, oder per Mail verschickt werden.
+    Print-CSS sorgt fuer sauberen A4-Druck (Strg+P).
+    """
     grade = score.get("grade", "?")
     grade_label = score.get("grade_label", "")
     total = score.get("total", 0)
     checks = score.get("checks", {})
     actions = score.get("actions", [])
-    color = _grade_color(grade)
+    color = grade_color(grade)
     ts = datetime.now(timezone.utc).strftime("%d.%m.%Y")
 
     def _detail(name: str) -> str:
@@ -164,6 +147,7 @@ Beste Gruesse
 Nils Lappenbusch
 DMARC Geeks
 https://dmarc-geeks.ch
++41 77 950 31 52
 
 --
 P.S.: Falls du das schon auf dem Schirm hast, gerne ignorieren -
@@ -181,8 +165,9 @@ _HOOKS_BY_GRADE = {
 }
 
 
-def _render_cold_mail(domain: str, score: dict, *, first_name: str = "",
-                      company: str = "", email: str = "") -> str:
+def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
+                     company: str = "", email: str = "") -> str:
+    """Personalisiertes Cold-Mail-Template basierend auf Grade-Hook."""
     grade = score.get("grade", "F")
     total = score.get("total", 0)
     actions = score.get("actions", [])
@@ -196,126 +181,3 @@ def _render_cold_mail(domain: str, score: dict, *, first_name: str = "",
         company_part=company_part, hook=hook, grade=grade,
         score=total, action_lines=action_lines,
     )
-
-
-def main():
-    ap = argparse.ArgumentParser(description="Batch Domain-Health-Snapshot")
-    ap.add_argument("csv_in", help="CSV-Datei mit Spalten: domain[,email,first_name,company]")
-    ap.add_argument("--out-html", help="Ordner fuer Standalone-HTML-Snapshots (pro Domain eine Datei)")
-    ap.add_argument("--out-mails", help="Ordner fuer Cold-Mail-Templates (pro Domain eine .txt-Datei)")
-    ap.add_argument("--out-csv", help="Ergebnis-CSV statt stdout schreiben")
-    ap.add_argument("--min-grade", choices=["A", "B", "C", "D", "F"],
-                    help="Nur Snapshots/Mails fuer Domains MIT diesem Grade ODER SCHLECHTER ausgeben")
-    ap.add_argument("--limit", type=int, help="Max Anzahl Domains verarbeiten")
-    ap.add_argument("--verbose", "-v", action="store_true", help="Debug-Output auf stderr")
-    args = ap.parse_args()
-
-    if args.out_html:
-        Path(args.out_html).mkdir(parents=True, exist_ok=True)
-    if args.out_mails:
-        Path(args.out_mails).mkdir(parents=True, exist_ok=True)
-
-    rows_in = []
-    with open(args.csv_in, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for r in reader:
-            rows_in.append(r)
-    if args.limit:
-        rows_in = rows_in[:args.limit]
-
-    out_fh = open(args.out_csv, "w", encoding="utf-8", newline="") if args.out_csv else sys.stdout
-    writer = csv.writer(out_fh)
-    writer.writerow([
-        "domain", "email", "first_name", "company",
-        "grade", "score", "dmarc", "spf", "dkim", "mta_sts", "bimi",
-        "top_action", "html_file", "mail_file",
-    ])
-
-    grade_order = ["A", "B", "C", "D", "F"]
-    min_idx = grade_order.index(args.min_grade) if args.min_grade else None
-
-    total_count = 0
-    processed = 0
-    for r in rows_in:
-        total_count += 1
-        domain = _normalize_domain(r.get("domain", ""))
-        if not domain or "." not in domain:
-            if args.verbose:
-                print(f"[skip] invalid domain: {r.get('domain')!r}", file=sys.stderr)
-            continue
-        email = (r.get("email") or "").strip()
-        first_name = (r.get("first_name") or "").strip()
-        company = (r.get("company") or "").strip()
-
-        if args.verbose:
-            print(f"[{total_count}/{len(rows_in)}] checking {domain} ...", file=sys.stderr)
-
-        try:
-            result = full_dns_check(domain)
-            score = score_check(result)
-        except Exception as e:  # noqa: BLE001
-            print(f"[err] {domain}: {e}", file=sys.stderr)
-            continue
-
-        grade = score.get("grade", "?")
-        if min_idx is not None:
-            try:
-                if grade_order.index(grade) < min_idx:
-                    if args.verbose:
-                        print(f"  -> grade {grade} better than threshold, skipping outputs", file=sys.stderr)
-                    # Trotzdem in CSV ausgeben fuer Vollstaendigkeit, aber keine Files
-                    skip_files = True
-                else:
-                    skip_files = False
-            except ValueError:
-                skip_files = False
-        else:
-            skip_files = False
-
-        total = score.get("total", 0)
-        checks = score.get("checks", {})
-        actions = score.get("actions", [])
-        top_action = actions[0] if actions else ""
-
-        safe_domain = re.sub(r"[^a-z0-9.-]", "_", domain)
-        html_file = ""
-        mail_file = ""
-
-        if args.out_html and not skip_files:
-            p = Path(args.out_html) / f"{safe_domain}.html"
-            p.write_text(_render_snapshot_html(domain, result, score), encoding="utf-8")
-            html_file = str(p)
-
-        if args.out_mails and not skip_files:
-            p = Path(args.out_mails) / f"{safe_domain}.txt"
-            p.write_text(_render_cold_mail(domain, score, first_name=first_name,
-                                            company=company, email=email),
-                          encoding="utf-8")
-            mail_file = str(p)
-
-        writer.writerow([
-            domain, email, first_name, company,
-            grade, total,
-            "1" if (result.get("dmarc") or {}).get("present") else "0",
-            "1" if (result.get("spf") or {}).get("present") else "0",
-            "1" if result.get("dkim") else "0",
-            "1" if (result.get("mta_sts") or {}).get("present") else "0",
-            "1" if (result.get("bimi") or {}).get("present") else "0",
-            top_action, html_file, mail_file,
-        ])
-        out_fh.flush()
-        processed += 1
-
-    if args.out_csv:
-        out_fh.close()
-    print(
-        f"[done] {processed}/{total_count} Domains verarbeitet"
-        + (f" -> HTML: {args.out_html}/" if args.out_html else "")
-        + (f" -> Mails: {args.out_mails}/" if args.out_mails else "")
-        + (f" -> CSV: {args.out_csv}" if args.out_csv else ""),
-        file=sys.stderr,
-    )
-
-
-if __name__ == "__main__":
-    main()

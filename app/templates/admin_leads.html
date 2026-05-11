@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Snapshot-Leads · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · Snapshot-Leads</div>
+<h1>Snapshot-Leads <span class="muted small">— eingehende Anfragen aus /snapshot + Batch-Tool</span></h1>
+<p class="muted">Jede Zeile = ein Mensch, der seine Mail-Domain bei uns gecheckt hat und uns die E-Mail dagelassen hat. F-Grades brennen am stärksten — die zuerst kontaktieren.</p>
+
+<!-- KPI-Karten -->
+<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
+    <div>
+      <div class="muted small">Total</div>
+      <div style="font-size: 28px; font-weight: 800;">{{ total_count }}</div>
+    </div>
+    <div>
+      <div class="muted small">Offen</div>
+      <div style="font-size: 28px; font-weight: 800; color: #d97706;">{{ open_count }}</div>
+    </div>
+    <div>
+      <div class="muted small">Convertiert</div>
+      <div style="font-size: 28px; font-weight: 800; color: #16a34a;">{{ converted_count }}</div>
+    </div>
+    {% for g in ['F','D','C','B','A'] %}
+    {% if grade_counts.get(g) %}
+    <div>
+      <div class="muted small">Grade {{ g }}</div>
+      <div style="font-size: 22px; font-weight: 800; color:
+        {% if g == 'A' %}#16a34a{% elif g == 'B' %}#65a30d{% elif g == 'C' %}#d97706{% elif g == 'D' %}#dc2626{% else %}#991b1b{% endif %};">
+        {{ grade_counts[g] }}
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Filter-Bar -->
+<section class="card">
+  <form method="get" action="/admin/leads" class="grid-form" style="display:grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: end;">
+    <label>Suche (Email/Domain/Firma)
+      <input type="text" name="q" value="{{ filter_q or '' }}" placeholder="z.B. acme.ch oder gmail.com">
+    </label>
+    <label>Grade
+      <select name="grade">
+        <option value="">alle</option>
+        {% for g in ['F','D','C','B','A'] %}
+        <option value="{{ g }}" {% if filter_grade == g %}selected{% endif %}>{{ g }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        <option value="">alle</option>
+        <option value="open" {% if filter_status == 'open' %}selected{% endif %}>offen (nicht kontaktiert)</option>
+        <option value="contacted" {% if filter_status == 'contacted' %}selected{% endif %}>kontaktiert</option>
+        <option value="converted" {% if filter_status == 'converted' %}selected{% endif %}>convertiert</option>
+      </select>
+    </label>
+    <button type="submit" class="btn-primary">Filtern</button>
+  </form>
+  <p class="muted small mt-8" style="margin-top:8px;">
+    💡 <a href="/admin/batch-snapshot">→ Batch-Snapshot-Tool</a> öffnen,
+    um CSV mit 50-200 Domains durchzubrennen + Cold-Mails zu generieren.
+  </p>
+</section>
+
+<!-- Lead-Tabelle -->
+<section class="card">
+  <h2 style="margin-top:0;">Leads ({{ leads|length }})</h2>
+  {% if not leads %}
+  <p class="muted">Keine Leads passen zum Filter. Bisschen Outreach machen oder Filter lockern.</p>
+  {% else %}
+  <table class="data">
+    <thead><tr>
+      <th>Datum</th>
+      <th>Grade</th>
+      <th>Domain</th>
+      <th>Email · Name · Firma</th>
+      <th>SPF/DKIM/DMARC</th>
+      <th>Top-Issue</th>
+      <th>Status</th>
+      <th>Quelle</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    {% for lead in leads %}
+      <tr>
+        <td class="small" style="white-space:nowrap;">{{ lead.created_at.strftime('%d.%m. %H:%M') }}</td>
+        <td>
+          <span style="display:inline-block; padding: 4px 10px; border-radius: 6px; color: white; font-weight: 700; font-size: 13px;
+            background: {% if lead.grade == 'A' %}#16a34a{% elif lead.grade == 'B' %}#65a30d{% elif lead.grade == 'C' %}#d97706{% elif lead.grade == 'D' %}#dc2626{% else %}#991b1b{% endif %};">
+            {{ lead.grade or '?' }}
+            <span style="opacity:.7; font-weight: 400; font-size: 11px;">{{ lead.score or 0 }}</span>
+          </span>
+        </td>
+        <td>
+          <a href="https://{{ lead.domain }}" target="_blank" rel="noopener" style="font-family: ui-monospace, monospace; font-size: 13px;">{{ lead.domain }}</a><br>
+          <a href="/check?domain={{ lead.domain }}" class="muted small">→ frisch checken</a>
+        </td>
+        <td>
+          <strong style="font-size: 13.5px;"><a href="mailto:{{ lead.email }}?subject=Mail-Sicherheits-Snapshot für {{ lead.domain }}">{{ lead.email }}</a></strong><br>
+          <span class="muted small">{{ lead.first_name or '—' }}{% if lead.company %} · {{ lead.company }}{% endif %}</span>
+        </td>
+        <td style="font-family: ui-monospace, monospace; font-size: 11.5px;">
+          {% if lead.has_spf %}<span style="color:#16a34a;">✓ SPF</span>{% else %}<span style="color:#dc2626;">✗ SPF</span>{% endif %}<br>
+          {% if lead.has_dkim %}<span style="color:#16a34a;">✓ DKIM</span>{% else %}<span style="color:#dc2626;">✗ DKIM</span>{% endif %}<br>
+          {% if lead.has_dmarc %}<span style="color:#16a34a;">✓ DMARC</span>{% else %}<span style="color:#dc2626;">✗ DMARC</span>{% endif %}
+        </td>
+        <td class="small" style="max-width: 280px;">{{ lead.top_action or '—' }}</td>
+        <td class="small">
+          {% if lead.converted_at %}
+            <span class="badge ok">✓ convertiert</span><br>
+            <span class="muted small">{{ lead.converted_at.strftime('%d.%m.%Y') }}</span>
+          {% elif lead.contacted_at %}
+            <span class="badge brand">→ kontaktiert</span><br>
+            <span class="muted small">{{ lead.contacted_at.strftime('%d.%m.%Y') }}</span>
+          {% else %}
+            <span class="badge warn">⏳ offen</span>
+          {% endif %}
+        </td>
+        <td class="small">{{ lead.source or '—' }}{% if lead.utm_campaign %}<br><span class="muted">{{ lead.utm_campaign }}</span>{% endif %}</td>
+        <td><a href="/admin/leads/{{ lead.id }}" class="btn-link">öffnen →</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

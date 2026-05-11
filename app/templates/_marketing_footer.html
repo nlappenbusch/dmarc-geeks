@@ -77,6 +77,20 @@
       </form>
     </div>
 
+    <!-- Persoenlicher Direkt-Kontakt (kostenlos, keine Hotline-Warteschlange) -->
+    <div class="footer-call">
+      <div class="footer-call-avatar" aria-hidden="true">NL</div>
+      <div class="footer-call-text">
+        <strong>📞 Lieber telefonieren? Direkt durchstellen zu Nils.</strong>
+        <p class="muted small">Kostenlos, kein Sales-Team, keine Warteschleife — du landest bei mir persoenlich.<br>
+        Geht es schnell? Schick mir SMS oder ruf an, ich melde mich innerhalb 1h zurueck (Buerozeit CH).</p>
+      </div>
+      <div class="footer-call-cta">
+        <a href="tel:+41779503152" class="btn-primary big footer-call-btn">+41 77 950 31 52</a>
+        <a href="mailto:service@dmarc-geeks.ch" class="btn-link">service@dmarc-geeks.ch</a>
+      </div>
+    </div>
+
     <div class="footer-bottom">
       <p class="muted small">
         © 2026 <strong>DMARC Geeks</strong> &middot; ein Service von Nils Lappenbusch
@@ -92,16 +106,151 @@
   </div>
 </footer>
 
+<!-- Floating CTA-Bar (Phone + Mail-Check) — sichtbar auf allen Marketing-Pages -->
+<div class="mkt-fab-bar" aria-label="Schneller Kontakt">
+  <a href="tel:+41779503152" class="mkt-fab mkt-fab-call" title="Direkt anrufen: +41 77 950 31 52">
+    <span class="mkt-fab-ico" aria-hidden="true">📞</span>
+    <span class="mkt-fab-label">+41 77 950 31 52</span>
+    <span class="mkt-fab-pulse" aria-hidden="true"></span>
+  </a>
+  <a href="/check" class="mkt-fab mkt-fab-check" title="Kostenlosen Mail-Health-Check starten">
+    <span class="mkt-fab-ico" aria-hidden="true">🔍</span>
+    <span class="mkt-fab-label">Mail-Check</span>
+  </a>
+</div>
+
 <style>
-  /* Prominent Mail-Check link in alle Marketing-Navs (Footer-Partial wird ueberall geladen) */
+  /* === MAIL-CHECK: prominenter Pill-Style in jeder Marketing-Nav === */
+  /* Wird zum CTA-Pill statt nur ein Textlink, damit's wirklich auffaellt
+     und Leute klicken — denn /check ist unser Top-of-Funnel-Lead-Tool. */
   .mkt-nav .nav-mailcheck {
-    color: var(--brand, #2563eb) !important;
-    font-weight: 600;
+    color: white !important;
+    font-weight: 700;
     white-space: nowrap;
-    transition: color .15s;
+    background: linear-gradient(135deg, var(--brand, #2563eb), #1d4ed8);
+    padding: 7px 14px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px -4px rgba(37,99,235,0.55), 0 0 0 1px rgba(37,99,235,0.4);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13.5px;
+    text-decoration: none !important;
   }
-  .mkt-nav .nav-mailcheck::before { content: "🔍 "; opacity: .8; }
-  .mkt-nav .nav-mailcheck:hover { color: #1d4ed8 !important; }
+  .mkt-nav .nav-mailcheck::before { content: "🔍 "; opacity: 1; }
+  .mkt-nav .nav-mailcheck::after {
+    content: "gratis";
+    background: rgba(255,255,255,0.22);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-left: 4px;
+  }
+  .mkt-nav .nav-mailcheck:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px -6px rgba(37,99,235,0.7), 0 0 0 1px rgba(37,99,235,0.5);
+    filter: brightness(1.05);
+  }
+
+  /* === Phone-Link in der Nav-CTA-Sektion === */
+  .mkt-nav-cta .nav-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    color: var(--text, #0f172a);
+    text-decoration: none;
+    padding: 7px 10px;
+    border-radius: 8px;
+    transition: background .12s, color .12s;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .mkt-nav-cta .nav-phone::before { content: "📞"; font-size: 14px; }
+  .mkt-nav-cta .nav-phone:hover { background: var(--surface-soft, #f1f5f9); color: var(--brand, #2563eb); }
+  @media (max-width: 980px) { .mkt-nav-cta .nav-phone .nav-phone-number { display: none; } .mkt-nav-cta .nav-phone::after { content: "Anrufen"; font-size: 13px; } }
+
+  /* === Floating CTA-Bar unten rechts (immer sichtbar) === */
+  .mkt-fab-bar {
+    position: fixed; right: 18px; bottom: 18px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px;
+    pointer-events: none;
+  }
+  .mkt-fab {
+    pointer-events: auto;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 18px;
+    border-radius: 999px;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 12px 32px -8px rgba(0,0,0,0.35), 0 4px 8px -4px rgba(0,0,0,0.15);
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .mkt-fab:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 16px 40px -10px rgba(0,0,0,0.45), 0 6px 12px -4px rgba(0,0,0,0.2); }
+  .mkt-fab-ico { font-size: 18px; line-height: 1; }
+  .mkt-fab-label { white-space: nowrap; }
+  .mkt-fab-call { background: linear-gradient(135deg, #16a34a, #0d9488); color: white; }
+  .mkt-fab-check { background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; }
+  /* Pulse-Ring um den Call-Button (subtil aber auffaellig) */
+  .mkt-fab-pulse {
+    position: absolute; inset: 0; border-radius: 999px;
+    box-shadow: 0 0 0 0 rgba(22,163,74,0.55);
+    animation: mkt-fab-pulse 2.4s infinite ease-out;
+    pointer-events: none;
+  }
+  @keyframes mkt-fab-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(22,163,74,0.55); }
+    70%  { box-shadow: 0 0 0 16px rgba(22,163,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  }
+  /* Mobile: nur Icons, kein Label-Text um Platz zu sparen */
+  @media (max-width: 540px) {
+    .mkt-fab-bar { right: 12px; bottom: 12px; gap: 8px; }
+    .mkt-fab { padding: 12px 14px; }
+    .mkt-fab-label { display: none; }
+    .mkt-fab-call::after { content: "Anrufen"; }
+    .mkt-fab-check::after { content: "Check"; }
+    .mkt-fab-ico { font-size: 20px; }
+  }
+  /* Verstecke FAB-Bar auf Druck-Seiten (Print-View, Snapshot, etc.) */
+  body.no-fab .mkt-fab-bar { display: none; }
+  @media print { .mkt-fab-bar { display: none !important; } }
+
+  /* === Persoenlicher Direkt-Kontakt Block (footer) === */
+  .footer-call {
+    margin-top: 22px; padding: 22px 26px;
+    background: linear-gradient(135deg, rgba(22,163,74,.08), rgba(13,148,136,.08));
+    border: 1px solid rgba(22,163,74,.3); border-radius: 12px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center;
+  }
+  @media (max-width: 720px) { .footer-call { grid-template-columns: 1fr; text-align: center; } }
+  .footer-call-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #0d9488);
+    color: white; font-weight: 800; font-size: 22px; letter-spacing: .02em;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px -6px rgba(22,163,74,.5);
+  }
+  @media (max-width: 720px) { .footer-call-avatar { margin: 0 auto; } }
+  .footer-call-text strong { font-size: 15px; display: block; margin-bottom: 4px; }
+  .footer-call-text p { margin: 0; font-size: 13px; line-height: 1.6; }
+  .footer-call-cta { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  @media (max-width: 720px) { .footer-call-cta { align-items: center; } }
+  .footer-call-btn {
+    background: linear-gradient(135deg, #16a34a, #0d9488) !important;
+    box-shadow: 0 8px 24px -8px rgba(22,163,74,.55) !important;
+    font-size: 15px;
+    padding: 12px 22px;
+    white-space: nowrap;
+  }
 
   .mkt-footer { padding: 56px 0 32px; margin-top: 80px; border-top: 1px solid var(--border, #e2e8f0); background: var(--card, #fafbfd); }
   .mkt-footer .container-mkt { max-width: 1200px; margin: 0 auto; padding: 0 20px; }

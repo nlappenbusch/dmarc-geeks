@@ -13,7 +13,7 @@ from .config import get_settings
 from .database import Base, SessionLocal, engine
 from .middleware import RequestContextMiddleware, SecurityHeadersMiddleware
 from .models import CustomerProfile, Reseller, Tenant, TenantSettings, User
-from .routers import (admin, api, api_keys, audit as audit_router, auth, auth_extra, dashboard,
+from .routers import (admin, admin_leads, api, api_keys, audit as audit_router, auth, auth_extra, dashboard,
                       dns_check, domains, generator, help as help_router, mail_tester, mailboxes, marketing,
                       newsletter, report_pdf, reports, reseller as reseller_router,
                       sender_kb as sender_kb_router,
@@ -176,6 +176,7 @@ def create_app() -> FastAPI:
     app.include_router(reseller_router.router)
     app.include_router(report_pdf.router)
     app.include_router(admin.router)
+    app.include_router(admin_leads.router)
     app.include_router(help_router.router)
     app.include_router(generator.router)
     app.include_router(dns_check.router)

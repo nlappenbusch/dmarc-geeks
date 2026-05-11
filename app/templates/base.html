@@ -61,6 +61,7 @@
     {% endif %}
     {% if user.is_superadmin %}
       <a href="/admin/tenants" class="{{ 'active' if active=='admin' else '' }}">Tenants</a>
+      <a href="/admin/leads" class="{{ 'active' if active=='leads' else '' }}">📩 Leads</a>
       <a href="/admin/system" class="{{ 'active' if active=='admin-system' else '' }}">System</a>
     {% endif %}
     <div class="nav-dropdown push-right {{ 'active' if active=='generator' else '' }}">
