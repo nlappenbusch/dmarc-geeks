@@ -622,6 +622,12 @@ def glossar_alias(request: Request):
     return RedirectResponse("/wissen", status_code=301)
 
 
+@router.get("/tool")
+def tool_landing(request: Request):
+    """Produkt-Landing-Page fuer das DMARC-Geeks-Tool selbst."""
+    return render(request, "tool_landing.html", user=None, tenant=None, active="tool")
+
+
 @router.get("/vergleich")
 def vergleich(request: Request):
     """DMARC-Tool-Vergleich: DMARC Geeks vs DMARCian vs EasyDMARC vs Valimail.

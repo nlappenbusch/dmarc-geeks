@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Das DMARC Geeks Tool · Multi-Tenant DMARC-Dashboard für IT-Teams &amp; MSPs</title>
+  <meta name="description" content="Unser eigenes DMARC-Aggregator-Dashboard: Sankey-Flow, Smart-Advisor, Sender-Klassifikation, BIMI-Tracking, Managed-DMARC via CNAME, Whitelabel für MSPs. Live-Demo ohne Anmeldung.">
+  <meta name="keywords" content="DMARC Tool, DMARC Dashboard, Multi-Tenant DMARC, Whitelabel DMARC, Sankey Flow, Smart Advisor, BIMI Tracking, Managed DMARC">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Das DMARC Geeks Tool · Multi-Tenant Dashboard für IT-Teams &amp; MSPs">
+  <meta property="og:description" content="Unser eigenes DMARC-Aggregator-Dashboard. Live-Demo ohne Anmeldung.">
+  <meta property="og:url" content="https://dmarc-geeks.ch/tool">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="canonical" href="https://dmarc-geeks.ch/tool">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .tl-wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 64px; }
+    .tl-hero { text-align: center; padding: 24px 0 32px; }
+    .tl-hero h1 { font-size: 40px; line-height: 1.12; margin: 14px 0 12px; letter-spacing: -0.01em; }
+    .tl-hero .lede { font-size: 17px; color: var(--muted, #64748b); max-width: 760px; margin: 0 auto 22px; line-height: 1.6; }
+    .tl-hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .tl-hero-trust { color: var(--muted, #64748b); font-size: 13px; }
+
+    /* Hero-Screenshot (das große Beispiel-Dashboard) */
+    .tl-screenshot {
+      max-width: 1080px; margin: 32px auto;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border-radius: 14px;
+      padding: 4px;
+      box-shadow: 0 32px 80px -20px rgba(15,23,42,.5), 0 0 0 1px rgba(255,255,255,.08);
+      position: relative;
+    }
+    .tl-screenshot::before {
+      content: ''; position: absolute; inset: -4px;
+      background: linear-gradient(135deg, #2563eb40, #7c3aed40);
+      border-radius: 18px; z-index: -1; filter: blur(20px); opacity: .6;
+    }
+    .tl-ssh-window {
+      background: var(--card, #fff);
+      border-radius: 11px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .tl-ssh-bar {
+      background: linear-gradient(180deg, #f1f5f9, #e2e8f0);
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border, #cbd5e1);
+    }
+    .tl-ssh-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .tl-ssh-bar .dot.red { background: #ef4444; }
+    .tl-ssh-bar .dot.yellow { background: #f59e0b; }
+    .tl-ssh-bar .dot.green { background: #22c55e; }
+    .tl-ssh-bar .url {
+      flex: 1; text-align: center; font-size: 12px; color: var(--muted, #64748b);
+      font-family: "JetBrains Mono", monospace;
+      background: var(--card, #fff); border: 1px solid var(--border, #cbd5e1);
+      border-radius: 6px; padding: 3px 12px; max-width: 360px;
+    }
+    .tl-ssh-body { padding: 22px 26px; min-height: 360px; }
+
+    /* Sample-Dashboard im Hero */
+    .ssh-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+                   padding-bottom: 14px; border-bottom: 1px solid var(--border, #e2e8f0); }
+    .ssh-logo { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--brand, #2563eb); font-size: 14px; }
+    .ssh-tabs { display: flex; gap: 6px; margin-left: 18px; }
+    .ssh-tab { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: default;
+                background: var(--card, #f8fafc); color: var(--muted, #64748b); }
+    .ssh-tab.active { background: var(--brand, #2563eb); color: white; }
+    .ssh-meta { margin-left: auto; font-size: 12px; color: var(--muted, #64748b); }
+
+    .ssh-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .ssh-kpi {
+      background: var(--card, #f8fafc); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .ssh-kpi .label { font-size: 11px; color: var(--muted, #64748b); text-transform: uppercase; letter-spacing: .03em; }
+    .ssh-kpi .value { font-size: 22px; font-weight: 800; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+    .ssh-kpi .delta { font-size: 11px; font-weight: 600; }
+    .ssh-kpi .delta.up { color: #16a34a; }
+    .ssh-kpi .delta.dn { color: #dc2626; }
+
+    .ssh-chart {
+      height: 140px; background: linear-gradient(180deg, rgba(37,99,235,.06), transparent);
+      border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 18px;
+      display: flex; align-items: flex-end; gap: 4px; padding: 10px;
+    }
+    .ssh-chart .bar { flex: 1; background: linear-gradient(180deg, var(--brand, #2563eb), #7c3aed);
+                       border-radius: 4px 4px 0 0; opacity: .85; }
+    .ssh-chart .bar.fail { background: linear-gradient(180deg, #ef4444, #dc2626); opacity: .65; }
+
+    /* Sankey-Like-Mock */
+    .ssh-sankey {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+      background: var(--card, #f8fafc); border-radius: 8px; padding: 14px 16px;
+      align-items: center;
+    }
+    .ssh-sankey-col { display: flex; flex-direction: column; gap: 8px; }
+    .ssh-sankey-bar {
+      padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+      display: flex; justify-content: space-between; gap: 8px;
+    }
+    .ssh-sankey-bar.pass { background: rgba(34,197,94,.18); color: #15803d; }
+    .ssh-sankey-bar.warn { background: rgba(245,158,11,.18); color: #b45309; }
+    .ssh-sankey-bar.fail { background: rgba(239,68,68,.18); color: #b91c1c; }
+    .ssh-sankey-bar.brand { background: rgba(37,99,235,.18); color: #1d4ed8; }
+    .ssh-sankey-mid { display: flex; flex-direction: column; align-items: center; padding: 0 8px; gap: 6px;
+                       color: var(--muted, #64748b); font-size: 11px; font-weight: 600; text-align: center; }
+
+    /* Feature-Grid */
+    .tl-features { padding: 60px 0 32px; }
+    .tl-section-head { text-align: center; max-width: 720px; margin: 0 auto 28px; }
+    .tl-section-head h2 { font-size: 32px; line-height: 1.15; margin: 12px 0 8px; }
+    .tl-section-head .lede { color: var(--muted, #64748b); margin: 0; }
+
+    .tl-fgrid { display: grid; gap: 24px; grid-template-columns: 1fr; }
+    @media (min-width: 720px) { .tl-fgrid { grid-template-columns: 1fr 1fr; } }
+    .tl-fitem {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px; padding: 26px 28px;
+      display: flex; flex-direction: column; gap: 14px;
+      transition: box-shadow .25s, transform .25s;
+    }
+    .tl-fitem:hover { box-shadow: 0 16px 40px -16px rgba(37,99,235,.18); transform: translateY(-2px); }
+    .tl-fico {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 22px; color: white;
+      background: linear-gradient(135deg, var(--c), var(--c-2));
+    }
+    .tl-fitem h3 { font-size: 18px; margin: 0; }
+    .tl-fitem p { margin: 0; color: var(--muted, #64748b); font-size: 14px; line-height: 1.6; }
+    .tl-fitem-mock {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 1px solid var(--border, #e2e8f0); border-radius: 10px;
+      padding: 12px; font-size: 12px; color: var(--muted, #64748b);
+      font-family: "JetBrains Mono", Menlo, Consolas, monospace; line-height: 1.65;
+      overflow-x: auto;
+    }
+    .tl-fitem-mock .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 10.5px; font-weight: 600; margin-right: 4px;
+      background: var(--card, #fff); color: var(--text, #0f172a);
+      border: 1px solid var(--border, #e2e8f0);
+    }
+    .tl-fitem-mock .pill.ok { background: rgba(34,197,94,.15); color: #15803d; border-color: rgba(34,197,94,.3); }
+    .tl-fitem-mock .pill.warn { background: rgba(245,158,11,.15); color: #b45309; border-color: rgba(245,158,11,.3); }
+    .tl-fitem-mock .pill.fail { background: rgba(239,68,68,.15); color: #b91c1c; border-color: rgba(239,68,68,.3); }
+
+    /* Big Demo-Block */
+    .tl-demo-block {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white; padding: 48px 40px; border-radius: 18px;
+      text-align: center; margin: 56px 0; position: relative; overflow: hidden;
+    }
+    .tl-demo-block::after {
+      content: ''; position: absolute; right: -80px; bottom: -80px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.15), transparent 70%);
+    }
+    .tl-demo-block h2 { font-size: 32px; line-height: 1.15; margin: 0 0 12px; color: white; }
+    .tl-demo-block p { font-size: 16px; opacity: .92; max-width: 640px; margin: 0 auto 22px; }
+    .tl-demo-block .btn-on-grad {
+      background: white; color: #2563eb; padding: 14px 28px;
+      border-radius: 10px; font-weight: 700; text-decoration: none;
+      display: inline-block; margin: 0 4px;
+    }
+    .tl-demo-block .btn-on-grad.ghost {
+      background: rgba(255,255,255,.18); color: white;
+      border: 1px solid rgba(255,255,255,.4);
+    }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool" class="active-mkt"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Score 0–10 für deine echte Mail</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="tl-wrap">
+
+  <!-- Hero -->
+  <section class="tl-hero">
+    <span class="eyebrow"><span class="dot-live"></span>Unser eigenes Multi-Tenant Dashboard</span>
+    <h1>Das Tool, das deine <span class="grad-text">DMARC-Reports</span> lesbar macht.</h1>
+    <p class="lede">Wir bauen unser eigenes DMARC-Aggregator-Dashboard. Multi-Tenant für MSPs, Sankey-Flow für Forensik, Smart-Advisor für die richtige Policy-Entscheidung, Managed-DMARC via CNAME-Delegation, BIMI-Tracking, DNSBL-Monitoring. <strong>Wenn du eines unserer Service-Pakete buchst, ist das Tool inklusive.</strong></p>
+    <div class="tl-hero-cta">
+      <a href="/demo" class="btn-primary big">🎯 Live-Demo ohne Anmeldung</a>
+      <a href="/kontakt?topic=audit" class="btn-ghost-arrow">Mit Audit starten (CHF 490) <span>→</span></a>
+    </div>
+    <div class="tl-hero-trust">3 Demo-Domains · 30 Tage Reports · klicke dich durch wie ein echter Kunde</div>
+  </section>
+
+  <!-- Big screenshot mock -->
+  <section class="tl-screenshot">
+    <div class="tl-ssh-window">
+      <div class="tl-ssh-bar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="url">dmarc-geeks.ch/dashboard?domain=acme-corp.demo</span>
+      </div>
+      <div class="tl-ssh-body">
+        <div class="ssh-topbar">
+          <span class="ssh-logo">
+            <svg width="20" height="20" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="g0" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+              <rect width="40" height="40" rx="9" fill="url(#g0)"/>
+              <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
+              <circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+              <circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+              <line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/>
+            </svg>
+            DMARC Geeks
+          </span>
+          <div class="ssh-tabs">
+            <span class="ssh-tab active">Dashboard</span>
+            <span class="ssh-tab">Domains</span>
+            <span class="ssh-tab">Reports</span>
+            <span class="ssh-tab">Mailboxen</span>
+          </div>
+          <span class="ssh-meta">acme-corp.demo &middot; 30 Tage</span>
+        </div>
+
+        <div class="ssh-kpis">
+          <div class="ssh-kpi"><div class="label">Volumen</div><div class="value">184'231</div><div class="delta up">↑ 12 % vs Vorperiode</div></div>
+          <div class="ssh-kpi"><div class="label">DMARC Pass</div><div class="value" style="color:#16a34a">99.4 %</div><div class="delta up">↑ 0.3 %</div></div>
+          <div class="ssh-kpi"><div class="label">Quarantäne</div><div class="value" style="color:#d97706">312</div><div class="delta dn">↓ 8 %</div></div>
+          <div class="ssh-kpi"><div class="label">Reject</div><div class="value" style="color:#dc2626">87</div><div class="delta up">↑ 4 %</div></div>
+        </div>
+
+        <div class="ssh-chart">
+          <div class="bar" style="height: 45%"></div>
+          <div class="bar" style="height: 65%"></div>
+          <div class="bar" style="height: 52%"></div>
+          <div class="bar" style="height: 78%"></div>
+          <div class="bar" style="height: 70%"></div>
+          <div class="bar" style="height: 88%"></div>
+          <div class="bar fail" style="height: 12%"></div>
+          <div class="bar" style="height: 82%"></div>
+          <div class="bar" style="height: 90%"></div>
+          <div class="bar" style="height: 76%"></div>
+          <div class="bar" style="height: 85%"></div>
+          <div class="bar" style="height: 92%"></div>
+          <div class="bar" style="height: 80%"></div>
+          <div class="bar" style="height: 95%"></div>
+        </div>
+
+        <div class="ssh-sankey">
+          <div class="ssh-sankey-col">
+            <div class="ssh-sankey-bar brand">Google Workspace<span>99.8 %</span></div>
+            <div class="ssh-sankey-bar brand">Microsoft 365<span>100 %</span></div>
+            <div class="ssh-sankey-bar warn">Mailchimp<span>96.4 %</span></div>
+            <div class="ssh-sankey-bar fail">Spoofer (RU)<span>12 %</span></div>
+          </div>
+          <div class="ssh-sankey-mid">→ Auth-Check →</div>
+          <div class="ssh-sankey-col">
+            <div class="ssh-sankey-bar pass">✓ Delivered</div>
+            <div class="ssh-sankey-bar warn">! Quarantäne</div>
+            <div class="ssh-sankey-bar fail">✕ Rejected</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="tl-features">
+    <div class="tl-section-head">
+      <span class="eyebrow"><span class="dot-live"></span>Features im Detail</span>
+      <h2>Was unser Tool besser macht.</h2>
+      <p class="lede">Sechs Features die wir besonders sauber gebaut haben. Alles in jedem Plan inklusive.</p>
+    </div>
+
+    <div class="tl-fgrid">
+
+      <article class="tl-fitem" style="--c:#2563eb;--c-2:#1d4ed8;">
+        <span class="tl-fico">📊</span>
+        <h3>Sankey-Flow-Forensik</h3>
+        <p>Visualisierter Fluss: <em>welcher Sender</em> → <em>welche Auth-Ergebnisse</em> → <em>welche Disposition</em>. Klick auf jeden Knoten zoomt in die Detail-Records.</p>
+        <div class="tl-fitem-mock">
+          M365 ─────────→ <span class="pill ok">99.8% pass</span><br>
+          Mailchimp ───→ <span class="pill warn">96.4% pass</span><br>
+          Spoofer ─────→ <span class="pill fail">12% pass</span> <span class="pill fail">→ rejected</span>
+        </div>
+      </article>
+
+      <article class="tl-fitem" style="--c:#7c3aed;--c-2:#6d28d9;">
+        <span class="tl-fico">🧠</span>
+        <h3>Smart-Advisor</h3>
+        <p>Wann kannst du sicher auf <code>p=quarantine</code> oder <code>p=reject</code>? Der Advisor schaut auf 30-Tage-Pass-Rate, Sender-Stabilität, Volumen-Trends und sagt's dir.</p>
+        <div class="tl-fitem-mock">
+          ✓ <span class="pill ok">Bereit für p=quarantine</span><br>
+          &nbsp;&nbsp;99.4 % Pass-Rate über 30 Tage<br>
+          &nbsp;&nbsp;Alle Sender stabil identifiziert<br>
+          ⚠ Noch nicht für p=reject — 1 Sender (Mailchimp) zickt
+        </div>
+      </article>
+
+      <article class="tl-fitem" style="--c:#16a34a;--c-2:#15803d;">
+        <span class="tl-fico">🏷</span>
+        <h3>Sender-Klassifikation</h3>
+        <p>Automatische Erkennung: ist das Google / Mailchimp / dein Server / Forwarder / Threat? 33+ kuratierte Anbieter in der <a href="/sender">Sender-DB</a>.</p>
+        <div class="tl-fitem-mock">
+          <span class="pill ok">📨 Microsoft 365</span> mailbox<br>
+          <span class="pill ok">📢 Mailchimp</span> marketing<br>
+          <span class="pill ok">⚡ SendGrid</span> transactional<br>
+          <span class="pill fail">🎭 Spoofer</span> threat
+        </div>
+      </article>
+
+      <article class="tl-fitem" style="--c:#0891b2;--c-2:#0e7490;">
+        <span class="tl-fico">🏢</span>
+        <h3>Multi-Tenant für MSPs</h3>
+        <p>Jeder deiner Endkunden bekommt seinen eigenen abgeschotteten Tenant. Dein Logo, deine Farben, dein Brand. Reseller-Whitelabel ab dem Pilot-Plan.</p>
+        <div class="tl-fitem-mock">
+          MSP-Verbund<br>
+          ├─ acme-corp.ch &nbsp;&nbsp;&nbsp;&nbsp; <span class="pill ok">aktiv</span><br>
+          ├─ globex-ag.ch &nbsp;&nbsp;&nbsp;&nbsp; <span class="pill ok">aktiv</span><br>
+          └─ widgets-gmbh.de <span class="pill warn">Setup läuft</span>
+        </div>
+      </article>
+
+      <article class="tl-fitem" style="--c:#f59e0b;--c-2:#d97706;">
+        <span class="tl-fico">🛡</span>
+        <h3>Managed-DMARC via CNAME</h3>
+        <p>Dein Kunde setzt einmalig einen CNAME in seinem DNS — wir hosten Authorization-Records + Policy-Records in unserer Hetzner-Zone. Kein DNS-Babysitting mehr.</p>
+        <div class="tl-fitem-mock">
+          _dmarc.kunde.ch.<br>
+          &nbsp;&nbsp;CNAME kunde-ch.dmarc.dmarc-geeks.ch.<br>
+          ✓ <span class="pill ok">Authorization aktiv</span><br>
+          ✓ <span class="pill ok">Policy gehostet</span>
+        </div>
+      </article>
+
+      <article class="tl-fitem" style="--c:#dc2626;--c-2:#b91c1c;">
+        <span class="tl-fico">🚨</span>
+        <h3>Spike-Alerts + DNSBL-Monitoring</h3>
+        <p>Wir watchen deine Sender-IPs gegen Spamhaus, sehen Volumen-Anomalien (10x mehr Reject-Mails heute?) und schicken dir sofort eine Mail oder Webhook.</p>
+        <div class="tl-fitem-mock">
+          🚨 <span class="pill fail">SPIKE-ALERT</span> 18:42 UTC<br>
+          &nbsp;&nbsp;Reject-Rate von 0.1% → 8% (Faktor 80x)<br>
+          &nbsp;&nbsp;Top-Source: 91.234.99.10 (Spoofer)<br>
+          &nbsp;&nbsp;→ Webhook gefeuert, Mail gesendet
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Demo block -->
+  <section class="tl-demo-block">
+    <h2>Klick dich rein. Ohne Anmeldung.</h2>
+    <p>Live-Demo mit 3 Beispiel-Domains (acme-corp.demo, globex.demo, widgets.demo), 30 Tagen Reports, vollem Funktionsumfang. Du bist sofort als Admin in einem isolierten Demo-Tenant — kannst alles machen, ohne irgendwen zu stören.</p>
+    <a href="/demo" class="btn-on-grad">🎯 Live-Demo starten</a>
+    <a href="/kontakt?topic=audit" class="btn-on-grad ghost">📅 Audit buchen (CHF 490)</a>
+  </section>
+
+  <!-- Was nicht (Ehrlichkeit) -->
+  <section style="padding: 32px 0;">
+    <div class="tl-section-head">
+      <h2 style="font-size:24px;">Was wir <span style="color:#dc2626">nicht</span> haben.</h2>
+      <p class="lede">Ehrlich statt geschummelt — wenn etwas wichtig ist, sag's, dann reden wir.</p>
+    </div>
+    <div class="tl-fgrid" style="gap: 14px;">
+      <div class="tl-fitem" style="--c:#94a3b8;--c-2:#64748b;">
+        <h3 style="color:var(--muted, #64748b);">Kein RUF / Forensic-Reports</h3>
+        <p>Wir empfangen RUA (Aggregate), nicht RUF (Forensic mit Mail-Body). Wenn du wirklich den Body einer fehlgeschlagenen Mail sehen willst — andere Tools bieten das. Wir wägen den ROI ab und bauen es, sobald ein Kunde es konkret braucht.</p>
+      </div>
+      <div class="tl-fitem" style="--c:#94a3b8;--c-2:#64748b;">
+        <h3 style="color:var(--muted, #64748b);">Kein TLS-RPT (noch)</h3>
+        <p>TLS-Reporting (DANE, MTA-STS-Reporting) ist auf unserer Roadmap, noch nicht live. Wenn du das brauchst, sag's vor der Pilot-Buchung.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>
