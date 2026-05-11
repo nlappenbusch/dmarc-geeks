@@ -18,6 +18,9 @@
         <ul>
           <li><a href="/#features">Features</a></li>
           <li><a href="/#preise">Preise</a></li>
+          <li><a href="/vergleich">Tool-Vergleich</a></li>
+          <li><a href="/wissen">Wissen / Blog</a></li>
+          <li><a href="/glossar">Mail-Security-Glossar</a></li>
           <li><a href="/services">Services</a></li>
           <li style="padding-left:14px;"><a href="/services/dmarc">— DMARC, SPF, DKIM</a></li>
           <li style="padding-left:14px;"><a href="/services/bimi">— BIMI + VMC</a></li>
@@ -59,6 +62,19 @@
         </ul>
       </div>
     </div>
+    <div class="footer-newsletter">
+      <div>
+        <strong>📬 1 Mail / Monat: DMARC-Insights für DACH-Profis.</strong>
+        <p class="muted small">Echte How-Tos, NIS2-Updates, Compliance-News. Jederzeit abbestellbar.</p>
+      </div>
+      <form method="post" action="/newsletter/subscribe" class="footer-nl-form">
+        <input type="hidden" name="source" value="footer">
+        <input type="email" name="email" placeholder="deine@email.ch" required aria-label="Email für Newsletter">
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit" class="btn-primary">Anmelden</button>
+      </form>
+    </div>
+
     <div class="footer-bottom">
       <p class="muted small">
         © 2026 <strong>DMARC Geeks</strong> &middot; ein Service von Nils Lappenbusch
@@ -95,6 +111,24 @@
   .mkt-footer ul li { margin-bottom: 6px; }
   .mkt-footer ul a, .mkt-footer .muted a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border, #cbd5e1); }
   .mkt-footer ul a:hover, .mkt-footer .muted a:hover { color: var(--brand, #2563eb); border-bottom-color: var(--brand, #2563eb); }
+  .mkt-footer .footer-newsletter {
+    margin-top: 36px; padding: 24px 28px;
+    background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(124,58,237,.06));
+    border: 1px solid rgba(37,99,235,.2); border-radius: 12px;
+    display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center;
+  }
+  @media (max-width: 720px) { .mkt-footer .footer-newsletter { grid-template-columns: 1fr; } }
+  .mkt-footer .footer-newsletter strong { font-size: 15px; }
+  .mkt-footer .footer-newsletter p { margin: 4px 0 0; font-size: 13px; }
+  .mkt-footer .footer-nl-form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mkt-footer .footer-nl-form input[type="email"] {
+    padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border, #e2e8f0);
+    background: var(--card, #fff); color: inherit; font: inherit; min-width: 220px;
+  }
+  .mkt-footer .footer-nl-form input[type="email"]:focus { outline: 2px solid var(--brand, #2563eb); outline-offset: -1px; }
+  .mkt-footer .footer-nl-form .btn-primary { padding: 10px 18px; white-space: nowrap; }
+  .mkt-footer .footer-nl-form .hp { position: absolute; left: -9999px; width: 1px; opacity: 0; }
+
   .mkt-footer .footer-bottom { margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   .mkt-footer .footer-bottom p { margin: 0; font-size: 12.5px; }
 </style>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Newsletter · DMARC Geeks</title>
+  <meta name="description" content="Newsletter-Status.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .nl-wrap { max-width: 640px; margin: 0 auto; padding: 80px 20px 60px; text-align: center; }
+    .nl-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 800; color: white; margin-bottom: 18px;
+    }
+    .nl-icon.ok { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .nl-icon.info { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+    .nl-icon.warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .nl-icon.err { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .nl-wrap h1 { font-size: 26px; margin: 0 0 12px; }
+    .nl-wrap p { color: var(--muted, #64748b); font-size: 15.5px; line-height: 1.6; margin: 0 0 24px; }
+    .nl-wrap a.btn-primary { padding: 12px 22px; }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="nl-wrap">
+  {% set ic = {'check_email': 'info', 'confirmed': 'ok', 'already': 'info', 'unsubscribed': 'warn', 'error': 'err'}[status] %}
+  {% set sym = {'check_email': '📬', 'confirmed': '✓', 'already': 'ℹ', 'unsubscribed': '👋', 'error': '✕'}[status] %}
+  <div class="nl-icon {{ ic }}">{{ sym }}</div>
+  <h1>
+    {%- if status == 'check_email' -%}Schau in deinen Posteingang
+    {%- elif status == 'confirmed' -%}Du bist im Verteiler
+    {%- elif status == 'already' -%}Schon dabei
+    {%- elif status == 'unsubscribed' -%}Abgemeldet
+    {%- else -%}Da ist was schief gelaufen
+    {%- endif -%}
+  </h1>
+  <p>{{ message }}</p>
+
+  {% if status == 'confirmed' %}
+    <a href="/wissen" class="btn-primary">→ Direkt zum Wissens-Bereich</a>
+  {% elif status == 'unsubscribed' %}
+    <a href="/" class="btn-primary">Zurück zur Startseite</a>
+  {% elif status == 'error' %}
+    <a href="/wissen" class="btn-primary">Zurück zum Wissens-Bereich</a>
+  {% else %}
+    <a href="/" class="btn-primary">Zurück zur Startseite</a>
+  {% endif %}
+</main>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>

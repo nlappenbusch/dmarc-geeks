@@ -15,9 +15,9 @@ from .middleware import RequestContextMiddleware, SecurityHeadersMiddleware
 from .models import CustomerProfile, Reseller, Tenant, TenantSettings, User
 from .routers import (admin, api, api_keys, audit as audit_router, auth, auth_extra, dashboard,
                       dns_check, domains, generator, help as help_router, mail_tester, mailboxes, marketing,
-                      report_pdf, reports, reseller as reseller_router,
+                      newsletter, report_pdf, reports, reseller as reseller_router,
                       settings as settings_router, sources, tags, upload, users,
-                      webhooks as webhooks_router)
+                      webhooks as webhooks_router, wissen_blog)
 from .scheduler import start_scheduler, stop_scheduler
 from .security import hash_password
 from .templating import render
@@ -180,6 +180,8 @@ def create_app() -> FastAPI:
     app.include_router(sources.router)
     app.include_router(marketing.router)
     app.include_router(mail_tester.router)
+    app.include_router(wissen_blog.router)
+    app.include_router(newsletter.router)
     app.include_router(api.router)
 
     @app.get("/healthz")

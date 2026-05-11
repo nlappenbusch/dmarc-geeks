@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DMARC-Tool-Vergleich · DMARCian, EasyDMARC, Valimail vs DMARC Geeks</title>
+  <meta name="description" content="DMARC-Aggregator-Vergleich für DACH: Funktionen, Preise, Features, MSP-Whitelabel-Fähigkeit. DMARC Geeks, DMARCian, EasyDMARC, Valimail im ehrlichen Direktvergleich.">
+  <meta name="keywords" content="DMARC Tool Vergleich, DMARCian alternative, EasyDMARC alternative, Valimail alternative, DMARC Aggregator">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="DMARC-Tool-Vergleich · DMARCian, EasyDMARC, Valimail vs DMARC Geeks">
+  <meta property="og:description" content="Welches DMARC-Tool für KMU und MSPs in der Schweiz? Ehrlicher Direktvergleich.">
+  <meta property="og:url" content="https://dmarc-geeks.ch/vergleich">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="canonical" href="https://dmarc-geeks.ch/vergleich">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .vgl-wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 64px; }
+    .vgl-head { text-align: center; margin-bottom: 32px; }
+    .vgl-head h1 { font-size: 36px; line-height: 1.15; margin: 12px 0 8px; }
+    .vgl-head .lede { color: var(--muted, #64748b); max-width: 720px; margin: 0 auto; }
+
+    .vgl-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border, #e2e8f0); box-shadow: 0 4px 16px -8px rgba(15,23,42,.08); margin: 32px 0; }
+    table.vgl { width: 100%; border-collapse: collapse; min-width: 760px; }
+    table.vgl th, table.vgl td { padding: 14px 16px; text-align: center; border-bottom: 1px solid var(--border, #e2e8f0); vertical-align: middle; }
+    table.vgl th:first-child, table.vgl td:first-child { text-align: left; }
+    table.vgl thead th { background: var(--card, #f8fafc); font-size: 14px; font-weight: 700; }
+    table.vgl thead th.us {
+      background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(124,58,237,.12));
+      color: var(--brand, #2563eb);
+      position: relative;
+    }
+    table.vgl thead th.us::after {
+      content: 'Empfehlung'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;
+      font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    table.vgl tbody tr:nth-child(even) { background: var(--card, #fafbfd); }
+    table.vgl tbody tr td.us { background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.04)); font-weight: 600; }
+    table.vgl tbody tr.section-head td { background: var(--card, #f1f5f9); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted, #64748b); text-align: left; padding-left: 16px; }
+    table.vgl tbody td.feat-name { font-weight: 500; font-size: 14px; }
+    table.vgl .yes { color: #16a34a; font-weight: 700; }
+    table.vgl .no  { color: #94a3b8; }
+    table.vgl .maybe { color: #f59e0b; font-weight: 600; }
+    table.vgl .num { font-variant-numeric: tabular-nums; }
+
+    .vgl-cards { display: grid; gap: 16px; grid-template-columns: 1fr; margin: 28px 0; }
+    @media (min-width: 720px) { .vgl-cards { grid-template-columns: 1fr 1fr; } }
+    .vgl-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px; padding: 22px 24px;
+    }
+    .vgl-card h3 { font-size: 17px; margin: 0 0 10px; }
+    .vgl-card ul { margin: 0; padding-left: 20px; }
+    .vgl-card li { padding: 4px 0; font-size: 14px; }
+    .vgl-card .pro { color: #16a34a; }
+    .vgl-card .con { color: #ef4444; }
+    .vgl-card.us { border-color: rgba(37,99,235,.4); background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.04)); }
+
+    .verdict {
+      background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(124,58,237,0.06));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 14px;
+      padding: 24px 28px; margin: 32px 0;
+    }
+    .verdict h2 { margin: 0 0 12px; font-size: 22px; }
+    .verdict p { margin: 0 0 8px; line-height: 1.65; }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/wissen">Wissen</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="vgl-wrap">
+
+  <div class="vgl-head">
+    <span class="eyebrow"><span class="dot-live"></span>Ehrlicher Direktvergleich (kein Sponsoring)</span>
+    <h1>DMARC-Tool-Vergleich für DACH</h1>
+    <p class="lede">Welcher DMARC-Aggregator passt für Schweizer KMU oder DACH-MSPs? Wir vergleichen die 4 verbreitetsten: <strong>DMARC Geeks</strong> (wir), <strong>DMARCian</strong>, <strong>EasyDMARC</strong>, <strong>Valimail</strong> — Funktionen, Preise, MSP-Fähigkeiten.</p>
+  </div>
+
+  <div class="vgl-table-wrap">
+    <table class="vgl">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="us">DMARC Geeks</th>
+          <th>DMARCian</th>
+          <th>EasyDMARC</th>
+          <th>Valimail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="section-head"><td colspan="5">Preise &amp; Modell</td></tr>
+        <tr>
+          <td class="feat-name">Einstiegspreis Tool/Monat</td>
+          <td class="us num">inkl. in CHF 1'990 Foundation</td>
+          <td class="num">€ 25/Mt</td>
+          <td class="num">€ 15/Mt</td>
+          <td class="num">$ 549/Mt</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Setup-Service inklusive</td>
+          <td class="us yes">✓ Bei Paketen inklusive</td>
+          <td class="no">✗ Self-Service</td>
+          <td class="no">✗ Self-Service</td>
+          <td class="maybe">~ "White-glove" Enterprise</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Festpreis (statt Volumen-Tier)</td>
+          <td class="us yes">✓ Festpreis-Pakete</td>
+          <td class="no">✗ Pro Domain/Volume</td>
+          <td class="no">✗ Pro Domain/Volume</td>
+          <td class="no">✗ Pro Domain/Volume</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Self-Hosting möglich</td>
+          <td class="us yes">✓ Source/Container</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+
+        <tr class="section-head"><td colspan="5">Funktionsumfang</td></tr>
+        <tr>
+          <td class="feat-name">DMARC-Aggregator (RUA)</td>
+          <td class="us yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Sankey-Flow-Visualisierung</td>
+          <td class="us yes">✓</td>
+          <td class="no">✗</td>
+          <td class="maybe">~ Basis</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Smart-Advisor (p=quarantine-Empfehlung)</td>
+          <td class="us yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat-name">BIMI/VMC-Reseller-Komplettpaket</td>
+          <td class="us yes">✓ Reseller (DigiCert / Prime)</td>
+          <td class="no">✗ Empfehlung extern</td>
+          <td class="maybe">~ Drittpartnerschaft</td>
+          <td class="no">✗ Empfehlung extern</td>
+        </tr>
+        <tr>
+          <td class="feat-name">DNSBL-Monitoring (Spamhaus)</td>
+          <td class="us yes">✓ Spamhaus DQS</td>
+          <td class="no">✗</td>
+          <td class="maybe">~ Basis</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td class="feat-name">DKIM-Inspector-Tool</td>
+          <td class="us yes">✓ Public</td>
+          <td class="maybe">Tool eingebaut</td>
+          <td class="yes">✓ Public</td>
+          <td class="maybe">Tool eingebaut</td>
+        </tr>
+
+        <tr class="section-head"><td colspan="5">MSP / Whitelabel</td></tr>
+        <tr>
+          <td class="feat-name">Multi-Tenant für MSPs</td>
+          <td class="us yes">✓ Reseller-Modell</td>
+          <td class="yes">✓ Agency-Plan</td>
+          <td class="yes">✓ MSP-Tier</td>
+          <td class="yes">✓ Enterprise</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Whitelabel-Branding (eigene Domain + Logo)</td>
+          <td class="us yes">✓ ab Reseller-Plus</td>
+          <td class="maybe">~ teils</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Managed-DMARC via CNAME-Delegation</td>
+          <td class="us yes">✓ inkl. Hetzner-DNS-Auto</td>
+          <td class="no">✗</td>
+          <td class="maybe">~ Hosted</td>
+          <td class="yes">✓</td>
+        </tr>
+
+        <tr class="section-head"><td colspan="5">DACH-Faktoren</td></tr>
+        <tr>
+          <td class="feat-name">CH/EU-Hosting der Daten</td>
+          <td class="us yes">✓ CH</td>
+          <td class="no">✗ USA</td>
+          <td class="maybe">~ EU</td>
+          <td class="no">✗ USA</td>
+        </tr>
+        <tr>
+          <td class="feat-name">DSG/DSGVO-konforme DPA</td>
+          <td class="us yes">✓</td>
+          <td class="maybe">~ Standard-DPA</td>
+          <td class="maybe">~ Standard-DPA</td>
+          <td class="maybe">~ Enterprise-DPA</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Support auf Deutsch</td>
+          <td class="us yes">✓ DE/CH-DE</td>
+          <td class="no">✗ Englisch</td>
+          <td class="no">✗ Englisch</td>
+          <td class="no">✗ Englisch</td>
+        </tr>
+        <tr>
+          <td class="feat-name">Persönlicher Ansprechpartner</td>
+          <td class="us yes">✓ Quartals-Reviews inkl.</td>
+          <td class="no">✗ Self-Service</td>
+          <td class="no">✗ Self-Service</td>
+          <td class="maybe">~ Enterprise</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Stärken / Schwächen Cards -->
+  <h2 class="section-h" style="margin-top: 56px;">Stärken &amp; Schwächen im Klartext</h2>
+  <p class="muted small" style="text-align:center; max-width: 720px; margin: 0 auto 24px;">Wir haben kein Affiliate, kein Sponsoring — das ist ehrliche Einschätzung. Was wir nicht haben, sagen wir auch.</p>
+
+  <div class="vgl-cards">
+    <div class="vgl-card us">
+      <h3>DMARC Geeks</h3>
+      <ul>
+        <li class="pro">✓ Komplettpakete statt Volumen-Tier (Festpreise)</li>
+        <li class="pro">✓ Setup-Service inklusive — du musst nichts selbst konfigurieren</li>
+        <li class="pro">✓ BIMI/VMC als Reseller — alles aus einer Hand</li>
+        <li class="pro">✓ Self-Hosting möglich für regulierte Branchen</li>
+        <li class="pro">✓ Made in Switzerland, deutschsprachiger Support, DSG-konform</li>
+        <li class="con">— Junges Unternehmen (2026 gestartet), kleinere Userbase</li>
+        <li class="con">— Tool noch weniger ausgereift als 5-jährige US-Konkurrenten</li>
+      </ul>
+    </div>
+
+    <div class="vgl-card">
+      <h3>DMARCian</h3>
+      <ul>
+        <li class="pro">✓ Etablierter Player seit 2014, gewachsene Userbase</li>
+        <li class="pro">✓ Solide Reports + Forensik</li>
+        <li class="pro">✓ Education-Inhalte sehr stark</li>
+        <li class="con">— USA-Hosting, kein nativer DSG-DPA</li>
+        <li class="con">— Self-Service-fokussiert, kein inkludiertes Setup</li>
+        <li class="con">— Englischer Support, US-Zeitzone</li>
+      </ul>
+    </div>
+
+    <div class="vgl-card">
+      <h3>EasyDMARC</h3>
+      <ul>
+        <li class="pro">✓ Günstiger Einstiegspreis</li>
+        <li class="pro">✓ Modernes UI mit guter UX</li>
+        <li class="pro">✓ Aktives Feature-Development</li>
+        <li class="con">— Trotz EU-Hosting unklare Datenfluss-Details für DACH-Compliance</li>
+        <li class="con">— BIMI/VMC nur via Drittpartnerschaft</li>
+        <li class="con">— Englischer Support</li>
+      </ul>
+    </div>
+
+    <div class="vgl-card">
+      <h3>Valimail</h3>
+      <ul>
+        <li class="pro">✓ Enterprise-DNA mit Fortune-500-Kunden</li>
+        <li class="pro">✓ Sehr gute Automation (Authenticate)</li>
+        <li class="pro">✓ White-Glove-Onboarding bei Enterprise</li>
+        <li class="con">— Enterprise-Preise — KMU-untauglich (>$500/Monat)</li>
+        <li class="con">— USA-Hosting, US-Compliance-Fokus</li>
+        <li class="con">— Englischer Support, kaum DACH-Präsenz</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <h2>Unser Verdict</h2>
+    <p><strong>Für DACH-KMU (10–500 MA):</strong> wenn du Wert auf CH/EU-Hosting, deutschsprachigen Support, Festpreis und „jemand macht das für mich" legst — wir. Wenn du lieber self-service und etabliertes Tool willst — DMARCian oder EasyDMARC.</p>
+    <p><strong>Für DACH-MSPs:</strong> Whitelabel-Multi-Tenant gibt's auch bei den Konkurrenten, aber niemand bietet ein Reseller-Pilot-Paket für CHF 1'490 mit eingebauter Onboarding-Hilfe für die ersten 3 Kunden. Plus Self-Hosting für die Compliance-Edge-Cases.</p>
+    <p><strong>Für Enterprise mit US-Konzernmutter:</strong> Valimail. Klar.</p>
+    <p><strong>Wenn du günstig anfangen willst und kein Setup brauchst:</strong> EasyDMARC. Aber check vorher den DPA-Wortlaut für DSG-Compliance.</p>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center; margin: 40px 0;">
+    <a href="/kontakt?topic=audit" class="btn-primary big">📅 Mail-Health-Audit buchen (CHF 490)</a>
+    <a href="/check" class="btn-ghost-arrow" style="margin-left: 12px;">🔍 Erst Domain prüfen <span>→</span></a>
+  </div>
+
+</main>
+
+<!-- Schema.org Product/Service comparison -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "DMARC Geeks · Mail-Security & Deliverability",
+  "description": "DMARC-Aggregator + Setup-Service + BIMI/VMC-Reseller für Schweizer KMU und MSPs. Festpreise, deutschsprachiger Support, CH-Hosting.",
+  "brand": {"@type": "Brand", "name": "DMARC Geeks"},
+  "offers": [
+    {"@type": "Offer", "name": "Mail-Health-Audit", "price": "490", "priceCurrency": "CHF", "url": "https://dmarc-geeks.ch/kontakt?topic=audit"},
+    {"@type": "Offer", "name": "Mail-Security Foundation", "price": "1990", "priceCurrency": "CHF", "url": "https://dmarc-geeks.ch/kontakt?topic=foundation"},
+    {"@type": "Offer", "name": "Mail-Security Pro+ mit BIMI", "price": "4990", "priceCurrency": "CHF", "url": "https://dmarc-geeks.ch/kontakt?topic=pro"}
+  ]
+}
+</script>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>

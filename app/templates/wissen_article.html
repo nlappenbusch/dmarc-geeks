@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ article.title }} · DMARC Geeks</title>
+  <meta name="description" content="{{ article.description }}">
+  {% if article.tags %}<meta name="keywords" content="{{ article.tags|join(', ') }}">{% endif %}
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="{{ article.title }}">
+  <meta property="og:description" content="{{ article.description }}">
+  <meta property="og:url" content="https://dmarc-geeks.ch/wissen/{{ article.slug }}">
+  <meta property="og:image" content="https://dmarc-geeks.ch{{ article.cover or '/static/og-image.png' }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  {% if article.date %}<meta property="article:published_time" content="{{ article.date.isoformat() }}">{% endif %}
+  {% if article.author %}<meta property="article:author" content="{{ article.author }}">{% endif %}
+  {% for t in article.tags %}<meta property="article:tag" content="{{ t }}">{% endfor %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ article.title }}">
+  <meta name="twitter:description" content="{{ article.description }}">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch{{ article.cover or '/static/og-image.png' }}">
+  <link rel="canonical" href="https://dmarc-geeks.ch/wissen/{{ article.slug }}">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .art-wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px 64px; }
+    .art-head { margin-bottom: 24px; }
+    .art-bc { margin-bottom: 12px; font-size: 13px; }
+    .art-bc a { color: var(--brand, #2563eb); text-decoration: none; }
+    .art-bc a:hover { text-decoration: underline; }
+
+    .art-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted, #64748b); margin-bottom: 14px; }
+    .art-meta time { font-variant-numeric: tabular-nums; }
+
+    .art-title { font-size: 36px; line-height: 1.15; margin: 6px 0 12px; letter-spacing: -0.01em; }
+    .art-lede { font-size: 18px; line-height: 1.55; color: var(--muted, #64748b); margin: 0 0 28px; }
+
+    .art-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0 0; }
+    .art-tags a {
+      font-size: 12px; padding: 3px 10px; border-radius: 999px; text-decoration: none;
+      background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));
+      color: var(--brand, #2563eb);
+    }
+
+    /* Article-Body Typography */
+    .art-body { font-size: 16px; line-height: 1.75; color: var(--text, #0f172a); }
+    .art-body h2 { font-size: 24px; line-height: 1.25; margin: 40px 0 14px; padding-top: 8px; border-top: 1px solid var(--border, #e2e8f0); }
+    .art-body h2:first-of-type { border-top: 0; padding-top: 0; }
+    .art-body h3 { font-size: 19px; line-height: 1.3; margin: 28px 0 10px; }
+    .art-body p, .art-body ul, .art-body ol { margin: 0 0 16px; }
+    .art-body ul, .art-body ol { padding-left: 22px; }
+    .art-body li { margin-bottom: 6px; }
+    .art-body code {
+      background: rgba(37,99,235,.08); color: var(--brand, #2563eb);
+      padding: 1.5px 6px; border-radius: 4px;
+      font: 13px "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    .art-body pre {
+      background: #0f172a; color: #e2e8f0;
+      padding: 16px 20px; border-radius: 10px;
+      overflow-x: auto;
+      font: 12.5px/1.65 "JetBrains Mono", Menlo, Consolas, monospace;
+      margin: 16px 0;
+      border-left: 3px solid var(--brand, #2563eb);
+    }
+    .art-body pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; }
+    .art-body blockquote {
+      border-left: 3px solid var(--brand, #2563eb);
+      padding: 8px 18px; margin: 18px 0; background: var(--card, #f8fafc);
+      color: var(--muted, #64748b); border-radius: 0 6px 6px 0;
+    }
+    .art-body table { border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14px; }
+    .art-body th, .art-body td { border: 1px solid var(--border, #e2e8f0); padding: 8px 12px; text-align: left; vertical-align: top; }
+    .art-body th { background: var(--card, #f8fafc); font-weight: 600; }
+    .art-body a { color: var(--brand, #2563eb); }
+    .art-body strong { color: var(--text, #0f172a); }
+    .art-body hr { border: 0; border-top: 1px solid var(--border, #e2e8f0); margin: 32px 0; }
+
+    /* Navigation between articles */
+    .art-nav {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      margin: 48px 0 0; padding-top: 24px; border-top: 1px solid var(--border, #e2e8f0);
+    }
+    @media (max-width: 540px) { .art-nav { grid-template-columns: 1fr; } }
+    .art-nav-card {
+      padding: 16px 18px; background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 10px; text-decoration: none; color: inherit;
+      transition: border-color .15s, transform .15s;
+    }
+    .art-nav-card:hover { border-color: rgba(37,99,235,.4); transform: translateY(-1px); }
+    .art-nav-card.next { text-align: right; grid-column: 2; }
+    .art-nav-card.prev { grid-column: 1; }
+    .art-nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted, #64748b); margin-bottom: 4px; }
+    .art-nav-title { font-size: 14px; font-weight: 600; }
+
+    /* CTA-Box am Ende */
+    .art-cta {
+      background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(124,58,237,0.06));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 14px;
+      padding: 24px 28px; margin: 40px 0 0; text-align: center;
+    }
+    .art-cta h3 { margin: 0 0 8px; font-size: 19px; }
+    .art-cta p { margin: 0 0 16px; color: var(--muted, #64748b); }
+    .art-cta .btn-primary { margin: 4px; }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/wissen" class="active-mkt">Wissen</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<article class="art-wrap">
+  <header class="art-head">
+    <p class="art-bc"><a href="/wissen">← Wissen</a></p>
+    <div class="art-meta">
+      {% if article.date %}<time datetime="{{ article.date.isoformat() }}">{{ article.date.strftime('%d.%m.%Y') }}</time>{% endif %}
+      <span>· {{ article.reading_minutes }} Min Lesezeit</span>
+      {% if article.author %}<span>· {{ article.author }}</span>{% endif %}
+    </div>
+    <h1 class="art-title">{{ article.title }}</h1>
+    <p class="art-lede">{{ article.description }}</p>
+    {% if article.tags %}
+    <div class="art-tags">
+      {% for t in article.tags %}<a href="/wissen?tag={{ t }}">#{{ t }}</a>{% endfor %}
+    </div>
+    {% endif %}
+  </header>
+
+  <div class="art-body">
+    {{ article.body_html|safe }}
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="art-cta">
+    <h3>Brauchst du Hilfe bei der Umsetzung?</h3>
+    <p>Wir machen DMARC, SPF, DKIM und BIMI komplett für dich — Festpreise, klare Pakete.</p>
+    <a href="/check" class="btn-primary">🔍 Erst deine Domain checken (gratis)</a>
+    <a href="/kontakt?topic=audit" class="btn-primary">📅 Audit buchen (CHF 490)</a>
+  </div>
+
+  <!-- Navigation prev/next -->
+  {% if prev_article or next_article %}
+  <nav class="art-nav">
+    {% if prev_article %}
+    <a href="/wissen/{{ prev_article.slug }}" class="art-nav-card prev">
+      <div class="art-nav-label">← Älterer Artikel</div>
+      <div class="art-nav-title">{{ prev_article.title }}</div>
+    </a>
+    {% endif %}
+    {% if next_article %}
+    <a href="/wissen/{{ next_article.slug }}" class="art-nav-card next">
+      <div class="art-nav-label">Neuerer Artikel →</div>
+      <div class="art-nav-title">{{ next_article.title }}</div>
+    </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+</article>
+
+<!-- Schema.org Article -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": {{ article.title|tojson }},
+  "description": {{ article.description|tojson }},
+  "image": "https://dmarc-geeks.ch{{ article.cover or '/static/og-image.png' }}",
+  {% if article.date %}"datePublished": "{{ article.date.isoformat() }}",{% endif %}
+  "author": {
+    "@type": "Person",
+    "name": {{ (article.author or 'Nils Lappenbusch')|tojson }}
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "DMARC Geeks",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dmarc-geeks.ch/static/og-image.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dmarc-geeks.ch/wissen/{{ article.slug }}"
+  },
+  "keywords": {{ article.tags|tojson }}
+}
+</script>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wissen · DMARC, SPF, DKIM, BIMI · DMARC Geeks</title>
+  <meta name="description" content="Konkrete Anleitungen zu Mail-Security: DMARC einrichten, SPF reparieren, BIMI mit VMC, M365-Hardening. Keine Marketing-Texte — echte Schritt-für-Schritt-Anleitungen.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Wissen · DMARC, SPF, DKIM, BIMI für KMU und MSPs">
+  <meta property="og:description" content="Konkrete Anleitungen zu Mail-Security. Echte Schritt-für-Schritt-Posts, keine Marketing-Texte.">
+  <meta property="og:url" content="https://dmarc-geeks.ch/wissen">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="canonical" href="https://dmarc-geeks.ch/wissen">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .wsn-wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+    .wsn-head { text-align: center; margin-bottom: 28px; }
+    .wsn-head h1 { font-size: 36px; line-height: 1.15; margin: 12px 0 8px; }
+    .wsn-head .lede { color: var(--muted, #64748b); max-width: 680px; margin: 0 auto; }
+
+    .wsn-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 22px 0 32px; }
+    .wsn-tag {
+      padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      color: var(--muted, #64748b); text-decoration: none;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .wsn-tag:hover { border-color: rgba(37,99,235,.4); color: var(--brand, #2563eb); }
+    .wsn-tag.active {
+      background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(124,58,237,.10));
+      border-color: rgba(37,99,235,.4); color: var(--brand, #2563eb);
+    }
+    .wsn-tag .count { opacity: .55; font-weight: 500; }
+
+    .wsn-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+    @media (min-width: 720px) { .wsn-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1000px) { .wsn-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .wsn-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 14px; padding: 22px 24px; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: box-shadow .2s, transform .2s, border-color .2s;
+    }
+    .wsn-card:hover {
+      box-shadow: 0 12px 32px -16px rgba(37,99,235,.2);
+      transform: translateY(-2px); border-color: rgba(37,99,235,.3);
+    }
+    .wsn-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted, #64748b); }
+    .wsn-meta time { font-variant-numeric: tabular-nums; }
+    .wsn-card h2 { font-size: 17px; line-height: 1.3; margin: 4px 0; color: var(--text, #0f172a); }
+    .wsn-card p { font-size: 14px; color: var(--muted, #64748b); line-height: 1.55; margin: 0; flex-grow: 1; }
+    .wsn-card .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .wsn-card .wsn-pill {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));
+      color: var(--brand, #2563eb);
+    }
+
+    .wsn-empty {
+      text-align: center; padding: 48px; color: var(--muted, #64748b);
+      background: var(--card, #fafbfd); border-radius: 14px;
+    }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/wissen" class="active-mkt">Wissen</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="wsn-wrap">
+
+  <div class="wsn-head">
+    <span class="eyebrow"><span class="dot-live"></span>Konkretes Wissen statt Marketing-Texte</span>
+    <h1>Mail-Security — <span class="grad-text">richtig gemacht.</span></h1>
+    <p class="lede">Schritt-für-Schritt-Anleitungen zu DMARC, SPF, DKIM, BIMI, M365-Hardening. Was du wirklich tun musst, was du dafür wissen musst, und wo die Fallstricke liegen.</p>
+  </div>
+
+  {% if all_tags %}
+  <div class="wsn-tags">
+    <a class="wsn-tag {% if not active_tag %}active{% endif %}" href="/wissen">Alle <span class="count">({{ articles|length }})</span></a>
+    {% for tag, count in all_tags %}
+      <a class="wsn-tag {% if active_tag == tag %}active{% endif %}" href="/wissen?tag={{ tag }}">{{ tag }} <span class="count">({{ count }})</span></a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if articles %}
+  <div class="wsn-grid">
+    {% for art in articles %}
+    <a href="/wissen/{{ art.slug }}" class="wsn-card">
+      <div class="wsn-meta">
+        {% if art.date %}<time datetime="{{ art.date.isoformat() }}">{{ art.date.strftime('%d.%m.%Y') }}</time>{% endif %}
+        <span>· {{ art.reading_minutes }} Min Lesezeit</span>
+      </div>
+      <h2>{{ art.title }}</h2>
+      <p>{{ art.description }}</p>
+      {% if art.tags %}
+      <div class="tag-row">
+        {% for t in art.tags[:3] %}<span class="wsn-pill">{{ t }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="wsn-empty">
+      {% if active_tag %}
+      Keine Artikel zum Tag "{{ active_tag }}". → <a href="/wissen">Alle anzeigen</a>
+      {% else %}
+      Noch keine Artikel veröffentlicht. Bald mehr — schau gleich wieder vorbei.
+      {% endif %}
+    </div>
+  {% endif %}
+
+</main>
+
+<!-- Schema.org Organization (site-wide) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "DMARC Geeks",
+  "url": "https://dmarc-geeks.ch",
+  "logo": "https://dmarc-geeks.ch/static/og-image.png",
+  "description": "Mail-Security & Deliverability für Schweizer KMU und MSPs.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Baumackerstrasse 11",
+    "postalCode": "8107",
+    "addressLocality": "Buchs ZH",
+    "addressCountry": "CH"
+  },
+  "founder": {"@type": "Person", "name": "Nils Lappenbusch"},
+  "email": "service@dmarc-geeks.ch",
+  "telephone": "+41779503152"
+}
+</script>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>

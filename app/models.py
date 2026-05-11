@@ -424,3 +424,25 @@ class MailTest(Base):
     # Lead-Capture Gate
     lead_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True, index=True)
     lead_email_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class NewsletterSubscriber(Base):
+    """Newsletter-Anmeldung mit Double-Opt-In.
+
+    Flow:
+    1. User gibt Email auf /wissen ein -> Row mit confirmed_at=None erzeugt,
+       confirm_token gesetzt, Bestaetigungsmail raus.
+    2. User klickt Link mit ?token=... -> confirmed_at = now(), token geloescht.
+    3. Unsubscribe via unsubscribe_token in jeder Newsletter-Mail.
+    """
+    __tablename__ = "newsletter_subscribers"
+
+    id: Mapped[int] = mapped_column(BigPK, primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    confirm_token: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True)
+    unsubscribe_token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    unsubscribed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # z.B. "wissen-article", "footer", "popup"
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
