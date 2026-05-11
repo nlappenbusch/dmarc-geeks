@@ -63,6 +63,7 @@ _STATIC_URLS = [
     ("/services/hin", "monthly", 0.7),
     ("/blog", "weekly", 0.85),
     ("/wissen", "monthly", 0.85),
+    ("/sender", "monthly", 0.85),
     ("/vergleich", "monthly", 0.85),
     ("/check", "weekly", 0.85),
     ("/mailtest", "weekly", 0.85),
@@ -102,6 +103,15 @@ def sitemap(request: Request):
         lines.append(f"    <lastmod>{last}</lastmod>")
         lines.append("    <changefreq>monthly</changefreq>")
         lines.append("    <priority>0.7</priority>")
+        lines.append("  </url>")
+    # Sender-Knowledge-Base
+    from ..sender_kb import all_senders
+    for s in all_senders():
+        lines.append("  <url>")
+        lines.append(f"    <loc>{base}/sender/{s.slug}</loc>")
+        lines.append(f"    <lastmod>{today}</lastmod>")
+        lines.append("    <changefreq>monthly</changefreq>")
+        lines.append("    <priority>0.65</priority>")
         lines.append("  </url>")
     lines.append("</urlset>")
     return Response(content="\n".join(lines), media_type="application/xml")

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sender-Datenbank · DMARC-Capability bekannter E-Mail-Sender · DMARC Geeks</title>
+  <meta name="description" content="Kuratierte Datenbank bekannter E-Mail-Sender (Mailchimp, M365, SendGrid, …) mit DMARC-Capability-Status und Setup-Guides. Find heraus wie du deinen Sender DMARC-konform machst.">
+  <meta name="keywords" content="DMARC Setup, SPF einrichten, DKIM einrichten, Mailchimp DMARC, M365 DMARC, SendGrid DMARC, Sender Authentication">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Sender-Datenbank — DMARC-Capability prüfen">
+  <meta property="og:description" content="Kuratierte Datenbank bekannter E-Mail-Sender mit DMARC-Status und Setup-Guides.">
+  <meta property="og:url" content="https://dmarc-geeks.ch/sender">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="canonical" href="https://dmarc-geeks.ch/sender">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .snd-wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 64px; }
+    .snd-head { text-align: center; margin-bottom: 32px; }
+    .snd-head h1 { font-size: 36px; line-height: 1.15; margin: 12px 0 8px; }
+    .snd-head .lede { color: var(--muted, #64748b); max-width: 720px; margin: 0 auto; }
+    .snd-stats { display: flex; gap: 16px; justify-content: center; margin: 18px 0 0; }
+    .snd-stat-pill {
+      padding: 6px 14px; border-radius: 999px;
+      background: var(--card, #f8fafc); border: 1px solid var(--border, #e2e8f0);
+      font-size: 13px; color: var(--muted, #64748b);
+    }
+    .snd-stat-pill strong { color: var(--brand, #2563eb); }
+
+    .snd-cat { margin-top: 36px; }
+    .snd-cat-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .snd-cat-head .snd-cat-ico { font-size: 24px; }
+    .snd-cat-head h2 { font-size: 22px; margin: 0; }
+    .snd-cat-head .snd-cat-count {
+      padding: 3px 10px; border-radius: 999px;
+      background: var(--card, #f8fafc); border: 1px solid var(--border, #e2e8f0);
+      font-size: 12px; color: var(--muted, #64748b);
+    }
+
+    .snd-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+    @media (min-width: 700px) { .snd-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1000px) { .snd-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .snd-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: box-shadow .2s, transform .2s, border-color .2s;
+    }
+    .snd-card:hover {
+      box-shadow: 0 10px 28px -14px rgba(37,99,235,.22);
+      transform: translateY(-2px); border-color: rgba(37,99,235,.3);
+    }
+    .snd-card h3 { font-size: 16px; line-height: 1.3; margin: 0; color: var(--text, #0f172a); }
+    .snd-card p { font-size: 13px; color: var(--muted, #64748b); line-height: 1.5; margin: 0; flex-grow: 1; }
+
+    .snd-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600; width: fit-content;
+    }
+    .snd-badge.ok { background: rgba(34,197,94,.12); color: #16a34a; }
+    .snd-badge.warn { background: rgba(245,158,11,.12); color: #d97706; }
+    .snd-badge.bad { background: rgba(239,68,68,.12); color: #dc2626; }
+    .snd-badge.muted { background: var(--card, #f8fafc); color: var(--muted, #64748b); }
+
+    .snd-intro {
+      background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(124,58,237,.06));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 12px;
+      padding: 18px 22px; margin: 16px 0 24px; font-size: 14.5px; line-height: 1.6;
+    }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/blog">Blog</a>
+    <a href="/sender" class="active-mkt">Sender</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+      </div>
+    </div>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="snd-wrap">
+
+  <div class="snd-head">
+    <span class="eyebrow"><span class="dot-live"></span>Kuratierte Sender-Datenbank</span>
+    <h1>DMARC-Capability bekannter <span class="grad-text">E-Mail-Sender</span></h1>
+    <p class="lede">Was kann dein Sender — kann er DMARC, muss er konfiguriert werden, hat er Pain-Points? Plus konkrete Setup-Guides pro Anbieter.</p>
+    <div class="snd-stats">
+      <span class="snd-stat-pill"><strong>{{ total_count }}</strong> Sender katalogisiert</span>
+      <span class="snd-stat-pill"><strong>{{ senders_grouped|length }}</strong> Kategorien</span>
+      <span class="snd-stat-pill">95&nbsp;% KMU-Traffic abgedeckt</span>
+    </div>
+  </div>
+
+  <div class="snd-intro">
+    💡 <strong>So nutzt du diese Datenbank:</strong> klick auf einen Sender den du benutzt → siehst Setup-Guide für SPF und DKIM. Vermisst du einen Anbieter? <a href="/kontakt?topic=audit">Sag uns Bescheid</a> — wir nehmen ihn auf.
+  </div>
+
+  {% for cat, sublist in senders_grouped.items() %}
+  <section class="snd-cat">
+    <div class="snd-cat-head">
+      <span class="snd-cat-ico">{{ category_icons[cat] }}</span>
+      <h2>{{ category_labels[cat]|safe }}</h2>
+      <span class="snd-cat-count">{{ sublist|length }}</span>
+    </div>
+    <div class="snd-grid">
+      {% for s in sublist %}
+      {% set caps = capable_labels[s.dmarc_capable] %}
+      <a href="/sender/{{ s.slug }}" class="snd-card">
+        <span class="snd-badge {{ caps[1] }}">{{ caps[0] }}</span>
+        <h3>{{ s.name }}</h3>
+        <p>{{ s.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+</main>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "DMARC-Capability bekannter E-Mail-Sender",
+  "description": "Kuratierte Datenbank bekannter E-Mail-Sender mit DMARC-Capability-Status und Setup-Guides.",
+  "url": "https://dmarc-geeks.ch/sender",
+  "publisher": {
+    "@type": "Organization",
+    "name": "DMARC Geeks",
+    "logo": "https://dmarc-geeks.ch/static/og-image.png"
+  }
+}
+</script>
+
+{% include "_marketing_footer.html" %}
+
+</body>
+</html>
