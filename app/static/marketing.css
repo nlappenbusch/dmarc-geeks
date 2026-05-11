@@ -415,7 +415,13 @@ section.container-mkt + section.container-mkt { padding-top: 0; }
 .mkt-nav-trigger { padding: 8px 14px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 14px; cursor: pointer; transition: color .12s, background .12s; user-select: none; text-decoration: none; }
 .mkt-nav-trigger:hover { color: var(--text); background: var(--surface-soft); text-decoration: none; }
 .mkt-nav-flyout { position: absolute; top: calc(100% + 6px); left: 0; min-width: 280px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 16px 48px -12px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--brand) 8%, transparent); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .15s, transform .15s; z-index: 50; }
-.mkt-nav-group:hover .mkt-nav-flyout, .mkt-nav-group:focus-within .mkt-nav-flyout { opacity: 1; transform: translateY(0); pointer-events: auto; }
+/* Bridge: füllt den 6px-Gap zwischen Trigger und Flyout, damit Hover beim Mauswechsel nicht abreisst */
+.mkt-nav-flyout::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+.mkt-nav-group:hover .mkt-nav-flyout, .mkt-nav-group:focus-within .mkt-nav-flyout, .mkt-nav-group.is-open .mkt-nav-flyout { opacity: 1; transform: translateY(0); pointer-events: auto; }
+/* Klickbarer Caret-Indicator fuer Mobile/Touch */
+.mkt-nav-trigger { cursor: pointer; }
+.mkt-nav-trigger:hover, .mkt-nav-trigger:focus-visible { background: var(--surface-soft); color: var(--text); }
+.mkt-nav-group.is-open > .mkt-nav-trigger { background: var(--surface-soft); color: var(--text); }
 .mkt-nav-flyout a { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 8px; color: var(--text); text-decoration: none; transition: background .12s; }
 .mkt-nav-flyout a:hover { background: var(--surface-soft); text-decoration: none; }
 .mkt-nav-flyout a strong { font-size: 13.5px; font-weight: 600; }
