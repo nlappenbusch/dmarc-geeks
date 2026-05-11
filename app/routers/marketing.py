@@ -495,6 +495,12 @@ def services_bimi(request: Request):
     return render(request, "services/bimi.html", user=None, tenant=None, active=None)
 
 
+@router.get("/partner-werden")
+def partner_werden(request: Request):
+    """Reseller / Affiliate / Co-managed Landing fuer MSPs, Treuhaender, Agenturen."""
+    return render(request, "partner_werden.html", user=None, tenant=None, active=None)
+
+
 @router.get("/bimi-generator")
 def bimi_generator(request: Request, domain: str = ""):
     """Public BIMI-Record-Generator + Live-Check."""

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if sent %}Snapshot ist unterwegs · {% endif %}Domain-Sicherheits-Snapshot · DMARC Geeks</title>
+  <meta name="description" content="Kostenloser Mail-Sicherheits-Snapshot für deine Domain. Wir prüfen DMARC, SPF, DKIM, MTA-STS, BIMI — und schicken dir den 1-Pager-Bericht direkt per E-Mail.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Domain-Sicherheits-Snapshot · DMARC Geeks">
+  <meta property="og:description" content="Kostenloser 1-Pager: DMARC, SPF, DKIM, MTA-STS, BIMI für deine Domain. Geprüft in 5 Sekunden, Bericht per E-Mail.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Score 0–10 für deine echte Mail</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<section class="check-hero">
+  <div class="hero-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="container-mkt" style="position:relative; z-index:1;">
+    {% if not sent %}
+    <div style="text-align:center; max-width: 760px; margin: 0 auto;">
+      <span class="eyebrow" style="margin: 0 auto 24px;">
+        <span class="dot-live"></span>
+        Kostenlos · 5 Sekunden · 1-Pager direkt im Postfach
+      </span>
+      <h1 class="check-h1">Dein <span class="grad-text">Domain-Sicherheits-Snapshot</span></h1>
+      <p class="lede" style="margin: 0 auto 24px;">
+        Du gibst Domain &amp; E-Mail ein — wir prüfen <strong>DMARC, SPF, DKIM, MX, MTA-STS, TLS-RPT, BIMI</strong>
+        und schicken dir einen <strong>druckbaren 1-Pager-Bericht</strong> direkt ins Postfach.
+        Ideal als Audit-Briefing, fürs Compliance-Team oder als Gesprächsgrundlage.
+      </p>
+    </div>
+
+    <form class="check-form" method="post" action="/snapshot" style="max-width: 720px; margin: 32px auto 0;">
+      {% if error %}
+      <div style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.3); color:#b91c1c; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-size:13.5px;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <input type="text" name="domain" value="{{ prefill_domain or '' }}" placeholder="domain.ch" required pattern="^[A-Za-z0-9.\-]+$" autocomplete="off" autofocus aria-label="Domain" style="padding:14px 16px; border:1px solid var(--border); border-radius:10px; font-size:15px;">
+        <input type="email" name="email" value="{{ prefill_email or '' }}" placeholder="vorname@firma.ch" required autocomplete="email" aria-label="E-Mail" style="padding:14px 16px; border:1px solid var(--border); border-radius:10px; font-size:15px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <input type="text" name="first_name" value="{{ prefill_first_name or '' }}" placeholder="Vorname (optional)" autocomplete="given-name" maxlength="120" style="padding:13px 16px; border:1px solid var(--border); border-radius:10px; font-size:14px;">
+        <input type="text" name="company" value="{{ prefill_company or '' }}" placeholder="Firma (optional)" autocomplete="organization" maxlength="255" style="padding:13px 16px; border:1px solid var(--border); border-radius:10px; font-size:14px;">
+      </div>
+
+      <!-- Honeypot fuer Bots -->
+      <div style="position:absolute; left:-9999px;" aria-hidden="true">
+        <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:13px; color:var(--muted); margin: 4px 0 16px 0; cursor:pointer;">
+        <input type="checkbox" name="consent" required style="margin-top:3px;">
+        <span>Ja, ihr dürft mir den Bericht per E-Mail schicken. Keine Newsletter, kein Spam — nur dieser Snapshot. <a href="/datenschutz" style="color:var(--brand)">Datenschutz</a></span>
+      </label>
+
+      <button type="submit" class="btn-primary big" style="width:100%;">📨 Snapshot anfordern →</button>
+
+      <div class="muted small" style="margin-top:10px; text-align:center;">
+        Du bekommst innerhalb von <strong>~30 Sekunden</strong> eine Mail mit deinem Bericht.
+        Antworten gehen direkt an uns.
+      </div>
+    </form>
+
+    {% else %}
+    <!-- ============== SUCCESS ============== -->
+    <div style="text-align:center; max-width: 720px; margin: 0 auto;">
+      <div style="width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,#16a34a,#0d9488); color:white; font-size:44px; line-height:88px; text-align:center; margin: 0 auto 20px; box-shadow: 0 16px 48px -16px rgba(22,163,74,0.5);">✓</div>
+      <h1 class="check-h1" style="font-size: clamp(28px, 4vw, 38px);">Dein Snapshot ist unterwegs!</h1>
+      <p class="lede" style="margin: 0 auto 24px;">
+        Wir haben deinen Bericht für <strong>{{ prefill_domain }}</strong> an
+        <strong>{{ prefill_email }}</strong> geschickt. Sollte in unter einer Minute da sein.
+      </p>
+
+      {% if result_grade %}
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding:24px; margin: 24px auto; max-width: 540px; text-align:left; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
+        <div style="display:grid; grid-template-columns: auto 1fr; gap: 20px; align-items:center;">
+          <div style="
+            background: {% if result_grade == 'A' %}linear-gradient(135deg,#16a34a,#059669){% elif result_grade == 'B' %}linear-gradient(135deg,#16a34a,#65a30d){% elif result_grade == 'C' %}linear-gradient(135deg,#d97706,#ca8a04){% elif result_grade == 'D' %}linear-gradient(135deg,#dc2626,#d97706){% else %}linear-gradient(135deg,#991b1b,#dc2626){% endif %};
+            color:white; width:80px; height:80px; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="font-size:36px; font-weight:900; line-height:1;">{{ result_grade }}</div>
+            <div style="font-size:11px; opacity:0.85;">{{ result_score }}/100</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 4px;">Quickresult</div>
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">{{ prefill_domain }}</div>
+            {% if result_actions %}
+            <ul style="margin: 0; padding-left: 18px; color: var(--text); font-size: 13px; line-height: 1.55;">
+              {% for a in result_actions %}<li>{{ a }}</li>{% endfor %}
+            </ul>
+            {% else %}
+            <div style="color: var(--muted); font-size: 13px;">Keine kritischen Punkte gefunden. 🎉</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 20px;">
+        <a href="{{ report_url }}" class="btn-primary">📄 Bericht direkt öffnen</a>
+        <a href="/snapshot" class="btn-link">Weitere Domain prüfen</a>
+        <a href="/kontakt?topic=audit&amp;domain={{ prefill_domain }}" class="btn-link">💬 Audit besprechen</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if not sent %}
+<section class="container-mkt" style="padding: 40px 0;">
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:20px; max-width:1080px; margin:0 auto;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px;">
+      <div style="font-size:28px; margin-bottom:8px;">📊</div>
+      <h3 style="margin:0 0 6px 0; font-size:16px;">7 Checks in 5 Sekunden</h3>
+      <p style="margin:0; color:var(--muted); font-size:13.5px; line-height:1.55;">DMARC · SPF · DKIM · MX · MTA-STS · TLS-RPT · BIMI — alles in einem 1-Pager.</p>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px;">
+      <div style="font-size:28px; margin-bottom:8px;">🎯</div>
+      <h3 style="margin:0 0 6px 0; font-size:16px;">Konkrete Empfehlungen</h3>
+      <p style="margin:0; color:var(--muted); font-size:13.5px; line-height:1.55;">Pro Lücke gibt's eine ausführbare Aktion. Kein „IT-Bingo", sondern „heute Nachmittag erledigt".</p>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px;">
+      <div style="font-size:28px; margin-bottom:8px;">📄</div>
+      <h3 style="margin:0 0 6px 0; font-size:16px;">PDF-druckbar</h3>
+      <p style="margin:0; color:var(--muted); font-size:13.5px; line-height:1.55;">Sauber gelayouteter Bericht, druckbar auf A4 — perfekt fürs Compliance-Meeting oder den IT-Dienstleister.</p>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px;">
+      <div style="font-size:28px; margin-bottom:8px;">🇨🇭</div>
+      <h3 style="margin:0 0 6px 0; font-size:16px;">Swiss-hosted</h3>
+      <p style="margin:0; color:var(--muted); font-size:13.5px; line-height:1.55;">Server in der Schweiz, kein Drittland-Datentransfer, kein Tracker, kein Cookie-Banner.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container-mkt" style="padding: 0 0 60px 0; text-align:center;">
+  <h2 style="font-size: clamp(22px, 3vw, 28px); margin: 0 0 12px 0;">Was wenn der Bericht „D" oder „F" zeigt?</h2>
+  <p style="color:var(--muted); max-width:640px; margin:0 auto 24px;">
+    Wir helfen dir aus der Misere — ohne Mail-Ausfall, ohne Big-Bang-Migration.
+    Drei Pakete für KMU, MSP-Reseller-Modelle für Agenturen.
+  </p>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="/services/dmarc" class="btn-link">DMARC-Service ansehen</a>
+    <a href="/#pakete-kmu" class="btn-link">KMU-Pakete vergleichen</a>
+    <a href="/partner-werden" class="btn-link">Reseller werden</a>
+  </div>
+</section>
+{% endif %}
+
+{% include '_marketing_footer.html' %}
+
+</body>
+</html>

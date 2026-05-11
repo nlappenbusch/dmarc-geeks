@@ -446,3 +446,46 @@ class NewsletterSubscriber(Base):
     source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # z.B. "wissen-article", "footer", "popup"
     requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class LeadSnapshot(Base):
+    """Lead-Capture aus dem Domain-Health-Snapshot-Tool (/snapshot).
+
+    Fluss:
+    1. User gibt Domain + Email ein -> wir machen einen DNS-Check, persistieren
+       Grade/Score/Top-Actions, schicken Email mit Link zum Print-View.
+    2. Pro Email + Domain Combo ein Row (keine Spam-Mehrfacheintraege).
+    3. Operator sieht Leads in /admin/leads-snapshots (TODO) und kann follow-uppen.
+
+    Datenschutz: Email-Capture mit Hinweis "Sie bekommen einen einmaligen
+    Report + optional Newsletter (Opt-out moeglich)" beim Submit.
+    """
+    __tablename__ = "lead_snapshots"
+
+    id: Mapped[int] = mapped_column(BigPK, primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    domain: Mapped[str] = mapped_column(String(253), nullable=False, index=True)
+    company: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    # Snapshot der Check-Resultate zum Zeitpunkt des Lead-Captures (wird nicht
+    # automatisch aktualisiert — Vergleichswert fuer Follow-up-Outreach).
+    grade: Mapped[Optional[str]] = mapped_column(String(2), nullable=True)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    top_action: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    has_dmarc: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    has_spf: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    has_dkim: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    # Quelle/UTM: woher kam der Lead
+    source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # "snapshot-public", "cold-outreach", "partner"
+    utm_campaign: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    # Lifecycle
+    contacted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    converted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("email", "domain", name="uq_lead_snapshots_email_domain"),
+        Index("ix_lead_snapshots_created_at", "created_at"),
+    )

@@ -65,6 +65,8 @@ _STATIC_URLS = [
     ("/wissen", "monthly", 0.85),
     ("/sender", "monthly", 0.85),
     ("/tool", "monthly", 0.9),
+    ("/snapshot", "monthly", 0.9),
+    ("/partner-werden", "monthly", 0.8),
     ("/demo", "weekly", 0.7),
     ("/vergleich", "monthly", 0.85),
     ("/check", "weekly", 0.85),

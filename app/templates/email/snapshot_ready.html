@@ -1,0 +1,77 @@
+{% extends "email/_base.html" %}
+{% block footer %}Du hast diesen Bericht für <strong>{{ domain }}</strong> bei DMARC Geeks angefordert. Antworten auf diese Mail gehen direkt an unser Postfach.{% endblock %}
+{% block body %}
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+  <tr><td align="center" style="padding:8px 0 20px 0;">
+    <div style="
+      width:96px; height:96px; border-radius:18px;
+      background: {% if grade == 'A' %}linear-gradient(135deg,#16a34a,#059669){% elif grade == 'B' %}linear-gradient(135deg,#16a34a,#65a30d){% elif grade == 'C' %}linear-gradient(135deg,#d97706,#ca8a04){% elif grade == 'D' %}linear-gradient(135deg,#dc2626,#d97706){% else %}linear-gradient(135deg,#991b1b,#dc2626){% endif %};
+      color:white; display:inline-block;">
+      <div style="font-size:48px; font-weight:900; line-height:60px; padding-top: 10px;">{{ grade }}</div>
+      <div style="font-size:12px; opacity:.85; line-height:18px;">{{ score }}/100</div>
+    </div>
+  </td></tr>
+</table>
+
+<h1 style="font-size:22px; margin:0 0 6px 0; color:#0f172a; text-align:center;">
+  Snapshot für <span style="color:{{ brand_color }};">{{ domain }}</span>
+</h1>
+<p style="text-align:center; color:#64748b; margin:0 0 24px 0; font-size:14px;">
+  {{ grade_label }} · auf einen Blick: was steht, was fehlt, was zuerst angehen.
+</p>
+
+{% if actions %}
+<div style="background:#fff7ed; border:1px solid #fdba74; border-radius:10px; padding:18px 20px; margin-bottom:24px;">
+  <div style="font-weight:700; color:#9a3412; margin-bottom:10px; font-size:14px;">🎯 Diese Punkte zuerst:</div>
+  <ol style="margin:0; padding-left:18px; color:#7c2d12; font-size:13.5px; line-height:1.7;">
+    {% for a in actions %}<li>{{ a }}</li>{% endfor %}
+  </ol>
+</div>
+{% else %}
+<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:18px 20px; margin-bottom:24px;">
+  <div style="font-weight:700; color:#166534; margin-bottom:6px; font-size:14px;">🎉 Solide Aufstellung!</div>
+  <div style="color:#14532d; font-size:13.5px;">
+    Keine kritischen Lücken. Im vollen Bericht zeigen wir dir, ob du noch optional MTA-STS, TLS-RPT oder BIMI nachschärfen kannst.
+  </div>
+</div>
+{% endif %}
+
+<p style="margin:16px 0 18px 0; text-align:center;">
+  <a href="{{ report_url }}" style="background:{{ brand_color }}; color:white; text-decoration:none;
+     padding:14px 24px; border-radius:8px; font-weight:600; display:inline-block; font-size:15px;">
+    📄 Vollständigen Bericht ansehen (PDF-druckbar)
+  </a>
+</p>
+
+<p style="color:#64748b; font-size:13px; text-align:center; margin: 4px 0 24px 0;">
+  Tipp: Browser öffnen → Strg+P → „Als PDF speichern" → fertig ist dein 1-Pager fürs Compliance-Meeting.
+</p>
+
+<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px 20px; margin-bottom:6px;">
+  <div style="font-weight:700; color:#0f172a; margin-bottom:10px; font-size:14px;">Was wir gemacht haben</div>
+  <div style="color:#475569; font-size:13.5px; line-height:1.65;">
+    Wir haben für <code style="background:white; padding:1px 5px; border-radius:3px; border:1px solid #e2e8f0;">{{ domain }}</code> sieben DNS-basierte Checks gefahren:
+    DMARC, SPF, DKIM (Selektor-Erkennung), MX, MTA-STS, TLS-RPT, BIMI.
+    Daraus haben wir einen Score von <strong>{{ score }}/100</strong> berechnet (Grade <strong>{{ grade }}</strong>).
+    Der Bericht enthält für jeden Check, was wir gefunden haben — inklusive der konkreten DNS-Records, die du siehst, wenn du das Tool von Hand abfragst.
+  </div>
+</div>
+
+<div style="background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(124,58,237,0.06));
+            border:1px solid #e2e8f0; border-radius:10px; padding:18px 20px; margin-top:18px;">
+  <div style="font-weight:700; color:#0f172a; margin-bottom:8px; font-size:14px;">Brauchst du Hilfe bei der Umsetzung?</div>
+  <p style="color:#334155; font-size:13.5px; line-height:1.6; margin: 0 0 12px 0;">
+    Wir machen <strong>DMARC-Einführung ohne Mail-Ausfall</strong> als Festpreis-Paket — Audit ab CHF 490, Voll-Migration ab CHF 1990.
+    Auch als <strong>White-Label für Agenturen &amp; IT-Dienstleister</strong>.
+  </p>
+  <p style="margin: 0;">
+    <a href="{{ base_url }}/kontakt?topic=audit&amp;domain={{ domain }}" style="color:{{ brand_color }}; font-weight:600; text-decoration:none; font-size:13.5px;">→ Kostenloses Erstgespräch buchen</a>
+  </p>
+</div>
+
+<p style="color:#94a3b8; font-size:12px; text-align:center; margin:24px 0 0 0;">
+  Diese E-Mail kommt automatisch — als Antwort auf deine Snapshot-Anfrage auf dmarc-geeks.ch.
+  Antworten landen in unserem Postfach.
+</p>
+{% endblock %}
