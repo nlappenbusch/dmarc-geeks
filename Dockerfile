@@ -15,6 +15,7 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
+COPY content ./content
 
 EXPOSE 8000
 
