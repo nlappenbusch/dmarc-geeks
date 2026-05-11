@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mail-Score: {{ score }}/10 · DMARC Geeks</title>
+  <meta name="description" content="Mail-Tester Resultat: SPF, DKIM, DMARC, Blacklists, Spam-Score auf einen Blick.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .mtr-wrap { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+    .mtr-head { text-align: center; margin-bottom: 28px; }
+    .mtr-score-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 16px; padding: 32px; text-align: center;
+      box-shadow: 0 8px 32px -16px rgba(15,23,42,.18);
+      margin-bottom: 24px;
+    }
+    .mtr-grade {
+      font-size: 84px; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, var(--mtr-color), var(--mtr-color-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin: 8px 0;
+    }
+    .mtr-grade-out { font-size: 22px; color: var(--muted, #64748b); font-weight: 400; }
+    .mtr-meta { display: grid; gap: 4px; margin-top: 18px; font-size: 13.5px; color: var(--muted, #64748b); }
+    .mtr-meta-row { display: inline-block; padding: 2px 10px; border-radius: 999px;
+                     background: var(--card, #f8fafc); margin: 2px; }
+    .mtr-meta-row strong { color: var(--text, #0f172a); }
+
+    .mtr-checks { display: grid; gap: 12px; margin-bottom: 24px; }
+    .mtr-check {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 12px; padding: 18px 22px;
+      display: grid; grid-template-columns: 36px 1fr auto; gap: 16px; align-items: center;
+    }
+    .mtr-check-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: white;
+    }
+    .mtr-icon-pass { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .mtr-icon-warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .mtr-icon-fail { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .mtr-icon-lock { background: linear-gradient(135deg, #94a3b8, #64748b); }
+    .mtr-check h3 { margin: 0 0 4px; font-size: 16px; }
+    .mtr-check .detail { color: var(--muted, #64748b); font-size: 13.5px; }
+    .mtr-check .fix-hint {
+      margin-top: 8px; padding: 10px 12px; font-size: 13px;
+      background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(124,58,237,.06));
+      border-left: 3px solid var(--brand, #2563eb); border-radius: 0 6px 6px 0;
+    }
+    .mtr-check .fix-hint code { background: rgba(37,99,235,.1); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+    .mtr-check-score {
+      text-align: right; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted, #64748b);
+      white-space: nowrap;
+    }
+    .mtr-check.locked { opacity: .65; }
+
+    .mtr-unlock {
+      background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(124,58,237,0.08));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 14px;
+      padding: 28px; margin: 28px 0;
+    }
+    .mtr-unlock h2 { margin: 0 0 8px; font-size: 22px; }
+    .mtr-unlock-form {
+      display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+    }
+    .mtr-unlock-form input {
+      flex: 1; min-width: 220px;
+      padding: 12px 14px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px;
+      font: inherit; background: var(--card, #fff);
+    }
+    .mtr-unlock-form button {
+      background: var(--brand, #2563eb); color: white; border: 0;
+      padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px;
+      white-space: nowrap;
+    }
+    .mtr-unlock-form button:hover { background: #1d4ed8; }
+    .mtr-unlock-err { color: #dc2626; font-size: 13px; margin-top: 8px; display: none; }
+
+    .mtr-actions {
+      text-align: center; margin-top: 32px; padding-top: 24px;
+      border-top: 1px solid var(--border, #e2e8f0);
+    }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/#features">Features</a>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main class="mtr-wrap">
+
+  {% set s = score|float %}
+  {% if s >= 8.5 %}
+    {% set grade_color = '#22c55e' %}{% set grade_color_2 = '#16a34a' %}
+    {% set verdict = 'Top!' %}
+  {% elif s >= 7 %}
+    {% set grade_color = '#84cc16' %}{% set grade_color_2 = '#65a30d' %}
+    {% set verdict = 'Gut' %}
+  {% elif s >= 5 %}
+    {% set grade_color = '#f59e0b' %}{% set grade_color_2 = '#d97706' %}
+    {% set verdict = 'Mit Feinschliff' %}
+  {% else %}
+    {% set grade_color = '#ef4444' %}{% set grade_color_2 = '#dc2626' %}
+    {% set verdict = 'Bug fixen!' %}
+  {% endif %}
+
+  <div class="mtr-head">
+    <span class="eyebrow"><span class="dot-live"></span>Resultat — fertig analysiert</span>
+    <h1 style="font-size: 32px; margin: 12px 0 6px;">📊 Mail-Score: {{ verdict }}</h1>
+  </div>
+
+  <div class="mtr-score-card" style="--mtr-color: {{ grade_color }}; --mtr-color-2: {{ grade_color_2 }};">
+    <div class="mtr-grade">{{ score }}<span class="mtr-grade-out"> / 10</span></div>
+    <div class="muted">{{ verdict }} — Test {{ test.token }}</div>
+    <div class="mtr-meta">
+      {% if test.sender_email %}<span class="mtr-meta-row">Absender: <strong>{{ test.sender_email }}</strong></span>{% endif %}
+      {% if test.sender_ip %}<span class="mtr-meta-row">IP: <strong>{{ test.sender_ip }}</strong></span>{% endif %}
+      {% if test.sender_domain %}<span class="mtr-meta-row">Domain: <strong>{{ test.sender_domain }}</strong></span>{% endif %}
+    </div>
+  </div>
+
+  {% if not unlocked and locked_count %}
+  <div class="mtr-unlock">
+    <h2>🔓 {{ locked_count }} weitere Detail-Checks freischalten</h2>
+    <p class="muted">Du siehst SPF/DKIM/DMARC — den Rest (PTR, TLS, Blacklist, Spam-Score, Content-Checks plus konkrete Fix-Tipps) gibt's einmalig nach Email-Eingabe. Wir nutzen die Email <strong>nur</strong> falls du Hilfe brauchst.</p>
+    <form class="mtr-unlock-form" onsubmit="return unlock(event)">
+      <input type="email" name="email" id="unlock-email" required placeholder="du@deine-firma.ch" autocomplete="email">
+      <button type="submit">Detail anzeigen →</button>
+    </form>
+    <div class="mtr-unlock-err" id="unlock-err"></div>
+  </div>
+  {% endif %}
+
+  <div class="mtr-checks">
+    {% for c in breakdown.checks %}
+      {% set is_locked = c._locked or false %}
+      <div class="mtr-check {% if is_locked %}locked{% endif %}">
+        <div class="mtr-check-icon
+          {%- if is_locked %} mtr-icon-lock
+          {%- elif c.status == 'pass' %} mtr-icon-pass
+          {%- elif c.status == 'warn' %} mtr-icon-warn
+          {%- else %} mtr-icon-fail{% endif %}">
+          {% if is_locked %}🔒
+          {%- elif c.status == 'pass' %}✓
+          {%- elif c.status == 'warn' %}!
+          {%- else %}✕{% endif %}
+        </div>
+        <div>
+          <h3>{{ c.label }}</h3>
+          <div class="detail">{{ c.detail }}</div>
+          {% if c.fix_hint and not is_locked %}
+            <div class="fix-hint">💡 {{ c.fix_hint|safe }}</div>
+          {% endif %}
+        </div>
+        <div class="mtr-check-score">
+          {% if not is_locked %}{{ '%.1f'|format(c.score) }}<span class="muted"> / {{ '%.1f'|format(c.max_score) }}</span>{% else %}<span class="muted">🔒</span>{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="mtr-actions">
+    <a href="/mailtest" class="btn-primary big">→ Nochmal testen</a>
+    <a href="/kontakt?topic=mail-check" class="btn-link" style="margin-left:12px;">Hilfe bei Konfiguration? Anfragen →</a>
+  </div>
+
+</main>
+
+{% include "_marketing_footer.html" %}
+
+<script>
+async function unlock(ev) {
+  ev.preventDefault();
+  const email = document.getElementById('unlock-email').value.trim();
+  const errBox = document.getElementById('unlock-err');
+  errBox.style.display = 'none';
+  try {
+    const r = await fetch(`/mailtest/{{ test.token }}/unlock`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({email}).toString(),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      window.location.href = d.redirect;
+    } else {
+      errBox.textContent = d.error || 'Fehler.';
+      errBox.style.display = 'block';
+    }
+  } catch (e) {
+    errBox.textContent = 'Netzwerkfehler — bitte nochmal versuchen.';
+    errBox.style.display = 'block';
+  }
+  return false;
+}
+</script>
+
+</body>
+</html>

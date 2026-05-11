@@ -391,3 +391,36 @@ class BlacklistCheck(Base):
     # DNSBL responses (rate-limits, NXDOMAIN flapping) don't cause loops.
     alerted_event: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     alerted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class MailTest(Base):
+    """Public mail-tester clone: user gets unique <token>@<our-subdomain>,
+    sends a mail to it, we score it 0-10 like mail-tester.com does.
+
+    Public + anonymous by default. If user later enters Email for the detail-
+    report, we store it as lead_email -> wandert ueber den Lead-Notify-Flow zu uns.
+    """
+    __tablename__ = "mail_tests"
+
+    id: Mapped[int] = mapped_column(BigPK, primary_key=True)
+    token: Mapped[str] = mapped_column(String(24), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # Set when mail arrives
+    received_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    sender_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    sender_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    sender_domain: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    subject: Mapped[Optional[str]] = mapped_column(String(998), nullable=True)
+    raw_email: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Score + Breakdown
+    score: Mapped[Optional[float]] = mapped_column(nullable=True)  # 0.0 - 10.0
+    breakdown_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Lead-Capture Gate
+    lead_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True, index=True)
+    lead_email_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

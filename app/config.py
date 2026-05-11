@@ -68,6 +68,24 @@ class Settings(BaseSettings):
     # (SMTP_FROM) bekommt dann was. Auf Prod z.B. private Gmail eintragen.
     lead_notify_emails: str = Field(default="", alias="LEAD_NOTIFY_EMAILS")
 
+    # ---- Mail-Tester ("mailtest.dmarc-geeks.ch") ----
+    # Domain unter der wir Test-Adressen anbieten (User schickt Mail an
+    # <token>@<diese-Domain>). Mailcow muss einen Catch-All auf diese Domain
+    # haben, der in MAILTEST_IMAP_* landet.
+    mailtest_domain: str = Field(default="", alias="MAILTEST_DOMAIN")
+    # IMAP-Zugang zur Catch-All-Mailbox des Mail-Testers (NICHT als Mailbox-Eintrag
+    # in der DB anlegen -- separater System-Account)
+    mailtest_imap_host: str = Field(default="", alias="MAILTEST_IMAP_HOST")
+    mailtest_imap_port: int = Field(default=993, alias="MAILTEST_IMAP_PORT")
+    mailtest_imap_user: str = Field(default="", alias="MAILTEST_IMAP_USER")
+    mailtest_imap_password: str = Field(default="", alias="MAILTEST_IMAP_PASSWORD")
+    mailtest_imap_ssl: bool = Field(default=True, alias="MAILTEST_IMAP_SSL")
+    mailtest_imap_folder: str = Field(default="INBOX", alias="MAILTEST_IMAP_FOLDER")
+    # Poll-Intervall in Sekunden -- Default 30s, niedriger = schnellere User-Feedback
+    mailtest_poll_seconds: int = Field(default=30, alias="MAILTEST_POLL_SECONDS")
+    # Wie viele Tests darf eine IP pro Tag starten? Anti-Spam.
+    mailtest_max_per_ip_per_day: int = Field(default=20, alias="MAILTEST_MAX_PER_IP_PER_DAY")
+
 
 @lru_cache()
 def get_settings() -> Settings:
