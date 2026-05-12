@@ -46,33 +46,19 @@ def _format_address(token: str, domain: str) -> str:
 
 
 def _gate_breakdown(test: MailTest, user: User | None) -> dict:
-    """Wenn user logged-in ODER lead_email eingegeben -> full breakdown.
-    Sonst nur Score + 3 Top-Checks, Rest 'unlock with email'."""
+    """Liefere den vollen Breakdown — kein Email-Gate.
+
+    Begründung: wir bekommen via mt_worker._mirror_mailtest_to_lead() schon
+    die Sender-Email + Domain als LeadSnapshot automatisch persistiert + die
+    Operator-Notify geht raus, sobald die Mail eingeht. Eine zusätzliche
+    Email-Abfrage im Frontend bringt nichts an Lead-Daten — wir haben die
+    bereits aus der Test-Mail selbst."""
     try:
         bd = json.loads(test.breakdown_json or "{}")
     except json.JSONDecodeError:
         bd = {"total": test.score or 0, "checks": []}
-
-    unlocked = bool(user) or bool(test.lead_email)
-    if unlocked:
-        bd["_unlocked"] = True
-        return bd
-
-    # Anonym: nur die "headline"-Checks (SPF, DKIM, DMARC). Rest hinter Gate.
-    headline_keys = {"spf", "dkim", "dmarc"}
-    locked_count = 0
-    visible_checks = []
-    for c in bd.get("checks", []):
-        if c.get("key") in headline_keys:
-            visible_checks.append(c)
-        else:
-            locked_count += 1
-            visible_checks.append({**c, "_locked": True,
-                                    "detail": "🔒 hinter dem Detail-Report",
-                                    "fix_hint": None})
-    bd["checks"] = visible_checks
-    bd["_unlocked"] = False
-    bd["_locked_count"] = locked_count
+    bd["_unlocked"] = True
+    bd["_locked_count"] = 0
     return bd
 
 

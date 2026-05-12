@@ -263,12 +263,26 @@ _INDUSTRY_KEYWORDS = {
         "soft", "digital", "consult", "msp", "iaas", "saas",
         "netzwerk", "support", "service", "sysadm", "computer",
     ],
+    # Schulmedizin / klassische Gesundheit
     "healthcare": [
-        "zahnarzt", "dentist", "dental", "kfo", "praxis", "klinik", "spital",
-        "physio", "therapie", "psycho", "psychotherap", "psychologin",
-        "psychologe", "medi-", "medic", "doc-", "doctor", "arzt", "ärzte",
+        "zahnarzt", "dentist", "dental", "kfo", "klinik", "spital",
+        "medi-", "medic", "doc-", "doctor", "arzt", "ärzte",
         "aerzte", "hausarzt", "kinderarzt", "internist", "orthopaed",
         "chiropract", "ergotherap", "logopaed", "tierarzt",
+        "physio",  # physio meist mit FMH-Anbindung
+    ],
+    # Komplementärmedizin / Naturheilkunde / EMR/RME-Therapeut·innen
+    "therapie": [
+        "naturheil", "heilpraktiker", "heilpraxis", "alternativ",
+        "komplementaer", "komplementär", "komplmed",
+        "tcm", "ayurv", "homoeop", "homöop", "phytother",
+        "osteopath", "kinesio", "shiatsu", "akupunktur", "akupressur",
+        "craniosacral", "feldenkrais", "polarity", "reflexzonen",
+        "atemtherap", "energetisch", "reiki", "bach-bluet", "bachblut",
+        "praxis", "therapie",  # Wenn "praxis"/"therapie" in domain, ist's oft EMR/RME
+        "psycho", "psychotherap", "psychologin", "psychologe",
+        "hypno", "mbsr", "mindful", "achtsam", "yoga",
+        "coaching", "coach.", "geist", "seele",
     ],
     "finma": [
         "bank", "kantonalbank", "raiffeisen", "treuhand", "fiduciary",
@@ -324,13 +338,34 @@ def _industry_cta_html(industry: str, brand_color: str = "#2563eb") -> str:
             '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
             'Praxen, Kliniken und Therapeut*innen haben besondere Anforderungen: '
             '<strong>HIN-Anschluss</strong> für FHIR/HL7-Austausch, DSG-Konformität bei '
-            'Patientendaten, und je nach Verband (FSP/ASP/SBAP/SVNP) konkrete IT-Sicherheits-'
+            'Patientendaten, und je nach Verband (FMH/SSO/mfe) konkrete IT-Sicherheits-'
             'Vorgaben. Wir machen <strong>Mail-Infrastruktur + M365-Tenant-Audits</strong> '
             'für Healthcare ab CHF 690 — inkl. HIN-Anbindung wenn nötig.<br><br>'
             f'<a href="https://dmarc-geeks.ch/services/healthcare-audit" style="color:#0d9488;'
             'text-decoration:none;font-weight:600;">→ Healthcare-IT-Audit ansehen</a> &nbsp;·&nbsp; '
             f'<a href="https://dmarc-geeks.ch/services/hin" style="color:#0d9488;'
             'text-decoration:none;font-weight:600;">→ HIN-Service</a>'
+            '</div></td></tr></table>'
+        )
+    elif industry == "therapie":
+        return (
+            '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+            'margin:14px 0 18px 0;border-collapse:separate;background:linear-gradient'
+            '(135deg, rgba(132,204,22,.05), rgba(16,185,129,.05));border:1px solid rgba(132,204,22,.3);'
+            'border-radius:12px;"><tr><td style="padding:18px 22px;">'
+            '<div style="font-weight:700;font-size:14px;color:#1f2937;margin-bottom:6px;">'
+            '🌿 Naturheil/Komplementärmedizin: DSG + EMR/RME-tauglich</div>'
+            '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
+            'Komplementärtherapeut·innen, Naturheilpraktiker·innen, Osteopath·innen, '
+            'TCM-/Akupunktur-Praktizierende: euer Beruf lebt vom Vertrauen. Patienten- '
+            'und Krankenkassen-Korrespondenz muss <strong>DSG-konform</strong> laufen, sonst '
+            'drohen revDSG-Bussgelder (bis CHF 250\'000) und ASCA/OdA AM-Probleme. '
+            'Wir machen einen <strong>spezifischen Mini-Audit</strong> für eure Praxis '
+            'ab CHF 590 — inkl. DSG-Dokumentation.<br><br>'
+            f'<a href="https://dmarc-geeks.ch/services/therapie-audit" style="color:#65a30d;'
+            'text-decoration:none;font-weight:600;">→ KomplMed-Audit ansehen</a> &nbsp;·&nbsp; '
+            f'<a href="https://dmarc-geeks.ch/services/dmarc" style="color:#65a30d;'
+            'text-decoration:none;font-weight:600;">→ Mail-Setup-Service</a>'
             '</div></td></tr></table>'
         )
     elif industry == "finma":
@@ -371,6 +406,14 @@ def _industry_cta_plain(industry: str) -> str:
             "Praxen/Kliniken/Therapeut*innen haben besondere Anforderungen (HIN-Anschluss, "
             "DSG, Verband-Vorgaben). Healthcare-IT-Audit ab CHF 690.\n"
             "→ https://dmarc-geeks.ch/services/healthcare-audit\n"
+        )
+    elif industry == "therapie":
+        return (
+            "\n\n🌿 Komplementärmedizin: DSG + EMR/RME-tauglich\n"
+            "Naturheilpraxis/TCM/Osteopathie/Kinesiologie: Patientendaten sind besonders "
+            "schützenswert (revDSG Art. 5 lit. c, Bussgelder bis CHF 250'000). "
+            "Mini-Audit für Naturheil-Praxen ab CHF 590.\n"
+            "→ https://dmarc-geeks.ch/services/therapie-audit\n"
         )
     elif industry == "finma":
         return (

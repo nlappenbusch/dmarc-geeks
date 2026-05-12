@@ -83,7 +83,8 @@
         <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
         <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
         <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
-        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Praxen · Psycho · Kliniken</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Zahnaerzte · Aerzte · Kliniken</span></a>
+        <a href="/services/therapie-audit"><strong>🌿 KomplMed-Audit</strong><span>Naturheilpraxis · EMR/RME</span></a>
         <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
         <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
       </div>
@@ -138,7 +139,7 @@
     <div style="position: relative;">
       <div class="mt-hero-card">
         <div class="mt-hero-card-head">🚀 Live ausprobieren — kein Login</div>
-        <iframe src="/embed/mailtest" style="width: 100%; height: 540px; border: 0; display: block;" title="Mail-Tester Live-Widget" loading="lazy"></iframe>
+        <iframe id="mt-hero-iframe" src="/embed/mailtest" style="width: 100%; height: 480px; border: 0; display: block; transition: height .2s ease;" title="Mail-Tester Live-Widget" loading="lazy"></iframe>
       </div>
       <div style="text-align: center; margin-top: 12px;">
         <a href="/mailtest" style="color: #64748b; font-size: 13px; text-decoration: none;">↗ in vollem Tab öffnen</a>
@@ -146,6 +147,20 @@
     </div>
   </div>
 </section>
+
+<script>
+// iframe-Auto-Resize: lausche auf postMessage vom embed-Widget
+window.addEventListener('message', (ev) => {
+  if (ev.data?.source !== 'dmarc-geeks-embed') return;
+  if (ev.data.type === 'resize' && ev.data.height) {
+    const f = document.getElementById('mt-hero-iframe');
+    if (f) {
+      const h = Math.max(380, Math.min(720, ev.data.height + 10));
+      f.style.height = h + 'px';
+    }
+  }
+});
+</script>
 
 <!-- Was wir prüfen -->
 <section class="container-mkt" id="warum">

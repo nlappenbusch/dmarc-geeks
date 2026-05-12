@@ -149,7 +149,7 @@
     </div>
     <div class="emb-status">
       <div class="emb-spinner"></div>
-      <span id="emb-status-text">Worte auf eingehende Mail …</span>
+      <span id="emb-status-text">Warte auf eingehende Mail …</span>
       <span class="emb-counter" id="emb-counter">0s</span>
     </div>
     <div class="emb-foot">
@@ -208,6 +208,31 @@
       window.parent.postMessage({source: 'dmarc-geeks-embed', type, ...payload}, '*');
     }
   }
+
+  // Auto-Resize: melde Inhalts-Höhe an Parent damit das iframe sich anpasst.
+  // Damit kein leerer Platz unter der Card entsteht (User-Feedback: 'leerer Bereich').
+  function reportHeight() {
+    if (window.parent === window) return;
+    const wrap = document.getElementById('emb');
+    if (!wrap) return;
+    const h = wrap.scrollHeight;
+    notifyParent('resize', {height: h});
+  }
+  // Initial nach DOM-Ready + bei Mutation/Resize
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', reportHeight);
+  } else {
+    reportHeight();
+  }
+  window.addEventListener('load', reportHeight);
+  // Beobachte DOM-Veränderungen (State-Switches Init->Waiting->Result)
+  if (window.MutationObserver) {
+    new MutationObserver(reportHeight).observe(document.body, {
+      childList: true, subtree: true, attributes: true,
+      attributeFilter: ['style', 'class'],
+    });
+  }
+  setInterval(reportHeight, 1000);  // Fallback fuer dynamische Counter
 
   btnStart.addEventListener('click', async () => {
     btnStart.disabled = true;

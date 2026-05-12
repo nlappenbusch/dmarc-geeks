@@ -69,6 +69,7 @@ _STATIC_URLS = [
     ("/partner-werden", "monthly", 0.8),
     ("/mail-test", "weekly", 0.9),
     ("/services/healthcare-audit", "monthly", 0.85),
+    ("/services/therapie-audit", "monthly", 0.85),
     ("/services/finma-audit", "monthly", 0.85),
     ("/embed/mailtest/code", "monthly", 0.6),
     ("/demo", "weekly", 0.7),

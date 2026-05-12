@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IT-Audit für Naturheilpraxis · EMR-Therapeut·innen · KomplementärMedizin · DMARC Geeks</title>
+  <meta name="description" content="Mail- &amp; IT-Compliance-Audit für Schweizer Naturheilpraxen, EMR/RME-akkreditierte Therapeut·innen, Komplementärmediziner. DSG-konform, Krankenkassen-Korrespondenz, ASCA/EMR-tauglich. Ab CHF 590.">
+  <meta name="keywords" content="Naturheilpraxis IT, EMR Therapeut Mail, Komplementärmedizin DSG, Heilpraktiker Schweiz IT, ASCA Mail-Setup, RME Therapeut Sicherheit, Therapie Datenschutz, Komplementärtherapeut M365">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="IT-Audit für Naturheilpraxis &amp; EMR-Therapeut·innen">
+  <meta property="og:description" content="DSG-konformes Mail- und M365-Setup für Naturheilpraxen, Komplementärtherapeut·innen, EMR/RME-akkreditierte Praktiker.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "IT-Compliance-Audit für Komplementärmedizin und Naturheilpraxen",
+    "name": "Mail- &amp; M365-Audit für EMR/RME-Therapeut·innen",
+    "description": "IT-Compliance-Audit für Schweizer Naturheilpraxen, Heilpraktiker, EMR/RME-akkreditierte Komplementärtherapeut·innen — DSG-Konformität, Krankenkassen-Korrespondenz, Mail-Sicherheit, M365-Härtung.",
+    "areaServed": "CH",
+    "provider": { "@type": "Organization", "name": "DMARC Geeks", "url": "https://dmarc-geeks.ch" },
+    "offers": { "@type": "Offer", "price": "590.00", "priceCurrency": "CHF" }
+  }
+  </script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Praxen · Psycho · Kliniken</span></a>
+        <a href="/services/therapie-audit"><strong>🌿 KomplMed-Audit</strong><span>Naturheilpraxis · EMR/RME</span></a>
+        <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<section class="svc-hero" style="background: linear-gradient(135deg, rgba(132,204,22,0.06), rgba(16,185,129,0.04));">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph">🌿</span> Service · Komplementärmedizin-IT-Audit</span>
+    <h1 class="svc-h1">Naturheilpraxis &amp; EMR-Therapeut·innen.<br><span class="grad-text" style="background:linear-gradient(135deg,#65a30d,#16a34a);-webkit-background-clip:text;background-clip:text;color:transparent;">IT, die nicht im Weg steht.</span></h1>
+    <p class="lede">Heilpraktiker·innen, Komplementärtherapeut·innen, Naturheil-Praxen, TCM-Praktiker·innen, Osteopath·innen, Kinesiolog·innen, Shiatsu-Therapeut·innen — euer Beruf ist auf Vertrauen + Verschwiegenheit gebaut. Eure IT muss das spiegeln: <strong>DSG-konforme Mail-Korrespondenz</strong>, sichere Patient·innen-Daten, Krankenkassen-tauglich für EMR/RME-Abrechnungen. Wir auditieren euer Setup gegen die konkreten Schweizer Vorgaben.</p>
+    <div class="svc-hero-cta">
+      <a href="/kontakt?topic=therapie-audit" class="btn-primary big" style="background:linear-gradient(135deg,#16a34a,#65a30d);">Audit-Gespräch buchen</a>
+      <a href="/check" class="btn-ghost-arrow">Erst meine Praxis-Domain checken <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>★ DSG-konform</strong> · CH-Datenraum</span>
+      <span class="sep">·</span>
+      <span>Festpreis ab CHF 590</span>
+      <span class="sep">·</span>
+      <span>Krankenkassen-tauglich</span>
+      <span class="sep">·</span>
+      <span>1-3 Wochen bis Bericht</span>
+    </div>
+  </div>
+</section>
+
+<!-- Warum dieser Audit -->
+<section class="container-mkt">
+  <h2 class="section-h">Was an Naturheilpraxis-IT speziell ist</h2>
+  <p class="section-sub">Komplementärmedizin ist <em>nicht</em> klassische Medizin — und die IT-Vorgaben sind dadurch anders gelagert:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🏥</div>
+      <h3>Patient·innen-Daten sind „besonders schützenswerte Personendaten"</h3>
+      <p>Gemäss revDSG Art. 5 lit. c gelten Gesundheits-Daten als <strong>besonders schützenswert</strong> — egal ob Komplementär- oder Schulmedizin. Heisst: höhere Anforderungen an Mail-Verschlüsselung, Aufbewahrungs-Fristen, ADV-Verträge mit Cloud-Diensten. Bei Verstoss: bis CHF 250'000 Bussgelder (revDSG Art. 65).</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🧾</div>
+      <h3>Krankenkassen-Korrespondenz via EMR/RME</h3>
+      <p>EMR-/RME-zertifizierte Therapeut·innen kommunizieren mit Krankenkassen über Rechnungen, Bestätigungen, Nachweise. Wenn deine Mails im Spam-Ordner der KK landen, brennt die Rückerstattung. Wir prüfen ob euer SPF/DKIM/DMARC zuverlässig durchgeht.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📋</div>
+      <h3>Verbands-Vorgaben (ASCA, OdA AM, VFLT, SGAS)</h3>
+      <p>Anders als FMH/mfe (Schulmedizin) gibt's bei Komplementärmedizin keinen Verband mit harten IT-Regeln — aber <strong>ASCA, OdA AM, VFLT, SGAS</strong> erwarten alle DSG-Konformität als Voraussetzung für Akkreditierung. Bei Verbandskontrolle oder Methodik-Erneuerung kommen Fragen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Was wir prüfen -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Was wir konkret prüfen</h2>
+    <p class="section-sub">Ein vollständiger Audit-Lauf — pro Praxis ~3-5 Stunden Arbeit, danach hast du einen Audit-Bericht mit Befund + Massnahmen.</p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📧 Praxis-Mail</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>SPF, DKIM, DMARC — Krankenkassen-tauglich konfiguriert</li>
+          <li>Praxis-Domain (nicht @gmx.ch) — Professionalität + Reputation</li>
+          <li>Spam-Schutz für eingehende Mails (Phishing-Resistenz)</li>
+          <li>Mail-Verschlüsselung für sensible Patientendaten</li>
+          <li>Backup + DSG-konforme Aufbewahrung (10 Jahre Patient·innen-Akten)</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">🛡 Cloud-Tools (M365 / Google)</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>M365 oder Google Workspace? Speicherort der Mails?</li>
+          <li>Mehrfaktor-Authentifizierung (MFA) — DSG-Mindeststandard</li>
+          <li>Auftragsverarbeitungs-Vertrag (ADV) mit Microsoft/Google</li>
+          <li>Datenzugriff-Logs aktiviert</li>
+          <li>Geräte-Verschlüsselung (BitLocker / FileVault)</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📅 Buchungs- &amp; Praxis-Tools</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Online-Buchung (Calendly, SimplyBook, Doctolib?) — Server in CH/EU?</li>
+          <li>Praxis-Software (Vitomed, MediPlus, ToothCare?) — DSG-Status</li>
+          <li>WhatsApp / Signal für Patienten? — DSG-Risiko-Bewertung</li>
+          <li>SMS-Reminder-Tools — Datenpfade dokumentiert</li>
+          <li>Patient·innen-Dokumenten-Plattformen (Dropbox?)</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📜 DSG-Compliance</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Verzeichnis der Verarbeitungstätigkeiten (revDSG Pflicht)</li>
+          <li>Datenschutzerklärung auf Website</li>
+          <li>Patient·innen-Einwilligung dokumentiert</li>
+          <li>Löschkonzept (Art. 6 lit. b revDSG: nur so lang wie nötig)</li>
+          <li>Meldepflicht-Konzept bei Datenpannen (revDSG Art. 24)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Use-Cases / wer das braucht -->
+<section class="container-mkt">
+  <h2 class="section-h">Für wen ist das?</h2>
+  <p class="section-sub">Konkret die Komplementärmedizin-Berufe wo wir regelmässig auditieren:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🌿</div>
+      <h3>Naturheilpraktiker·innen</h3>
+      <p>OdA AM-akkreditierte Praxen mit den 4 Berufsbildern: Naturheilpraktiker·in (TEN, TCM, Ayurveda, Homöopathie).</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">💆</div>
+      <h3>Komplementärtherapeut·innen</h3>
+      <p>OdA-KT-Diplom: Akupressur, Atemtherapie, Craniosacral, Eutonie, Feldenkrais, Kinesiologie, Polarity, Reflexzonen, Shiatsu, Yoga, Pilates u.a.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🧘</div>
+      <h3>Achtsamkeits- / MBSR-Therapeut·innen</h3>
+      <p>MBSR/MBCT-Praktizierende, Atemtherapie, Meditation-Begleitung — alles wo Klient·innen-Daten und Mail-Korrespondenz im Spiel sind.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🌸</div>
+      <h3>TCM- &amp; Akupunktur-Praktiker·innen</h3>
+      <p>TCM-Therapeut·innen mit EMR-/RME-Code für Krankenkassen-Abrechnung. Sensitive Datenflüsse zu KK + Patient·innen.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🤲</div>
+      <h3>Osteopath·innen / Physio-Komp.</h3>
+      <p>Methoden-übergreifende Praktiker·innen, oft auch mit FMH-/FOIA-Hintergrund. Mail-Setup für mehrere Methodik-Bereiche.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📖</div>
+      <h3>Hypnose-Therapeut·innen, NLP-Coaches</h3>
+      <p>Schwerpunkt mentale/psychische Themen — DSG-relevante Daten, oft auch mit Krankenkassen-Abrechnung über EMR/RME.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pakete -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Pakete</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Praxis-Mini-Audit</h3>
+        <p class="muted small" style="margin:0 0 16px;">Einzel-Therapeut·in · 1-2 Mailboxen · Remote</p>
+        <div style="font-size:28px; font-weight:900;">CHF 590</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Mail-Authentifizierung-Check (SPF/DKIM/DMARC)</li>
+          <li>M365/Google-Workspace-Quick-Review</li>
+          <li>DSG-Selbst-Check-Anleitung</li>
+          <li>Audit-Bericht 8-12 Seiten</li>
+          <li>30 Min Abschluss-Call</li>
+        </ul>
+        <a href="/kontakt?topic=therapie-audit&amp;package=mini" class="btn-primary" style="margin-top:18px; display:block; text-align:center; background:linear-gradient(135deg,#16a34a,#65a30d);">Buchen →</a>
+      </div>
+      <div style="background:white; border:2px solid #16a34a; border-radius:16px; padding: 28px; position: relative;">
+        <div style="position:absolute; top:-12px; left:24px; background:#16a34a; color:white; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase;">⭐ Komplett</div>
+        <h3 style="margin:0 0 4px;">Audit + Umsetzung</h3>
+        <p class="muted small" style="margin:0 0 16px;">Mit Begleitung der Massnahmen-Umsetzung</p>
+        <div style="font-size:28px; font-weight:900;">CHF 1490</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Alles aus Praxis-Mini-Audit</li>
+          <li>DMARC-Aufbau und scharfschaltung</li>
+          <li>M365 MFA + Conditional Access aktiviert</li>
+          <li>DSG-Dokumentation erstellt (Verzeichnis, Erklärung)</li>
+          <li>Praxis-Domain-Setup (falls noch @gmx.ch)</li>
+          <li>3 Monate Begleitung</li>
+        </ul>
+        <a href="/kontakt?topic=therapie-audit&amp;package=komplett" class="btn-primary" style="margin-top:18px; display:block; text-align:center; background:linear-gradient(135deg,#16a34a,#0d9488);">Buchen →</a>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Gemeinschaftspraxis</h3>
+        <p class="muted small" style="margin:0 0 16px;">Mehrere Therapeut·innen unter einem Dach · gemeinsames IT-Setup</p>
+        <div style="font-size:28px; font-weight:900;">ab CHF 2900</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Audit pro Therapeut·in</li>
+          <li>Gemeinsames Mail-Domain-Setup</li>
+          <li>Geteilter Praxis-Kalender DSG-konform</li>
+          <li>Praxis-Software integriert</li>
+          <li>Festpreis nach Erstgespräch</li>
+        </ul>
+        <a href="/kontakt?topic=therapie-audit&amp;package=gemeinschaft" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Anfragen →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="container-mkt">
+  <h2 class="section-h">Häufige Fragen</h2>
+  <div style="max-width:760px; margin: 24px auto 0;">
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Brauche ich als kleine Praxis wirklich einen IT-Audit?</summary>
+      <p style="margin:12px 0 0;">Wenn du Patient·innen-Daten verarbeitest (Behandlungs-Notizen, Krankenkassen-Korrespondenz, Termin-Bestätigungen) — ja. Das revDSG (seit 09/2023) gilt unabhängig von der Praxis-Grösse. Selbst eine Einzel-Praxis ist gegenüber dem EDÖB rechenschaftspflichtig.</p>
+    </details>
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Was kostet ein Datenpannen-Vorfall?</summary>
+      <p style="margin:12px 0 0;">Bei DSG-Verstössen sind bis CHF 250'000 Bussgelder möglich (revDSG Art. 65). Realistischer Schaden: Verbandsausschluss (Verlust des EMR-Codes → keine Krankenkassen-Rückerstattung mehr), Reputationsschaden, Patient·innen-Klagen. Vorbeugen kostet ein Bruchteil.</p>
+    </details>
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Was ist der Unterschied zu eurem Healthcare-Audit?</summary>
+      <p style="margin:12px 0 0;">Healthcare-Audit ist für <strong>klassisch-medizinische Praxen</strong> (FMH-Ärzte, Zahnarzt-Praxen, Kliniken) mit HIN-Pflicht und FMH/SSO-Vorgaben. Dieser Audit ist für <strong>Komplementärmedizin</strong> ohne HIN-Zwang, dafür mit EMR/RME-Spezifika und OdA-Verbänden. Wenn du dir nicht sicher bist welcher passt — buch einen kostenlosen Erstcall.</p>
+    </details>
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Brauchen wir HIN als Komplementärtherapeut·in?</summary>
+      <p style="margin:12px 0 0;">In den allermeisten Fällen <strong>nein</strong>. HIN ist primär für FMH-Ärzte und Spitäler die ans eHealth-Netz (FHIR, eMedikation, EPD) angebunden sind. Komplementärtherapeut·innen kommunizieren typisch via normaler verschlüsselter Mail mit Patient·innen und Krankenkassen. Wir prüfen das individuell — bei Bedarf empfehlen wir HIN trotzdem (z.B. wenn du mit Ärzten zusammenarbeitest).</p>
+    </details>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="container-mkt" style="padding: 60px 0; text-align:center;">
+  <h2 style="font-size:clamp(26px, 3.5vw, 34px); margin: 0 0 14px;">Lass uns 20 Minuten reden.</h2>
+  <p style="color:var(--muted); max-width: 580px; margin: 0 auto 28px;">
+    Wir schauen kurz auf deine Praxis-Domain (gratis), erklären was wir sehen, und wenn's passt buchen wir den Audit-Termin.
+  </p>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="/kontakt?topic=therapie-audit" class="btn-primary big" style="background:linear-gradient(135deg,#16a34a,#65a30d);">📅 Audit-Gespräch buchen</a>
+    <a href="tel:+41779503152" class="btn-link">📞 +41 77 950 31 52</a>
+  </div>
+</section>
+
+{% include '_marketing_footer.html' %}
+</body>
+</html>

@@ -521,6 +521,13 @@ def services_healthcare_audit(request: Request):
                    user=None, tenant=None, active=None)
 
 
+@router.get("/services/therapie-audit")
+def services_therapie_audit(request: Request):
+    """IT-Compliance-Audit fuer Naturheilpraxis, Komplementaermedizin, EMR/RME-Therapeut*innen."""
+    return render(request, "services/therapie_audit.html",
+                   user=None, tenant=None, active=None)
+
+
 @router.get("/services/finma-audit")
 def services_finma_audit(request: Request):
     """FINMA-Compliance-Audit fuer Banken, Versicherungen, Vermoegensverwalter."""
