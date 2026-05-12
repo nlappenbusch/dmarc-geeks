@@ -442,12 +442,31 @@ def notify_domain_check(request: Request, tool: str, domain: str) -> None:
 @router.get("/")
 def root(request: Request):
     """Marketing for anonymous users; redirect to /dashboard for logged-in,
-    preserving any query string (so old bookmarks like /?domain_id=X still work)."""
+    preserving any query string (so old bookmarks like /?domain_id=X still work).
+
+    Host-aware: wenn die Anfrage über mail-test.ch / www.mail-test.ch
+    reinkommt, zeigen wir die Mail-Tester-fokussierte Landing statt der
+    generischen Startseite. Das selbe Tool, anderer Brand-Funnel."""
     if request.session.get("user_id"):
         qs = request.url.query
         target = "/dashboard" + (f"?{qs}" if qs else "")
         return RedirectResponse(target, status_code=303)
+
+    # Host-Detection für mail-test.ch
+    host = (request.headers.get("host") or "").lower().split(":")[0]
+    if host in ("mail-test.ch", "www.mail-test.ch"):
+        return render(request, "mail_test_landing.html",
+                       user=None, tenant=None, active=None)
+
     return render(request, "marketing.html", user=None, tenant=None, active=None)
+
+
+@router.get("/mail-test")
+def mail_test_landing(request: Request):
+    """Mail-Tester-fokussierte Landingpage mit SEO-Content. Erreichbar via
+    dmarc-geeks.ch/mail-test ODER als / wenn unter mail-test.ch."""
+    return render(request, "mail_test_landing.html",
+                   user=None, tenant=None, active=None)
 
 
 @router.get("/about")
@@ -493,6 +512,20 @@ def services_hin(request: Request):
 @router.get("/services/bimi")
 def services_bimi(request: Request):
     return render(request, "services/bimi.html", user=None, tenant=None, active=None)
+
+
+@router.get("/services/healthcare-audit")
+def services_healthcare_audit(request: Request):
+    """IT-Compliance-Audit fuer Praxen, Psychotherapeut*innen, Zahnaerzte, Kliniken."""
+    return render(request, "services/healthcare_audit.html",
+                   user=None, tenant=None, active=None)
+
+
+@router.get("/services/finma-audit")
+def services_finma_audit(request: Request):
+    """FINMA-Compliance-Audit fuer Banken, Versicherungen, Vermoegensverwalter."""
+    return render(request, "services/finma_audit.html",
+                   user=None, tenant=None, active=None)
 
 
 @router.get("/partner-werden")

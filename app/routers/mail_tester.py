@@ -339,6 +339,78 @@ def rescore(token: str, db: Session = Depends(get_db),
     return JSONResponse({"ok": True, "redirect": f"/mailtest/{test.token}?rescored=1"})
 
 
+# ============================================================================
+# Embed-Widget: minimal-Standalone-Version fuer iframe-Embedding bei Partnern
+# ============================================================================
+
+@router.get("/embed/mailtest")
+def embed_mailtest(request: Request):
+    """Minimal-Mail-Tester-Widget zum Einbetten via iframe.
+
+    Hat KEIN navbar / footer / mkt-styles — schlank gehalten damit es in
+    fremde Seiten passt. Erlaubt Partner über JavaScript-postMessage
+    Events zu empfangen (test-started, test-ready)."""
+    s = get_settings()
+    return render(request, "mailtest_embed.html",
+                   user=None, tenant=None, active=None,
+                   configured=bool(s.mailtest_domain),
+                   rate_limited=False,
+                   utm=request.query_params.get("utm", ""))
+
+
+@router.get("/embed/mailtest/code")
+def embed_mailtest_code(request: Request,
+                          user: User | None = Depends(current_user_optional)):
+    """Code-Generator: zeigt einen Partner wie er das Widget einbettet."""
+    s = get_settings()
+    base = s.base_url.rstrip("/") if s.base_url else "https://dmarc-geeks.ch"
+    return render(request, "mailtest_embed_code.html",
+                   user=user, tenant=user.tenant if user else None,
+                   active=None, base_url=base)
+
+
+@router.post("/api/mailtest/generate")
+async def generate_token_api(request: Request, db: Session = Depends(get_db),
+                              user: User | None = Depends(current_user_optional)):
+    """JSON-API: Token + Test-Adresse generieren. Wird vom Embed-Widget genutzt."""
+    s = get_settings()
+    if not s.mailtest_domain:
+        return JSONResponse({"ok": False, "msg": "Mail-Tester nicht konfiguriert."}, status_code=503)
+
+    ip = request.client.host if request.client else "-"
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    n_today = db.execute(
+        select(MailTest).where(
+            MailTest.requester_ip == ip,
+            MailTest.created_at >= today_start,
+        )
+    ).scalars().all()
+    if user is None and len(n_today) >= s.mailtest_max_per_ip_per_day:
+        return JSONResponse({"ok": False,
+            "msg": f"Tages-Limit erreicht ({s.mailtest_max_per_ip_per_day} Tests/Tag)."},
+            status_code=429)
+
+    token = _gen_token()
+    for _ in range(3):
+        if not db.execute(select(MailTest).where(MailTest.token == token)).scalars().first():
+            break
+        token = _gen_token()
+
+    test = MailTest(
+        token=token,
+        created_at=datetime.now(timezone.utc),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+        requester_ip=ip,
+        user_id=user.id if user else None,
+    )
+    db.add(test)
+    db.commit()
+
+    address = _format_address(token, s.mailtest_domain)
+    return JSONResponse({"ok": True, "token": token, "address": address,
+                          "result_url": f"/mailtest/{token}"})
+
+
 # Convenience: kurze /mt-Adresse als Server-Side 301 -> mailtest.dmarc-geeks.ch
 @router.get("/mt")
 def mt_short(request: Request):

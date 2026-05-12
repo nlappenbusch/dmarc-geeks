@@ -251,6 +251,137 @@ def _build_context_extras(check_result: dict | None) -> list[str]:
     return extras
 
 
+# ============================================================================
+# Branchen-Detection + Branchen-spezifische CTAs
+# ============================================================================
+# Aus (domain, company_name) heuristisch die Branche ableiten und in der
+# Cold-Mail einen anderen Schlussabsatz / CTA setzen.
+
+_INDUSTRY_KEYWORDS = {
+    "it": [
+        "it-", "-it.", "informatik", "systems", "tech", "cloud", "hosting",
+        "soft", "digital", "consult", "msp", "iaas", "saas",
+        "netzwerk", "support", "service", "sysadm", "computer",
+    ],
+    "healthcare": [
+        "zahnarzt", "dentist", "dental", "kfo", "praxis", "klinik", "spital",
+        "physio", "therapie", "psycho", "psychotherap", "psychologin",
+        "psychologe", "medi-", "medic", "doc-", "doctor", "arzt", "ärzte",
+        "aerzte", "hausarzt", "kinderarzt", "internist", "orthopaed",
+        "chiropract", "ergotherap", "logopaed", "tierarzt",
+    ],
+    "finma": [
+        "bank", "kantonalbank", "raiffeisen", "treuhand", "fiduciary",
+        "versicher", "insurance", "broker", "rueckver", "ckversich",
+        "wealth", "asset", "vermögens", "vermoegens", "finanz", "fund",
+        "advisor", "vermögensver", "vermoegensver", "investment",
+        "kapitalanlage",
+    ],
+}
+
+
+def _detect_industry(domain: str, company_name: str = "") -> Optional[str]:
+    """Heuristik: aus domain + company_name die Branche ableiten.
+    Returns 'it' | 'healthcare' | 'finma' | None."""
+    haystack = f"{domain or ''} {company_name or ''}".lower()
+    for industry, keywords in _INDUSTRY_KEYWORDS.items():
+        for kw in keywords:
+            if kw in haystack:
+                return industry
+    return None
+
+
+# Branchen-spezifische CTA-Blöcke (HTML). Werden VOR der Standard-Signatur
+# eingefügt. Stil: kleine Card mit Branchen-spezifischem Pitch.
+def _industry_cta_html(industry: str, brand_color: str = "#2563eb") -> str:
+    if industry == "it":
+        return (
+            '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+            'margin:14px 0 18px 0;border-collapse:separate;background:linear-gradient'
+            '(135deg, rgba(37,99,235,.05), rgba(124,58,237,.05));border:1px solid rgba(37,99,235,.25);'
+            'border-radius:12px;"><tr><td style="padding:18px 22px;">'
+            '<div style="font-weight:700;font-size:14px;color:#1f2937;margin-bottom:6px;">'
+            '🛠 Du bist IT-Dienstleister? Verdiene mit unserem Service mit.</div>'
+            '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
+            'Unser <strong>Multi-Tenant DMARC-Analyzer</strong> verwaltet das DMARC-Setup '
+            'deiner Endkunden zentral — eigene Subdomain, dein Branding, deine Mandantenverwaltung. '
+            'Du kassierst Marge, wir liefern Tech + 2nd-Level-Support. '
+            '<strong>Reseller-Pakete ab CHF 199/Mo</strong> für 10 Tenants.<br><br>'
+            f'<a href="https://dmarc-geeks.ch/partner-werden" style="color:{brand_color};'
+            'text-decoration:none;font-weight:600;">→ Partnerprogramm ansehen</a> &nbsp;·&nbsp; '
+            f'<a href="https://dmarc-geeks.ch/tool" style="color:{brand_color};'
+            'text-decoration:none;font-weight:600;">→ Tool im Detail</a>'
+            '</div></td></tr></table>'
+        )
+    elif industry == "healthcare":
+        return (
+            '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+            'margin:14px 0 18px 0;border-collapse:separate;background:linear-gradient'
+            '(135deg, rgba(22,163,74,.05), rgba(13,148,136,.05));border:1px solid rgba(22,163,74,.25);'
+            'border-radius:12px;"><tr><td style="padding:18px 22px;">'
+            '<div style="font-weight:700;font-size:14px;color:#1f2937;margin-bottom:6px;">'
+            '⚕️ Healthcare-Sonderfall: HIN-Anschluss + DSG-Patientendaten</div>'
+            '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
+            'Praxen, Kliniken und Therapeut*innen haben besondere Anforderungen: '
+            '<strong>HIN-Anschluss</strong> für FHIR/HL7-Austausch, DSG-Konformität bei '
+            'Patientendaten, und je nach Verband (FSP/ASP/SBAP/SVNP) konkrete IT-Sicherheits-'
+            'Vorgaben. Wir machen <strong>Mail-Infrastruktur + M365-Tenant-Audits</strong> '
+            'für Healthcare ab CHF 690 — inkl. HIN-Anbindung wenn nötig.<br><br>'
+            f'<a href="https://dmarc-geeks.ch/services/healthcare-audit" style="color:#0d9488;'
+            'text-decoration:none;font-weight:600;">→ Healthcare-IT-Audit ansehen</a> &nbsp;·&nbsp; '
+            f'<a href="https://dmarc-geeks.ch/services/hin" style="color:#0d9488;'
+            'text-decoration:none;font-weight:600;">→ HIN-Service</a>'
+            '</div></td></tr></table>'
+        )
+    elif industry == "finma":
+        return (
+            '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+            'margin:14px 0 18px 0;border-collapse:separate;background:linear-gradient'
+            '(135deg, rgba(220,38,38,.04), rgba(245,158,11,.04));border:1px solid rgba(220,38,38,.2);'
+            'border-radius:12px;"><tr><td style="padding:18px 22px;">'
+            '<div style="font-weight:700;font-size:14px;color:#1f2937;margin-bottom:6px;">'
+            '🏛 FINMA-Aufsicht: Mail-Sicherheit als Compliance-Pflicht</div>'
+            '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
+            'FINMA-Rundschreiben 2023/1 + 2018/3 (Operative Risiken / Outsourcing) '
+            'fordern <strong>Mail-Authentifizierung</strong> als Teil der ICT-Sicherheit. '
+            'Banken, Vermögensverwalter und Versicherungs-Broker müssen DMARC + SPF + DKIM '
+            'nachweisen können — bei Audit, Inspection, ISAE 3402. Wir machen den '
+            '<strong>FINMA-Compliance-Audit für Mail-Infrastruktur</strong> mit Audit-Brief '
+            'für deine Prüfer ab CHF 1490.<br><br>'
+            f'<a href="https://dmarc-geeks.ch/services/finma-audit" style="color:#dc2626;'
+            'text-decoration:none;font-weight:600;">→ FINMA-Audit ansehen</a> &nbsp;·&nbsp; '
+            f'<a href="https://dmarc-geeks.ch/services/dmarc" style="color:#dc2626;'
+            'text-decoration:none;font-weight:600;">→ DMARC-Implementation</a>'
+            '</div></td></tr></table>'
+        )
+    return ""
+
+
+def _industry_cta_plain(industry: str) -> str:
+    if industry == "it":
+        return (
+            "\n\n🛠 Du bist IT-Dienstleister? Verdiene mit:\n"
+            "Unser Multi-Tenant DMARC-Analyzer verwaltet das DMARC-Setup deiner Endkunden "
+            "zentral — eigene Subdomain, dein Branding. Reseller-Pakete ab CHF 199/Mo.\n"
+            "→ https://dmarc-geeks.ch/partner-werden\n"
+        )
+    elif industry == "healthcare":
+        return (
+            "\n\n⚕️ Healthcare-Sonderfall: HIN + DSG-Patientendaten\n"
+            "Praxen/Kliniken/Therapeut*innen haben besondere Anforderungen (HIN-Anschluss, "
+            "DSG, Verband-Vorgaben). Healthcare-IT-Audit ab CHF 690.\n"
+            "→ https://dmarc-geeks.ch/services/healthcare-audit\n"
+        )
+    elif industry == "finma":
+        return (
+            "\n\n🏛 FINMA-Aufsicht: Mail-Sicherheit als Compliance-Pflicht\n"
+            "FINMA-Rundschreiben 2023/1 + 2018/3 fordern Mail-Authentifizierung als Teil "
+            "der ICT-Sicherheit. FINMA-Compliance-Audit ab CHF 1490.\n"
+            "→ https://dmarc-geeks.ch/services/finma-audit\n"
+        )
+    return ""
+
+
 def _hook_for(grade: str, domain: str, check_result: dict | None = None,
               *, plain: bool = False) -> str:
     """Hook mit Context-Anreicherung. Fuer Grade C wird der rua_sniplet
@@ -300,10 +431,15 @@ def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
 
     subject = f"Mail-Sicherheit & Zustellbarkeit von {domain} — Grade {grade}"
     name_part = f" {first_name}" if first_name else ""
+
+    # Branchen-spezifischer CTA-Block (Plain-Version)
+    industry = _detect_industry(domain, company)
+    industry_cta = _industry_cta_plain(industry) if industry else ""
+
     return _COLD_MAIL_TEMPLATE.format(
         subject=subject, domain=domain, name_part=name_part,
         hook=hook, grade=grade,
-        score=total, action_lines=action_lines + extras_plain,
+        score=total, action_lines=action_lines + extras_plain + industry_cta,
     )
 
 
@@ -384,6 +520,10 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
             f'<ul style="margin:0;padding-left:20px;">{extras_items}</ul>'
             '</div>'
         )
+
+    # Branchen-Detection + CTA-Block (IT-Dienstleister/Healthcare/FINMA)
+    industry = _detect_industry(domain, company)
+    industry_cta = _industry_cta_html(industry) if industry else ""
 
     # Mini-Snapshot-Card (5 Ampeln) — visualisiert was geprueft wurde
     snapshot_strip = _render_check_strip_html(check_result or {}, score)
@@ -475,6 +615,8 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
   </ol>
 
   {extras_html}
+
+  {industry_cta}
 
   {cta_box}
 

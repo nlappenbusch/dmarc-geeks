@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mail-Tester · DMARC Geeks</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <style>
+    /* Minimal-Standalone-Styles — kein style.css damit Iframe schlank bleibt */
+    :root {
+      --brand: #2563eb; --brand-2: #7c3aed;
+      --text: #0f172a; --muted: #64748b;
+      --border: #e2e8f0; --bg: #ffffff; --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: -apple-system, "Segoe UI", Inter, sans-serif; color: var(--text); background: transparent; }
+    .emb {
+      max-width: 480px; margin: 0 auto; padding: 18px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: 0 8px 32px -16px rgba(15,23,42,.15);
+    }
+    .emb-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13.5px; font-weight: 700; color: var(--text);
+      margin-bottom: 10px;
+    }
+    .emb-brand svg { flex-shrink: 0; }
+    .emb-brand .brand-name { letter-spacing: -0.01em; }
+    .emb-brand .brand-name span { color: var(--brand); }
+    .emb-brand .badge { margin-left: auto; font-size: 10.5px; font-weight: 600;
+                       padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); }
+    .emb h1 { font-size: 18px; margin: 0 0 6px; line-height: 1.3; }
+    .emb p { font-size: 13.5px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+    .emb-btn {
+      display: block; width: 100%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white; border: 0; padding: 14px 18px;
+      border-radius: 10px; font-weight: 700; font-size: 14.5px;
+      cursor: pointer; transition: transform .15s, box-shadow .15s, filter .15s;
+      box-shadow: 0 6px 18px -6px rgba(37,99,235,.5);
+      font-family: inherit;
+    }
+    .emb-btn:hover { transform: translateY(-1px); filter: brightness(1.05);
+                     box-shadow: 0 8px 24px -8px rgba(37,99,235,.6); }
+    .emb-btn:disabled { opacity: .6; cursor: wait; }
+    .emb-address {
+      font: 700 15px ui-monospace, "JetBrains Mono", Menlo, monospace;
+      color: var(--brand); word-break: break-all; user-select: all;
+      background: linear-gradient(135deg, rgba(37,99,235,.05), rgba(124,58,237,.05));
+      border: 2px dashed rgba(37,99,235,.25); border-radius: 8px;
+      padding: 12px 14px; text-align: center; margin: 6px 0 10px;
+    }
+    .emb-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+    .emb-actions button, .emb-actions a {
+      flex: 1; background: var(--soft); color: var(--text);
+      border: 1px solid var(--border); padding: 8px 10px;
+      border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; text-align: center; text-decoration: none;
+      font-family: inherit;
+    }
+    .emb-actions button:hover, .emb-actions a:hover { background: white; border-color: var(--brand); }
+    .emb-status {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: 8px;
+      background: var(--soft); font-size: 12.5px; color: var(--text);
+    }
+    .emb-spinner {
+      width: 14px; height: 14px; border: 2px solid rgba(37,99,235,.18);
+      border-top-color: var(--brand); border-radius: 50%;
+      animation: spin .9s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .emb-counter { font-family: ui-monospace, monospace; font-weight: 700; margin-left: auto; color: var(--brand); }
+    .emb-foot {
+      margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center;
+    }
+    .emb-foot a { color: var(--muted); text-decoration: underline; }
+    .emb-result {
+      background: linear-gradient(135deg, rgba(22,163,74,.06), rgba(13,148,136,.06));
+      border: 1px solid rgba(22,163,74,.3); border-radius: 10px;
+      padding: 14px; margin-bottom: 10px; text-align: center;
+    }
+    .emb-result-score {
+      font-family: ui-monospace, monospace; font-size: 28px; font-weight: 800;
+      color: #16a34a; line-height: 1;
+    }
+    .emb-result-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="emb" id="emb">
+
+  {% if not configured %}
+  <div style="padding: 16px; text-align: center; color: #dc2626; font-size: 13px;">
+    Mail-Tester ist gerade nicht verfügbar.
+  </div>
+  {% elif rate_limited %}
+  <div style="padding: 16px; text-align: center; color: #d97706; font-size: 13px;">
+    Test-Limit erreicht. In 24h wieder verfügbar.
+  </div>
+  {% else %}
+
+  <!-- INIT-STATE -->
+  <div id="emb-init">
+    <div class="emb-brand">
+      <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+        <defs><linearGradient id="dgEmb" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient></defs>
+        <rect width="40" height="40" rx="9" fill="url(#dgEmb)"/>
+        <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
+        <circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+        <circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+        <line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/>
+      </svg>
+      <span class="brand-name">DMARC<span>Geeks</span> Mail-Tester</span>
+      <span class="badge">Gratis</span>
+    </div>
+    <h1>Wie spamig sieht deine E-Mail aus?</h1>
+    <p>Sende deine echte Mail an unsere Adresse, kriege in 30 Sek einen Score 0–10 mit SPF/DKIM/DMARC, Blacklist + Spam-Analyse.</p>
+    <button class="emb-btn" id="btn-start">📨 Test-Adresse generieren →</button>
+    <div class="emb-foot">
+      Powered by <a href="https://dmarc-geeks.ch{% if utm %}?utm_source=embed{% if utm %}&amp;{{ utm }}{% endif %}{% endif %}" target="_blank" rel="noopener">dmarc-geeks.ch</a>
+    </div>
+  </div>
+
+  <!-- WAITING-STATE -->
+  <div id="emb-waiting" style="display:none;">
+    <div class="emb-brand">
+      <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+        <defs><linearGradient id="dgEmb2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient></defs>
+        <rect width="40" height="40" rx="9" fill="url(#dgEmb2)"/>
+        <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
+        <circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+        <circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+        <line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/>
+      </svg>
+      <span class="brand-name">Mail-Tester</span>
+      <span class="badge" id="emb-token-badge">—</span>
+    </div>
+    <p style="margin-bottom:6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700;">Deine Test-Adresse</p>
+    <div class="emb-address" id="emb-address">—</div>
+    <div class="emb-actions">
+      <button type="button" id="btn-copy">📋 Kopieren</button>
+      <a id="btn-mailto" href="#">📧 Mail-Programm</a>
+    </div>
+    <div class="emb-status">
+      <div class="emb-spinner"></div>
+      <span id="emb-status-text">Worte auf eingehende Mail …</span>
+      <span class="emb-counter" id="emb-counter">0s</span>
+    </div>
+    <div class="emb-foot">
+      Token: <code id="emb-token-code">—</code> · Detail-Resultat im neuen Tab beim Eintreffen.
+    </div>
+  </div>
+
+  <!-- RESULT-STATE (kurz angeteasert, dann Redirect zum vollen Tool) -->
+  <div id="emb-result" style="display:none;">
+    <div class="emb-result">
+      <div class="emb-result-score" id="emb-score">9.5/10</div>
+      <div class="emb-result-label">Score (1-10)</div>
+    </div>
+    <a class="emb-btn" id="btn-fulldetail" target="_blank">📊 Vollständiges Resultat ansehen →</a>
+    <div class="emb-foot">
+      Bei <a href="https://dmarc-geeks.ch{% if utm %}?utm_source=embed{% if utm %}&amp;{{ utm }}{% endif %}{% endif %}" target="_blank" rel="noopener">dmarc-geeks.ch</a>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  if (window.parent !== window) {
+    // Im iframe: erlaube Parent-Window via postMessage zu wissen wann was passiert
+    window.addEventListener('error', (e) => {
+      window.parent.postMessage({source: 'dmarc-geeks-embed', type: 'error', error: e.message}, '*');
+    });
+    window.parent.postMessage({source: 'dmarc-geeks-embed', type: 'ready'}, '*');
+  }
+
+  const btnStart = document.getElementById('btn-start');
+  if (!btnStart) return;  // Tool nicht verfügbar
+
+  const initEl = document.getElementById('emb-init');
+  const waitEl = document.getElementById('emb-waiting');
+  const resultEl = document.getElementById('emb-result');
+  const addressEl = document.getElementById('emb-address');
+  const tokenBadgeEl = document.getElementById('emb-token-badge');
+  const tokenCodeEl = document.getElementById('emb-token-code');
+  const statusEl = document.getElementById('emb-status-text');
+  const counterEl = document.getElementById('emb-counter');
+  const scoreEl = document.getElementById('emb-score');
+  const fullDetailBtn = document.getElementById('btn-fulldetail');
+  const copyBtn = document.getElementById('btn-copy');
+  const mailtoBtn = document.getElementById('btn-mailto');
+
+  let currentToken = null;
+  let counterInterval = null;
+  let pollInterval = null;
+  let startedAt = null;
+
+  function notifyParent(type, payload) {
+    if (window.parent !== window) {
+      window.parent.postMessage({source: 'dmarc-geeks-embed', type, ...payload}, '*');
+    }
+  }
+
+  btnStart.addEventListener('click', async () => {
+    btnStart.disabled = true;
+    btnStart.textContent = '⏳ Generiere …';
+    try {
+      const r = await fetch('/api/mailtest/generate', { method: 'POST' });
+      if (!r.ok) {
+        btnStart.disabled = false;
+        btnStart.textContent = '📨 Test-Adresse generieren →';
+        alert('Fehler ' + r.status);
+        return;
+      }
+      const d = await r.json();
+      if (!d.ok) {
+        btnStart.disabled = false;
+        btnStart.textContent = '📨 Test-Adresse generieren →';
+        alert(d.msg || 'Fehler');
+        return;
+      }
+      currentToken = d.token;
+      startedAt = Date.now();
+      addressEl.textContent = d.address;
+      tokenBadgeEl.textContent = d.token.substring(0, 6) + '…';
+      tokenCodeEl.textContent = d.token;
+      mailtoBtn.href = 'mailto:' + d.address + '?subject=Mail-Tester%20' + d.token;
+      fullDetailBtn.href = '/mailtest/' + d.token;
+      initEl.style.display = 'none';
+      waitEl.style.display = '';
+      notifyParent('test-started', {token: d.token, address: d.address});
+
+      // Live-Counter
+      counterInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+        counterEl.textContent = elapsed < 60 ? elapsed + 's' : Math.floor(elapsed/60) + 'm ' + (elapsed%60) + 's';
+        if (elapsed === 30) statusEl.textContent = 'Mail dauert manchmal länger — Mail wirklich geschickt?';
+        if (elapsed === 90) statusEl.textContent = 'Mailclient öffnen + nochmal abschicken?';
+      }, 1000);
+
+      // Polling
+      pollInterval = setInterval(pollStatus, 3000);
+      pollStatus();
+    } catch (e) {
+      btnStart.disabled = false;
+      btnStart.textContent = '📨 Test-Adresse generieren →';
+      alert('Netzwerkfehler: ' + e.message);
+    }
+  });
+
+  async function pollStatus() {
+    if (!currentToken) return;
+    try {
+      const r = await fetch('/api/mailtest/' + currentToken + '/status', {cache:'no-store'});
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.status === 'ready') {
+        clearInterval(counterInterval);
+        clearInterval(pollInterval);
+        scoreEl.textContent = (d.score || 0).toFixed(1) + '/10';
+        waitEl.style.display = 'none';
+        resultEl.style.display = '';
+        notifyParent('test-ready', {token: currentToken, score: d.score});
+      }
+    } catch (e) {}
+  }
+
+  copyBtn?.addEventListener('click', () => {
+    navigator.clipboard.writeText(addressEl.textContent).then(() => {
+      copyBtn.textContent = '✓ kopiert';
+      setTimeout(() => copyBtn.textContent = '📋 Kopieren', 1500);
+    });
+  });
+})();
+</script>
+</body>
+</html>

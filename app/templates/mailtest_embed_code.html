@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mail-Tester einbetten · Partner · DMARC Geeks</title>
+  <meta name="description" content="Embedde unseren Mail-Tester als iframe auf deiner Website. Kostenlos, gratis Lead-Magnet für IT-Dienstleister, Agenturen und Verbände.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Mail-Tester Embed-Code · DMARC Geeks">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <a href="/mailtest">Mail-Tester</a>
+    <a href="/partner-werden">Partner werden</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<main style="max-width: 960px; margin: 0 auto; padding: 32px 20px 64px;">
+
+<div style="text-align:center; margin-bottom: 36px;">
+  <span class="eyebrow"><span class="dot-live"></span>Für Partner · kostenlos · keine Anmeldung</span>
+  <h1 style="font-size: clamp(28px, 4vw, 38px); margin: 12px 0 8px;">📦 Mail-Tester einbetten</h1>
+  <p class="lede" style="max-width: 640px; margin: 0 auto;">
+    Embed das Mail-Tester-Tool als iframe auf deiner Website. Kostenlos, gratis Lead-Magnet — gut für IT-Dienstleister, Agenturen, Verbände, MSPs.
+  </p>
+</div>
+
+<!-- Live Preview -->
+<section style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+  <div>
+    <h2 style="font-size: 18px; margin: 0 0 12px;">👁 Vorschau</h2>
+    <p class="muted small" style="margin: 0 0 14px;">So sieht's bei deinen Besuchern aus:</p>
+    <iframe src="/embed/mailtest" style="width:100%; height: 520px; border: 1px solid var(--border); border-radius: 12px; background: white;"></iframe>
+  </div>
+  <div>
+    <h2 style="font-size: 18px; margin: 0 0 12px;">🔗 Embed-Code</h2>
+    <p class="muted small" style="margin: 0 0 14px;">Diesen HTML-Code an die gewünschte Stelle auf deiner Website kopieren:</p>
+    <pre style="background: var(--surface-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: ui-monospace, monospace; font-size: 12.5px; line-height: 1.5; overflow: auto; max-height: 200px;" id="code-iframe"><code>&lt;iframe src="{{ base_url }}/embed/mailtest"
+        width="100%" height="520"
+        style="border: 0; border-radius: 12px;"
+        loading="lazy"
+        title="Mail-Tester von DMARC Geeks"&gt;
+&lt;/iframe&gt;</code></pre>
+    <button type="button" class="btn-primary" onclick="copyCode('code-iframe', this)" style="margin-top: 8px; width: 100%;">📋 iframe-Code kopieren</button>
+  </div>
+</section>
+
+<!-- Mit UTM-Parameter -->
+<section class="card">
+  <h2 style="font-size: 18px; margin: 0 0 8px;">🔍 Mit Tracking-Parameter (optional)</h2>
+  <p class="muted small">Wenn du verschiedene Embed-Stellen unterscheiden willst (z.B. Homepage vs. Blog-Post), füge ein <code>?utm</code>-Parameter dran:</p>
+  <pre style="background: var(--surface-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: ui-monospace, monospace; font-size: 12.5px; line-height: 1.5; overflow: auto;" id="code-utm"><code>&lt;iframe src="{{ base_url }}/embed/mailtest?utm=utm_source=dein-domain&amp;amp;utm_medium=blog"
+        width="100%" height="520"
+        style="border: 0; border-radius: 12px;"
+        loading="lazy"&gt;
+&lt;/iframe&gt;</code></pre>
+  <button type="button" class="btn-link" onclick="copyCode('code-utm', this)">📋 Mit-UTM-Code kopieren</button>
+</section>
+
+<!-- JavaScript-Events -->
+<section class="card">
+  <h2 style="font-size: 18px; margin: 0 0 8px;">📡 Events empfangen (JavaScript)</h2>
+  <p class="muted small" style="margin-bottom: 12px;">
+    Wenn du auf Test-Events reagieren willst (z.B. Analytics tracken, eigenes „Danke"-Modal zeigen):
+  </p>
+  <pre style="background: var(--surface-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; overflow: auto;" id="code-events"><code>&lt;script&gt;
+window.addEventListener('message', (ev) =&gt; {
+  if (ev.data?.source !== 'dmarc-geeks-embed') return;
+  switch (ev.data.type) {
+    case 'ready':
+      console.log('Mail-Tester geladen');
+      break;
+    case 'test-started':
+      console.log('User hat Test gestartet:', ev.data.token);
+      // z.B. Plausible / GA Event tracken
+      if (window.plausible) plausible('Mail-Tester Started');
+      break;
+    case 'test-ready':
+      console.log('Score eingetroffen:', ev.data.score);
+      if (window.plausible) plausible('Mail-Tester Done', { props: { score: ev.data.score } });
+      break;
+  }
+});
+&lt;/script&gt;</code></pre>
+  <button type="button" class="btn-link" onclick="copyCode('code-events', this)">📋 Event-Code kopieren</button>
+</section>
+
+<!-- WordPress / Shopify Snippets -->
+<section class="card">
+  <h2 style="font-size: 18px; margin: 0 0 14px;">🧩 Platform-spezifische Snippets</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+
+    <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+      <h3 style="margin: 0 0 6px; font-size: 14px;">📝 WordPress</h3>
+      <p class="muted small" style="margin: 0 0 8px; line-height:1.55;">In den Gutenberg-Editor → Custom-HTML-Block → iframe einfügen. Oder im Classic-Editor → Text-Tab.</p>
+    </div>
+
+    <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+      <h3 style="margin: 0 0 6px; font-size: 14px;">🛍 Shopify / Webflow</h3>
+      <p class="muted small" style="margin: 0 0 8px; line-height:1.55;">Custom Liquid (Shopify) oder Embed-Element (Webflow) → iframe-Code reinpacken. Höhe ggf. anpassen je nach Theme.</p>
+    </div>
+
+    <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+      <h3 style="margin: 0 0 6px; font-size: 14px;">⚛️ React / Next.js</h3>
+      <p class="muted small" style="margin: 0 0 8px; line-height:1.55;">iframe als JSX einfügen — selfClosing-Syntax, <code>className</code> statt <code>class</code>. Event-Listener via <code>useEffect</code>.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Partner-Programm -->
+<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(124,58,237,.06)); border: 1px solid rgba(37,99,235,.25);">
+  <h2 style="margin: 0 0 8px; color: var(--brand);">🤝 Mehr als Embed: Reseller werden</h2>
+  <p>Wenn du das Mail-Tester-Widget einbettest, hast du eine kostenlose Lead-Source. Wenn du auch <strong>den DMARC-Service als White-Label</strong> verkaufen willst — eigene Subdomain, dein Branding, deine Margen — schau dir das Partnerprogramm an:</p>
+  <p>
+    <a href="/partner-werden" class="btn-primary">→ Partnerprogramm ansehen</a>
+    <a href="/kontakt?topic=reseller-pilot" class="btn-link" style="margin-left: 8px;">Reseller-Gespräch buchen</a>
+  </p>
+</section>
+
+</main>
+
+{% include "_marketing_footer.html" %}
+
+<script>
+function copyCode(id, btn) {
+  const code = document.querySelector('#' + id + ' code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ kopiert';
+    setTimeout(() => btn.textContent = orig, 1800);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Healthcare-IT-Audit · Praxen, Therapeut·innen, Kliniken · DMARC Geeks</title>
+  <meta name="description" content="IT-Compliance-Audit für Schweizer Praxen, Psychotherapeut·innen, Zahnärzte, Kliniken. Mail-Infrastruktur + M365-Tenant + HIN-Anschluss gegen FSP/ASP/SBAP/SVNP/FMH-Vorgaben prüfen. Ab CHF 690.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Healthcare-IT-Audit · Mail & M365 für Schweizer Praxen">
+  <meta property="og:description" content="Audit für Psychotherapeuten, Ärzte, Zahnärzte: Mail-Setup + M365 gegen Verbands-Vorgaben prüfen. Inkl. HIN-Anschluss.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Healthcare IT-Compliance-Audit",
+    "name": "Mail-Infrastruktur & M365-Audit für Schweizer Healthcare",
+    "description": "IT-Compliance-Audit für Schweizer Praxen, Psychotherapeut·innen, Zahnärzte und Kliniken — Mail-Setup, M365-Tenant, HIN-Anschluss gegen Verbands-Vorgaben (FSP/ASP/SBAP/SVNP/FMH) prüfen.",
+    "areaServed": "CH",
+    "provider": {
+      "@type": "Organization",
+      "name": "DMARC Geeks",
+      "url": "https://dmarc-geeks.ch"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "690.00",
+      "priceCurrency": "CHF"
+    }
+  }
+  </script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Praxen · Psycho · Kliniken</span></a>
+        <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<section class="svc-hero" style="background: linear-gradient(135deg, rgba(22,163,74,0.05), rgba(13,148,136,0.05));">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph">⚕️</span> Service · Healthcare-IT-Audit</span>
+    <h1 class="svc-h1">Mail &amp; M365 für Schweizer Praxen.<br><span class="grad-text" style="background:linear-gradient(135deg,#16a34a,#0d9488);-webkit-background-clip:text;background-clip:text;color:transparent;">Auditiert. Konform. Sicher.</span></h1>
+    <p class="lede">Psychotherapeut·innen, Zahnarzt-Praxen, Hausärzte, Kliniken: ihr habt Patientendaten am Hals, Verbände mit konkreten IT-Vorgaben, und einen <strong>HIN-Anschluss</strong> der „läuft halt irgendwie". Wir machen ein <strong>strukturiertes IT-Audit</strong> eurer Mail-Infrastruktur + M365 — gegen die Vorgaben eures Verbandes geprüft, mit Audit-Bericht für eure Akten.</p>
+    <div class="svc-hero-cta">
+      <a href="/kontakt?topic=healthcare-audit" class="btn-primary big" style="background:linear-gradient(135deg,#16a34a,#0d9488);">Audit-Gespräch buchen</a>
+      <a href="/check" class="btn-ghost-arrow">Schnell-Check meiner Praxis-Domain <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>★ DSG-konform</strong> · CH-Datenraum</span>
+      <span class="sep">·</span>
+      <span>Festpreis ab CHF 690</span>
+      <span class="sep">·</span>
+      <span>2-4 Wochen bis Audit-Bericht</span>
+      <span class="sep">·</span>
+      <span>Remote oder vor Ort in CH</span>
+    </div>
+  </div>
+</section>
+
+<!-- Warum jetzt -->
+<section class="container-mkt">
+  <h2 class="section-h">Was die Verbände konkret fordern</h2>
+  <p class="section-sub">Drei Beispiele aus den letzten Verbands-Updates — alle adressieren <strong>Mail-Sicherheit</strong>:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🧠</div>
+      <h3>FSP / ASP / SBAP / SVNP</h3>
+      <p>Psychotherapie-Verbände fordern „angemessene Schutzmassnahmen für elektronische Kommunikation mit Patienten" — DSG Art. 8, gemäss neuem revDSG seit 09/2023. Praktisch heisst das: <strong>verschlüsselter Mailverkehr</strong>, Authentifizierung der Absender, und Schutz vor CEO-Fraud, der bei kleinen Praxen häufig zuschlägt.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🦷</div>
+      <h3>SSO (Swiss Dental Association)</h3>
+      <p>Empfehlung 2022: „Patientenkommunikation über offizielle Praxis-Adressen statt private Mailaccounts". Was niemand sagt: dafür braucht's eine ordentliche <strong>Mail-Setup</strong> mit Spam-Schutz, sonst landen Termin-Reminder im Junk und Patienten kommen nicht.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">⚕️</div>
+      <h3>FMH / mfe / Kantonsärztliche Dienste</h3>
+      <p>HIN-Anschluss für FHIR/HL7-Austausch + DSG-konformer Mailaustausch werden zunehmend Voraussetzung für e-Health-Anbindung (eMedikation, Patientendossier). <strong>Veraltete Mail-Setups</strong> blockieren die Zukunft.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Was wir prüfen -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Was wir konkret prüfen</h2>
+    <p class="section-sub">Ein vollständiger Audit-Lauf — pro Praxis ~4-8 Stunden Arbeit, danach hast du Schwarz-auf-Weiss was sitzt und was nicht.</p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📧 Mail-Infrastruktur</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>SPF, DKIM, DMARC vollständig + funktional</li>
+          <li>MX-Records korrekt + redundant</li>
+          <li>MTA-STS, TLS-RPT für strikte Verschlüsselung</li>
+          <li>Spam-Filter-Setup (rspamd/SpamAssassin/EOP)</li>
+          <li>Mail-Backup + Aufbewahrungsfristen DSG-konform</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">🛡 M365-Tenant-Härtung</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Conditional Access für Patientendaten</li>
+          <li>Mehrfaktor-Authentifizierung (MFA) erzwungen</li>
+          <li>Defender for Office 365 + Safe Links/Attachments</li>
+          <li>Audit-Logs aktiviert, Aufbewahrungs-Policy gesetzt</li>
+          <li>EOP-Regeln gegen Phishing + Impersonation</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">⚕️ HIN-Anschluss-Check</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>HIN Mail Gateway konfiguriert + zertifiziert</li>
+          <li>HIN-spezifische Mail-Adressen sauber getrennt</li>
+          <li>Routing zwischen HIN-Mail + Standard-Mail</li>
+          <li>S/MIME-Zertifikate erneuert + gültig</li>
+          <li>SMTP-Relay via HIN für Praxis-Software</li>
+        </ul>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📋 DSG-Compliance-Check</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Patientendaten-Kommunikation: was geht wohin?</li>
+          <li>Auftragsdatenverarbeitungs-Verträge (ADV) mit Cloud-Providern</li>
+          <li>Speicherort der Mails (CH/EU/USA?)</li>
+          <li>Löschkonzept für Patient·innen-Korrespondenz</li>
+          <li>Verzeichnis der Verarbeitungstätigkeiten</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Was du bekommst -->
+<section class="container-mkt">
+  <h2 class="section-h">Was du am Ende hast</h2>
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📄</div>
+      <h3>Audit-Bericht (15-25 Seiten PDF)</h3>
+      <p>Strukturierter Bericht mit Befund pro Check, Risiko-Bewertung, konkreten Handlungsempfehlungen. Geeignet für deine Akten + bei Verbandskontrolle vorlegbar.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">✅</div>
+      <h3>Priorisierter Massnahmen-Katalog</h3>
+      <p>Was muss heute, was kann nächste Woche, was ist „nice to have". Mit Aufwand-Schätzung pro Massnahme — entweder selbst umsetzbar oder als Festpreis-Paket von uns.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📞</div>
+      <h3>1h Abschluss-Gespräch</h3>
+      <p>Wir gehen den Bericht mit dir durch, beantworten Fragen, helfen Prioritäten setzen. Bei Bedarf direkt einen Slot für die Umsetzung blockieren.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pakete -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Pakete</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Praxis-Audit</h3>
+        <p class="muted small" style="margin:0 0 16px;">Einzel-Praxis · 1 Standort · ≤5 Mailboxen</p>
+        <div style="font-size:28px; font-weight:900;">CHF 690</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Komplett-Check Mail-Infrastruktur + M365</li>
+          <li>HIN-Anbindung wird gecheckt (sofern vorhanden)</li>
+          <li>Audit-Bericht 15-20 Seiten</li>
+          <li>1h Abschluss-Gespräch</li>
+        </ul>
+        <a href="/kontakt?topic=healthcare-audit&amp;package=praxis" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Buchen →</a>
+      </div>
+      <div style="background:white; border:2px solid #16a34a; border-radius:16px; padding: 28px; position: relative;">
+        <div style="position:absolute; top:-12px; left:24px; background:#16a34a; color:white; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase;">⭐ Empfohlen</div>
+        <h3 style="margin:0 0 4px;">Praxis + Umsetzung</h3>
+        <p class="muted small" style="margin:0 0 16px;">Audit + DMARC-Implementation + M365-Hardening</p>
+        <div style="font-size:28px; font-weight:900;">CHF 1990</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Alles aus Praxis-Audit</li>
+          <li>DMARC-Reise: p=none → p=quarantine → p=reject</li>
+          <li>M365 EOP + Defender konfiguriert</li>
+          <li>MFA + Conditional Access aktiviert</li>
+          <li>3 Monate Begleitung nach Go-Live</li>
+        </ul>
+        <a href="/kontakt?topic=healthcare-audit&amp;package=praxis-plus" class="btn-primary" style="margin-top:18px; display:block; text-align:center; background:linear-gradient(135deg,#16a34a,#0d9488);">Buchen →</a>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Klinik / Mehrere Standorte</h3>
+        <p class="muted small" style="margin:0 0 16px;">Multi-Standort · ≥20 Mailboxen · komplexer</p>
+        <div style="font-size:28px; font-weight:900;">ab CHF 3900</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Audit pro Standort</li>
+          <li>HIN-Architektur-Review</li>
+          <li>Mailrouting-Konzept zwischen Standorten</li>
+          <li>ISO 27001 / EPDG-Vorbereitung möglich</li>
+          <li>Individuelles Angebot nach Erstgespräch</li>
+        </ul>
+        <a href="/kontakt?topic=healthcare-audit&amp;package=klinik" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Anfragen →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="container-mkt" style="text-align:center;">
+  <p class="eyebrow"><span class="dot-live"></span>Vertraulich · DSG-konform · Schweizer Daten-Raum</p>
+  <p style="max-width:680px; margin: 14px auto 0; color:var(--muted);">
+    Wir behandeln Patientendaten nicht — unser Audit prüft <em>nur</em> die technische Infrastruktur (DNS-Records, M365-Konfiguration, HIN-Settings). Trotzdem unterzeichnen wir vor jedem Audit einen NDA + Auftragsverarbeitungs-Vertrag. Alle Reports werden in CH-Datenraum gespeichert.
+  </p>
+</section>
+
+<!-- CTA -->
+<section class="container-mkt" style="padding: 60px 0; text-align:center;">
+  <h2 style="font-size:clamp(26px, 3.5vw, 34px); margin: 0 0 14px;">Lass uns 20 Minuten reden.</h2>
+  <p style="color:var(--muted); max-width: 580px; margin: 0 auto 28px;">
+    Wir schauen kurz auf deine Praxis-Domain (gratis), erklären was wir sehen, und wenn's passt buchen wir den Audit-Termin.
+  </p>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="/kontakt?topic=healthcare-audit" class="btn-primary big" style="background:linear-gradient(135deg,#16a34a,#0d9488);">📅 Audit-Gespräch buchen</a>
+    <a href="tel:+41779503152" class="btn-link">📞 +41 77 950 31 52</a>
+  </div>
+</section>
+
+{% include '_marketing_footer.html' %}
+</body>
+</html>

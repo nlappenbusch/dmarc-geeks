@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mail-Tester für Schweizer KMU · Spam-Score 0–10 in 30 Sekunden · DMARC Geeks</title>
+  <meta name="description" content="Kostenloser Mail-Tester für Schweizer KMU: SPF, DKIM, DMARC, Spam-Score, Blacklist-Check, Header-Analyzer und Deliverability-Bewertung. Score 0–10 in 30 Sekunden — wie mail-tester.com, mit Schweizer Datenraum.">
+  <meta name="keywords" content="Mail-Tester, Spam-Score, Mail-Score, Deliverability-Check, SPF DKIM DMARC Test, E-Mail Spam-Filter Check, Mail-Header-Analyzer, Mailcheck Schweiz, mail-tester.com Alternative">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="Mail-Tester für Schweizer KMU · Spam-Score 0–10">
+  <meta property="og:description" content="Sende eine Mail an unsere Test-Adresse, kriege in 30 Sek einen detaillierten Score: SPF/DKIM/DMARC, Spam-Score, Blacklist-Check, Header-Analyzer. Kostenlos. Schweizer Datenraum.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="canonical" href="https://mail-test.ch/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Mail-Tester",
+    "applicationCategory": "EmailApplication",
+    "operatingSystem": "Any",
+    "description": "Kostenloser Mail-Tester für Spam-Score-Bewertung von E-Mails. Analysiert SPF, DKIM, DMARC, Blacklist-Status, Header und Content. Score 0-10 in unter 30 Sekunden.",
+    "url": "https://mail-test.ch/",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CHF"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "1"
+    }
+  }
+  </script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Praxen · Psycho · Kliniken</span></a>
+        <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<!-- HERO: direkt zum Tool -->
+<section class="check-hero">
+  <div class="container-mkt" style="position:relative; z-index:1;">
+    <div style="text-align:center; max-width:760px; margin: 0 auto;">
+      <span class="eyebrow"><span class="dot-live"></span>Kostenlos · 30 Sek · keine Anmeldung · Schweizer Datenraum</span>
+      <h1 style="font-size: clamp(34px, 5vw, 52px); margin: 18px 0 14px; line-height: 1.1;">
+        Wie spamig sieht <span class="grad-text">deine E-Mail</span> wirklich aus?
+      </h1>
+      <p class="lede" style="font-size: 17px; margin: 0 auto 28px;">
+        Sende eine echte Mail aus deinem Setup (Newsletter-Tool, M365, Mailcow, was auch immer) an unsere Test-Adresse — wir scoren dich in unter 30 Sekunden. <strong>SPF, DKIM, DMARC, Blacklist, Spam-Filter-Test, Header-Analyzer und Content-Check.</strong> Kostenlos.
+      </p>
+      <a href="/mailtest" class="btn-primary big" style="font-size:17px; padding: 16px 32px;">📨 Mail-Tester starten →</a>
+      <p class="muted small" style="margin-top:14px;">Keine Anmeldung. Token gilt 24h. Wir speichern die Mail nur fürs Scoring.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quick-Inline-Embed-Preview -->
+<section class="container-mkt" style="padding: 40px 0;">
+  <div style="max-width: 480px; margin: 0 auto; text-align: center;">
+    <iframe src="/embed/mailtest" style="width:100%; height: 480px; border: 1px solid var(--border); border-radius: 14px; background: white; box-shadow: 0 16px 48px -20px rgba(15,23,42,.25);" title="Mail-Tester Live"></iframe>
+    <p class="muted small" style="margin-top:10px;">↑ Live-Tool · oder <a href="/mailtest">in vollem Browser-Tab öffnen →</a></p>
+  </div>
+</section>
+
+<!-- Was wir prüfen -->
+<section class="container-mkt">
+  <h2 class="section-h">Was wir konkret prüfen</h2>
+  <p class="section-sub">15 Checks pro Mail — von der Authentifizierung bis zur HTML-Tiefen-Analyse. Wie mail-tester.com, aber mit Fokus auf Schweizer KMU + DSG-Aspekte.</p>
+
+  <div class="svc-pain-grid" style="margin-top: 24px;">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🛡</div>
+      <h3>SPF, DKIM, DMARC</h3>
+      <p>Wir prüfen ob deine Mail-Authentifizierung sauber ist. SPF mit Lookup-Counter (RFC 7208), DKIM mit Key-Length, DMARC mit Policy-Anzeige. Plus: die echten DNS-Records werden inline angezeigt.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🚦</div>
+      <h3>Blacklist-Status</h3>
+      <p>Deine Sender-IP wird gegen die wichtigsten DNSBL geprüft (Spamhaus etc.). Wenn du gelistet bist, brennen Mails. Wir sagen dir wo.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📊</div>
+      <h3>Spam-Filter-Score</h3>
+      <p>Mailcow's rspamd-Score wird ausgewertet. Du siehst exakt was der Spam-Filter denkt — von „freundlich" bis „landet im Junk".</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📨</div>
+      <h3>Header-Analyzer</h3>
+      <p>Eingebauter Header-Parser: Received-Chain mit jedem Mail-Hop, Authentication-Results, DKIM-Signature aufgeschlüsselt. Plus 1-Click „Headers kopieren" für Microsoft Header Analyzer.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🔍</div>
+      <h3>HTML-Tiefen-Analyse</h3>
+      <p>Bei HTML-Mails prüfen wir: gefährliche Tags (script/iframe/form), Image-ALT-Attribute, Short-URLs (bit.ly etc.), und das Text/HTML-Verhältnis. Alles Faktoren die Spam-Filter werten.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🌐</div>
+      <h3>Reverse-DNS (PTR)</h3>
+      <p>Plus rDNS-Domain-Match: deine Sender-IP muss zu einem Hostname auflösen, der zur Sender-Domain oder HELO-Domain passt. Strenge Empfänger (Gmail, Microsoft) bewerten das.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Wann brauchst du sowas -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Wann macht ein Mail-Tester Sinn?</h2>
+    <p class="section-sub">Typische Situationen wo Schweizer KMU testen sollten:</p>
+
+    <div class="svc-pain-grid">
+      <div class="svc-pain">
+        <div class="svc-pain-ico">📧</div>
+        <h3>Mails landen im Spam</h3>
+        <p>Kunden / Patienten / Lieferanten beklagen sich dass sie eure Mails nicht finden. Wir zeigen euch warum — meist sind's fehlende SPF/DKIM-Records oder ein zu hoher Spam-Score durch Mail-Inhalt.</p>
+      </div>
+      <div class="svc-pain">
+        <div class="svc-pain-ico">📬</div>
+        <h3>Newsletter-Versand startet</h3>
+        <p>Bevor ihr eine Liste von 500+ Adressen anschreibt: erst <strong>einen</strong> Test machen. Spart Bouncing-Reputation und teure ESP-Sanctions.</p>
+      </div>
+      <div class="svc-pain">
+        <div class="svc-pain-ico">🛍</div>
+        <h3>Online-Shop Order-Confirmation</h3>
+        <p>Wenn Order-Bestätigungen, Rechnungen oder Lieferankündigungen nicht ankommen → Kunde fragt nach, Support brennt. Test bevor du live gehst.</p>
+      </div>
+      <div class="svc-pain">
+        <div class="svc-pain-ico">⚕️</div>
+        <h3>Healthcare / Praxis-Mail</h3>
+        <p>Praxen schicken Termin-Reminders, Behandlungs-Pläne, Befunde — wenn die im Spam landen kommen Patienten nicht. Wir prüfen ob deine Mail-Setup HIN-kompatibel und DSG-konform aufgesetzt ist.</p>
+      </div>
+      <div class="svc-pain">
+        <div class="svc-pain-ico">🏛</div>
+        <h3>FINMA / Banken-Audit</h3>
+        <p>Bei FINMA-Prüfung muss Mail-Authentifizierung dokumentiert sein. Wir liefern einen schriftlichen Audit-Bericht zum Vorlegen.</p>
+      </div>
+      <div class="svc-pain">
+        <div class="svc-pain-ico">⚖️</div>
+        <h3>Phishing-Vorfall im Team</h3>
+        <p>Wenn jemand auf eine Phishing-Mail klickt: oft ist der Grund schwaches DMARC. Wir checken eure Auth-Setup und sagen euch wo's hakt.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Vergleich -->
+<section class="container-mkt">
+  <h2 class="section-h">Wie wir uns von mail-tester.com unterscheiden</h2>
+  <p class="section-sub">mail-tester.com ist ein super Tool — aber für DACH gibt's ein paar Lücken die wir füllen:</p>
+
+  <div style="overflow-x: auto; margin-top: 18px;">
+    <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="background: var(--surface-soft);">
+          <th style="padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border);">Feature</th>
+          <th style="padding: 12px 14px; text-align: center; border-bottom: 1px solid var(--border);">mail-tester.com</th>
+          <th style="padding: 12px 14px; text-align: center; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));">DMARC Geeks Mail-Tester</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Basis-Score 0-10</td><td style="text-align:center;">✓</td><td style="text-align:center; background: rgba(37,99,235,.04);">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">SPF/DKIM/DMARC inkl. DNS-Records</td><td style="text-align:center;">✓</td><td style="text-align:center; background: rgba(37,99,235,.04);">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Eingebauter Header-Analyzer</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Re-Score-Button (ohne neue Mail)</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Embedable iframe für Partner</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Schweizer Daten-Raum (DSG-konform)</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Deutsch-Sprachig + DACH-Kontext</td><td style="text-align:center; color: #94a3b8;">— (nur EN/FR)</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓</td></tr>
+        <tr><td style="padding: 10px 14px; border-bottom:1px solid var(--border);">Folge-Service für Umsetzung</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓ DMARC-Pakete ab CHF 490</td></tr>
+        <tr><td style="padding: 10px 14px;">Reseller / White-Label</td><td style="text-align:center; color: #94a3b8;">—</td><td style="text-align:center; background: rgba(37,99,235,.04); color: #16a34a; font-weight: 700;">✓ Partnerprogramm</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Häufige Fragen</h2>
+    <div style="max-width:760px; margin: 24px auto 0;">
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Was bedeutet ein Score von 9.5/10?</summary>
+        <p style="margin:12px 0 0;">9.5 heisst: deine Authentifizierung (SPF/DKIM/DMARC) ist sauber, du bist nicht auf Blacklists, dein Spam-Filter-Score ist niedrig, und der HTML-Content macht keine groben Fehler. Bei modernen Mailservern (Gmail, Outlook, Apple Mail) landest du sicher in der Inbox.</p>
+      </details>
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Mein Score ist nur 6/10. Was tun?</summary>
+        <p style="margin:12px 0 0;">Das ist der häufigste Fall — typischerweise fehlen SPF/DKIM/DMARC oder sind unvollständig. Wir zeigen dir pro Check was kaputt ist und wie du's reparierst. Optional: wir setzen das für dich um (DMARC-Pakete ab <a href="/services/dmarc">CHF 490</a>).</p>
+      </details>
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Wie unterscheidet sich das von einem DNS-Check?</summary>
+        <p style="margin:12px 0 0;">Ein DNS-Check (wie unser <a href="/check">Mail-Health-Check</a>) prüft deine DNS-Records statisch. Der Mail-Tester prüft deine <strong>echte abgesendete Mail</strong> — inkl. Spam-Filter-Score, Blacklist, Mail-Header und Content. Praktisch: erst DNS-Check (statisch), dann Mail-Tester (Live-Check). Beides kostenlos.</p>
+      </details>
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Werden meine Mails gespeichert?</summary>
+        <p style="margin:12px 0 0;">Nur für 24h und nur für's Scoring. Danach werden die Test-Mails automatisch gelöscht. Wir haben keinen Cloud-Storage in den USA — alles in CH-Datenraum. <a href="/datenschutz">Datenschutz</a>.</p>
+      </details>
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Kann ich den Mail-Tester auf meiner eigenen Website embedden?</summary>
+        <p style="margin:12px 0 0;">Ja, mit einem einzeiligen <code>&lt;iframe&gt;</code>-Snippet. Kostenlos und auch für kommerzielle Nutzung erlaubt — viele IT-Dienstleister setzen das auf ihrer Service-Seite ein. Code-Generator unter <a href="/embed/mailtest/code">/embed/mailtest/code</a>.</p>
+      </details>
+
+      <details class="card" style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-weight:700;">Wer steckt hinter dem Mail-Tester?</summary>
+        <p style="margin:12px 0 0;">Wir, <a href="/">DMARC Geeks</a> — eine Schweizer Mail-Security-Boutique mit Fokus auf KMU. Wir bieten DMARC-Setup, BIMI-Implementation, M365-Härtung und Healthcare-/FINMA-Compliance-Audits. <a href="/services">→ Services</a>.</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="container-mkt" style="padding: 56px 0; text-align:center;">
+  <h2 style="font-size:clamp(28px, 4vw, 38px); margin:0 0 14px;">📨 Bereit? Test in 30 Sek.</h2>
+  <p style="color:var(--muted); max-width: 520px; margin: 0 auto 28px;">
+    Klick auf den Button → kriegst eine Test-Adresse → schickst eine echte Mail dahin → siehst den Score.
+  </p>
+  <a href="/mailtest" class="btn-primary big" style="font-size:17px; padding:16px 36px;">Mail-Tester jetzt starten →</a>
+</section>
+
+{% include '_marketing_footer.html' %}
+</body>
+</html>

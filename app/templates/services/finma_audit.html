@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FINMA-Mail-Compliance-Audit · Banken, Versicherungen, Vermögensverwalter · DMARC Geeks</title>
+  <meta name="description" content="FINMA-Compliance-Audit der Mail-Infrastruktur für Schweizer Finanzinstitute. RS 2023/1 Operative Risiken + RS 2018/3 Outsourcing — DMARC/SPF/DKIM, M365, ISAE 3402-Vorbereitung. Ab CHF 1490.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="FINMA-Mail-Compliance-Audit · DMARC Geeks">
+  <meta property="og:description" content="Audit der Mail-Sicherheit gegen FINMA-Rundschreiben 2023/1 + 2018/3 für Schweizer Banken, Vermögensverwalter, Versicherungen.">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "FINMA-Compliance-Audit für Mail-Infrastruktur",
+    "name": "FINMA Mail-Compliance-Audit",
+    "description": "Audit der Mail-Sicherheit gegen FINMA-Rundschreiben 2023/1 (Operative Risiken) und 2018/3 (Outsourcing) für Schweizer Banken, Vermögensverwalter und Versicherungen.",
+    "areaServed": "CH",
+    "provider": { "@type": "Organization", "name": "DMARC Geeks", "url": "https://dmarc-geeks.ch" },
+    "offers": { "@type": "Offer", "price": "1490.00", "priceCurrency": "CHF" }
+  }
+  </script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Praxen · Psycho · Kliniken</span></a>
+        <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<section class="svc-hero" style="background: linear-gradient(135deg, rgba(220,38,38,0.04), rgba(245,158,11,0.04));">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph">🏛</span> Service · FINMA-Compliance-Audit</span>
+    <h1 class="svc-h1">FINMA-Audit-fest.<br><span class="grad-text" style="background:linear-gradient(135deg,#dc2626,#d97706);-webkit-background-clip:text;background-clip:text;color:transparent;">Mail-Sicherheit mit Audit-Brief.</span></h1>
+    <p class="lede">Banken, Vermögensverwalter, Versicherungs-Broker, Wertschriften-Handelshäuser: FINMA-Rundschreiben <strong>2023/1 (Operative Risiken)</strong> und <strong>2018/3 (Outsourcing)</strong> fordern explizit „Mail-Authentifizierung als Teil der ICT-Sicherheit". Wenn euer Prüfer kommt, müsst ihr DMARC + SPF + DKIM nachweisen — wir machen den Audit-Lauf inkl. <strong>Audit-Brief für ISAE-3402-Prüfung</strong>.</p>
+    <div class="svc-hero-cta">
+      <a href="/kontakt?topic=finma-audit" class="btn-primary big" style="background:linear-gradient(135deg,#dc2626,#d97706);">FINMA-Audit-Gespräch buchen</a>
+      <a href="/check" class="btn-ghost-arrow">Erst meine Firma-Domain checken <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>★ FINMA-konform</strong> · CH-Datenraum</span>
+      <span class="sep">·</span>
+      <span>Festpreis ab CHF 1490</span>
+      <span class="sep">·</span>
+      <span>Audit-Brief für Prüfer</span>
+      <span class="sep">·</span>
+      <span>3-6 Wochen bis Abschluss</span>
+    </div>
+  </div>
+</section>
+
+<!-- Was FINMA fordert -->
+<section class="container-mkt">
+  <h2 class="section-h">Was FINMA konkret fordert</h2>
+  <p class="section-sub">Die Rundschreiben sind oft vage formuliert — wir übersetzen sie in konkrete technische Massnahmen:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📜</div>
+      <h3>RS 2023/1 Operative Risiken</h3>
+      <p>Punkte zu „<strong>Cyberrisiken</strong>" (Rn 18-26) und „<strong>ICT-Sicherheit</strong>" (Rn 31): Schutz vor Identitätsdiebstahl, Phishing-Resistenz, Mail-Authentifizierung. Konkret: DMARC mit <code>p=quarantine</code> oder strenger, vollständige SPF + DKIM. Audit-Trail dokumentiert für 5 Jahre.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🤝</div>
+      <h3>RS 2018/3 Outsourcing</h3>
+      <p>Wenn ihr M365, Google Workspace oder einen externen Mailserver nutzt → Outsourcing-Tatbestand. Erfordert: <strong>ADV mit dem Anbieter</strong>, Standort des Mail-Servers dokumentiert, Recht zur Audits beim Anbieter geklärt, Exit-Strategie definiert.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📋</div>
+      <h3>ISAE 3402 Vorbereitung</h3>
+      <p>Bei ISAE-3402-Type-II-Prüfung (oft von Kunden / Banken-Partnern gefordert) gehört Mail-Sicherheit in den Scope: Authentifizierung, Verschlüsselung, Zugriffskontrolle. <strong>Audit-Bericht muss vorlagefähig sein</strong> für die Prüfgesellschaft.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Phasen-Plan -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Wie wir vorgehen</h2>
+    <p class="section-sub">Drei Phasen über typisch 4-6 Wochen — von Bestandsaufnahme bis Audit-Bericht in deiner Hand.</p>
+
+    <div class="svc-flow" aria-hidden="true">
+      <div class="svc-flow-step">
+        <div class="svc-flow-step-h">Woche 1-2</div>
+        <h4>1. Discovery + Soll-Ist-Analyse</h4>
+        <p>DNS-Records, M365-Tenant-Config, Mailrouting, ADV-Verträge inventarisieren</p>
+        <span class="arrow">→</span>
+      </div>
+      <div class="svc-flow-step">
+        <div class="svc-flow-step-h">Woche 2-4</div>
+        <h4>2. Audit + Massnahmen-Katalog</h4>
+        <p>Pro Vorgabe ein Befund, Gap-Analyse, priorisierte Empfehlungen</p>
+        <span class="arrow">→</span>
+      </div>
+      <div class="svc-flow-step">
+        <div class="svc-flow-step-h">Woche 4-6</div>
+        <h4>3. Audit-Brief + Übergabe</h4>
+        <p>Bericht 30-50 Seiten + ein Audit-Brief mit Compliance-Status pro RS-Punkt</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Was du am Ende hast -->
+<section class="container-mkt">
+  <h2 class="section-h">Was du nach 6 Wochen hast</h2>
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📑</div>
+      <h3>Audit-Bericht 30-50 Seiten</h3>
+      <p>Pro FINMA-RS-Punkt eine Befund-Zeile (compliant / partial / non-compliant). Mit Evidence-Trail: Screenshots, DNS-Lookups, Konfigurations-Exports.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">✉️</div>
+      <h3>Audit-Brief 1-Pager</h3>
+      <p>Kurz-Brief mit Compliance-Status, vorlagefähig bei Prüfgesellschaft oder Kunden-Audits. Signiert + datiert.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🛠</div>
+      <h3>Massnahmen-Plan</h3>
+      <p>Wenn Lücken: priorisierter Plan mit Aufwand, Zeitschiene, Kosten. Optional: wir setzen direkt um (als Folge-Auftrag).</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pakete -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Pakete</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">FINMA-Audit Light</h3>
+        <p class="muted small" style="margin:0 0 16px;">≤25 Mitarbeitende · 1 Domain · 1 Mail-Provider</p>
+        <div style="font-size:28px; font-weight:900;">CHF 1490</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Mail-Auth Audit (SPF/DKIM/DMARC)</li>
+          <li>M365 EOP/Defender-Setup-Review</li>
+          <li>Outsourcing-Mapping (RS 2018/3)</li>
+          <li>Audit-Bericht 30 Seiten</li>
+          <li>Audit-Brief 1-Pager</li>
+        </ul>
+        <a href="/kontakt?topic=finma-audit&amp;package=light" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Buchen →</a>
+      </div>
+      <div style="background:white; border:2px solid #dc2626; border-radius:16px; padding: 28px; position: relative;">
+        <div style="position:absolute; top:-12px; left:24px; background:#dc2626; color:white; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase;">⭐ Audit + Umsetzung</div>
+        <h3 style="margin:0 0 4px;">FINMA-Audit + Remediation</h3>
+        <p class="muted small" style="margin:0 0 16px;">Audit + DMARC-Implementation + M365-Härtung</p>
+        <div style="font-size:28px; font-weight:900;">CHF 4900</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Alles aus Audit Light</li>
+          <li>DMARC p=none → p=quarantine → p=reject</li>
+          <li>M365 Conditional Access + MFA</li>
+          <li>Audit-Log-Retention konfiguriert</li>
+          <li>3 Monate Nachbetreuung nach Go-Live</li>
+        </ul>
+        <a href="/kontakt?topic=finma-audit&amp;package=remediation" class="btn-primary" style="margin-top:18px; display:block; text-align:center; background:linear-gradient(135deg,#dc2626,#d97706);">Buchen →</a>
+      </div>
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Bank / Komplex</h3>
+        <p class="muted small" style="margin:0 0 16px;">Mehrere Mail-Domains · Multi-Provider · Custody</p>
+        <div style="font-size:28px; font-weight:900;">individuell</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Audit pro Mail-Domain</li>
+          <li>Inter-Provider-Mail-Routing</li>
+          <li>ISAE 3402 Vorbereitung</li>
+          <li>Begleitung Prüfgesellschaft</li>
+          <li>Festpreis nach Discovery</li>
+        </ul>
+        <a href="/kontakt?topic=finma-audit&amp;package=bank" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Anfragen →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="container-mkt" style="text-align:center;">
+  <p class="eyebrow"><span class="dot-live"></span>NDA standardmässig · Schweizer Daten-Raum · Vertraulich</p>
+  <p style="max-width:680px; margin: 14px auto 0; color:var(--muted);">
+    Wir prüfen <em>nur</em> technische Konfiguration, keine Kundendaten. Vor jedem Audit wird NDA + Auftragsverarbeitungs-Vertrag unterzeichnet. Alle Audit-Reports werden in CH-Datenraum gespeichert + sind ausschliesslich für den Auftraggeber bestimmt.
+  </p>
+</section>
+
+<!-- CTA -->
+<section class="container-mkt" style="padding: 60px 0; text-align:center;">
+  <h2 style="font-size:clamp(26px, 3.5vw, 34px); margin: 0 0 14px;">FINMA-Prüfer steht vor der Tür?</h2>
+  <p style="color:var(--muted); max-width: 580px; margin: 0 auto 28px;">
+    Wir machen den Audit-Lauf so dass du Mail-Authentifizierung als „compliant" auf den Tisch legen kannst — mit Audit-Brief, signiert, vorlagefähig.
+  </p>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="/kontakt?topic=finma-audit" class="btn-primary big" style="background:linear-gradient(135deg,#dc2626,#d97706);">📅 Audit-Gespräch buchen</a>
+    <a href="tel:+41779503152" class="btn-link">📞 +41 77 950 31 52</a>
+  </div>
+</section>
+
+{% include '_marketing_footer.html' %}
+</body>
+</html>
