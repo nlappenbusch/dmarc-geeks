@@ -130,13 +130,21 @@ def render_snapshot_html(domain: str, result: dict, score: dict) -> str:
 
 
 # Plain-Text-Version (Fallback fuer Reply-Threads). Mit echten Umlauten.
+# Das Thema ist zweigleisig: Mail-SICHERHEIT (Phishing-Schutz) UND
+# Mail-ZUSTELLBARKEIT (eure Mails landen in der Inbox, nicht im Spam).
+# Beides hängt an den gleichen DNS-Records (SPF / DKIM / DMARC).
 _COLD_MAIL_TEMPLATE = """Betreff: {subject}
 
 Hallo{name_part},
 
-ich habe mir heute kurz die Mail-Sicherheit von {domain} angeschaut – das mache ich für Schweizer KMU regelmässig, wenn ich auf eine Firma stosse, deren Setup ich nicht kenne.
+ich habe mir heute kurz die Mail-Sicherheit UND Zustellbarkeit von {domain} angeschaut – beides hängt an den gleichen DNS-Records (SPF/DKIM/DMARC), und ich mache das regelmässig für Schweizer KMU.
 
 {hook}
+
+Konkret betrifft das zwei Sachen gleichzeitig:
+  1. SICHERHEIT: kann jemand in eurem Namen schreiben? (Phishing-Risiko)
+  2. ZUSTELLBARKEIT: kommen EURE Mails bei Kunden, Patienten, Lieferanten an?
+     (Spam-Ordner-Problem — typisch ~5-30% Mailverlust bei kaputtem Setup)
 
 Aktueller Stand auf der Skala A bis F:
 {grade} ({score}/100)
@@ -150,7 +158,6 @@ Wir bauen sowas regelmässig für Schweizer KMU und MSPs: DMARC-Einführung ohne
 
 Liebe Grüsse aus dem Zürcher Unterland
 Nils Lappenbusch
-
 DMARC Geeks · https://dmarc-geeks.ch
 +41 77 950 31 52 · nils@dmarc-geeks.ch
 
@@ -159,15 +166,15 @@ P.S.: Falls ihr das schon auf dem Schirm habt – gerne ignorieren. Ich schreibe
 """
 
 
-# Hooks pro Grade — mit echten Umlauten, persoenlicher Ton.
+# Hooks pro Grade — beide Angles ansprechen: SICHERHEIT + ZUSTELLBARKEIT.
 # Werden mit Context-Add-Ons angereichert (rua, SPF-Lookups) wenn der
 # DNS-Check entsprechende Daten liefert.
 _HOOKS_BY_GRADE = {
-    "F": "Kurz gesagt: aktuell kann unter dem Namen <strong>{domain}</strong> aus dem Internet jeder eine E-Mail verschicken, ohne dass es als Fälschung erkennbar wäre — DMARC und SPF fehlen komplett. Das ist ein konkretes Phishing-Risiko, besonders wenn ihr Rechnungen, Mahnungen oder Lohnabrechnungen verschickt.",
-    "D": "Kurz gesagt: bei <strong>{domain}</strong> sind nur die Basics gesetzt — kein DMARC oder kein DKIM. Damit landet ihr bei strengen Empfängern (Google, Microsoft, Apple Mail) zunehmend im Spam-Ordner statt in der Inbox.",
-    "C": "Kurz gesagt: die Basis bei <strong>{domain}</strong> ist da, aber DMARC läuft noch auf „beobachten“ (p=none){rua_sniplet}. Heisst konkret: niemand bei euch sieht, wer eigentlich in eurem Namen mailt.",
-    "B": "Kurz gesagt: <strong>{domain}</strong> ist gut aufgestellt, aber 1–2 Schwächen lassen sich noch glätten. Falls ihr BIMI nutzt, würde euer Logo bei jeder Mail im Posteingang sichtbar sein — aktuell nicht.",
-    "A": "Kurz gesagt: solide Aufstellung bei <strong>{domain}</strong>. Falls ihr trotzdem mal eine zweite Meinung wollt — oder BIMI/VMC fürs Logo-neben-Mail-Branding — kein Stress, meldet euch gerne.",
+    "F": "Kurz gesagt: aktuell kann unter dem Namen <strong>{domain}</strong> aus dem Internet jeder eine E-Mail verschicken, ohne dass es als Fälschung erkennbar wäre — DMARC und SPF fehlen komplett. Und umgekehrt: <strong>eure eigenen Mails</strong> (Terminbestätigungen, Rechnungen, Mahnungen, …) landen bei Gmail/Outlook/Apple Mail zunehmend im Spam-Ordner, weil eure Domain für die nicht als „authentifizierter Absender“ erkennbar ist.",
+    "D": "Kurz gesagt: bei <strong>{domain}</strong> sind nur die Basics gesetzt — kein DMARC oder kein DKIM. Praktisch heisst das: eure eigenen Mails landen bei strengen Empfängern (Google, Microsoft, Apple Mail) zunehmend im Spam-Ordner statt in der Inbox. Typisch <strong>5-30% Zustellrate-Verlust</strong> — also Rechnungen, Termin-Bestätigungen, Newsletter die nie ankommen. Gleichzeitig ist Spoofing in eurem Namen problemlos möglich.",
+    "C": "Kurz gesagt: die Basis bei <strong>{domain}</strong> ist da, aber DMARC läuft noch auf „beobachten“ (p=none){rua_sniplet}. Heisst konkret: <strong>niemand bei euch sieht</strong>, wer in eurem Namen mailt und ob eure eigenen Mails sauber zugestellt werden. Die scharfe Policy (<code>p=quarantine</code> / <code>p=reject</code>) ist der eigentliche Schutz — ohne Reports kann man die aber nicht datengetrieben einführen.",
+    "B": "Kurz gesagt: <strong>{domain}</strong> ist gut aufgestellt, aber 1–2 Schwächen lassen sich noch glätten — und meist hängen die direkt an der Zustellbarkeit (z.B. SPF-Lookup-Count grenzwertig). Falls ihr BIMI nutzt, würde euer Logo bei jeder Mail im Posteingang sichtbar sein, was die Öffnungsrate spürbar hebt — aktuell nicht.",
+    "A": "Kurz gesagt: solide Aufstellung bei <strong>{domain}</strong> — sowohl bei Sicherheit als auch bei Zustellbarkeit. Falls ihr trotzdem mal eine zweite Meinung wollt, oder BIMI/VMC fürs Logo-neben-Mail-Branding (Öffnungsraten-Boost) — kein Stress, meldet euch gerne.",
 }
 
 
@@ -280,7 +287,7 @@ def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
                 for e in extras
             ) + "\n"
 
-    subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
+    subject = f"Mail-Sicherheit & Zustellbarkeit von {domain} — Grade {grade}"
     name_part = f" {first_name}" if first_name else ""
     return _COLD_MAIL_TEMPLATE.format(
         subject=subject, domain=domain, name_part=name_part,
@@ -337,7 +344,7 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
     actions = score.get("actions", [])
     hook = _hook_for(grade, domain, check_result, plain=False)
     color = grade_color(grade)
-    subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
+    subject = f"Mail-Sicherheit & Zustellbarkeit von {domain} — Grade {grade}"
     greeting = f"Hallo {first_name},".strip() if first_name else "Hallo zusammen,"
 
     actions_html = ""
@@ -384,7 +391,7 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
         f'<td valign="middle" style="padding:22px 26px;color:white;'
         f'font-family:-apple-system,Inter,sans-serif;">'
         f'<div style="font-size:11px;font-weight:700;text-transform:uppercase;'
-        f'letter-spacing:0.08em;opacity:0.85;margin-bottom:4px;">Mail-Sicherheits-Grade</div>'
+        f'letter-spacing:0.08em;opacity:0.85;margin-bottom:4px;">Mail-Sicherheit &amp; Zustellbarkeit</div>'
         f'<div style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px;">'
         f'<code style="font-family:inherit;background:rgba(255,255,255,.18);'
         f'padding:2px 10px;border-radius:6px;">{domain}</code></div>'
@@ -430,9 +437,22 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
 
   <p style="margin:0 0 14px 0;">{greeting}</p>
 
-  <p style="margin:0 0 14px 0;">ich habe mir heute kurz die Mail-Sicherheit von <strong>{domain}</strong> angeschaut — das mache ich für Schweizer KMU regelmässig, wenn ich auf eine Firma stosse, deren Setup ich nicht kenne.</p>
+  <p style="margin:0 0 14px 0;">ich habe mir kurz die <strong>Mail-Sicherheit</strong> und die <strong>Zustellbarkeit</strong> von <strong>{domain}</strong> angeschaut — beides hängt an den gleichen drei DNS-Records (SPF / DKIM / DMARC), und ich mache das regelmässig für Schweizer KMU.</p>
 
   <p style="margin:0 0 22px 0;">{hook}</p>
+
+  <table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 22px 0;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:10px;">
+    <tr>
+      <td style="padding:14px 18px;background:#f8fafc;border-right:1px solid #e2e8f0;width:50%;vertical-align:top;border-radius:10px 0 0 10px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#dc2626;margin-bottom:6px;">🛡 Sicherheits-Angle</div>
+        <div style="font-size:13.5px;color:#1f2937;line-height:1.55;">Kann jemand in eurem Namen Mails schreiben? Phishing-Angriffe auf Kunden / Lieferanten / Mitarbeitende.</div>
+      </td>
+      <td style="padding:14px 18px;background:#f8fafc;width:50%;vertical-align:top;border-radius:0 10px 10px 0;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#d97706;margin-bottom:6px;">📬 Zustellbarkeits-Angle</div>
+        <div style="font-size:13.5px;color:#1f2937;line-height:1.55;">Kommen <em>eure</em> Mails (Rechnungen, Termin-Bestätigungen, …) bei Gmail/Outlook/Apple Mail in der Inbox an — oder im Spam?</div>
+      </td>
+    </tr>
+  </table>
 
   {score_card}
 
@@ -449,10 +469,9 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
 
   <p style="margin:0 0 18px 0;color:#475569;font-size:13.5px;">Wir bauen sowas regelmässig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab <strong>CHF 490</strong> als Audit, ab <strong>CHF 1990</strong> als Voll-Migration. Auch als White-Label für Agenturen.</p>
 
-  <p style="margin:0 0 4px 0;">Liebe Grüsse aus dem Zürcher Unterland</p>
-  <p style="margin:0 0 18px 0;font-weight:600;">Nils Lappenbusch</p>
+  <p style="margin:0 0 18px 0;">Liebe Grüsse aus dem Zürcher Unterland</p>
 
-  <!-- Signatur-Karte -->
+  <!-- Signatur-Karte (mit Name + Kontakt — nicht extra "Nils Lappenbusch" davor) -->
   <table cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e2e8f0;padding-top:18px;margin-top:6px;width:100%;">
     <tr>
       <td valign="middle" style="padding-right:14px;width:50px;">
