@@ -207,7 +207,11 @@ def poll_mailtest_inbox() -> dict:
         err_str = str(e)
         err_lower = err_str.lower()
         hint = None
-        if "authentication" in err_lower or "login failed" in err_lower or "auth failed" in err_lower:
+        if "privacyrequired" in err_lower or "plaintext authentication disallowed" in err_lower:
+            hint = ("Mailcow lehnt Klartext-Login auf unverschlüsselter Verbindung ab (gut so!). "
+                    "Setting auf Port=993 + MAILTEST_IMAP_SSL=on stellen — impliziter SSL ist "
+                    "der Standard-Modus.")
+        elif "authentication" in err_lower or "login failed" in err_lower or "auth failed" in err_lower:
             hint = ("IMAP-Login abgelehnt. User/Passwort prüfen — meist ist's der Username "
                     "(Mailcow erwartet die volle Adresse, z.B. catch-all@mt.dmarc-geeks.ch).")
         elif "connection refused" in err_lower:
