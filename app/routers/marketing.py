@@ -528,6 +528,13 @@ def services_therapie_audit(request: Request):
                    user=None, tenant=None, active=None)
 
 
+@router.get("/services/psychotherapie-it")
+def services_psychotherapie_it(request: Request):
+    """Komplette IT-Beratung fuer Psychotherapeut*innen (PsyG, FSP/ASP/SBAP/SVNP)."""
+    return render(request, "services/psychotherapie_it.html",
+                   user=None, tenant=None, active=None)
+
+
 @router.get("/services/finma-audit")
 def services_finma_audit(request: Request):
     """FINMA-Compliance-Audit fuer Banken, Versicherungen, Vermoegensverwalter."""

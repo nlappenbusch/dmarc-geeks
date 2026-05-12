@@ -271,7 +271,23 @@ _INDUSTRY_KEYWORDS = {
         "chiropract", "ergotherap", "logopaed", "tierarzt",
         "physio",  # physio meist mit FMH-Anbindung
     ],
-    # Komplementärmedizin / Naturheilkunde / EMR/RME-Therapeut·innen
+    # Psychotherapeut·innen mit PsyG-Bewilligung (FSP/ASP/SBAP/SVNP).
+    # Eigene Kategorie weil deren IT-Bedarf umfassender ist (Anordnungsmodell,
+    # Tarpsy, Berufsgeheimnis StGB 321). Hat Vorrang vor "therapie" weil
+    # spezifischer.
+    "psychotherapie": [
+        "psychotherap", "psychotherapie", "psychologin", "psychologe",
+        "psycholog", "psychiat",
+        "tiefenpsycholog", "verhaltensther", "kvt", "systemisch",
+        "ifs", "schematherap", "tfp",
+        "fsp-", "asp-", "sbap-", "svnp-",
+        "klinpsy", "kinderpsy", "jugendpsy",
+    ],
+    # Komplementärmedizin / Naturheilkunde / EMR/RME-Therapeut·innen.
+    # WICHTIG: Reihenfolge nach healthcare und psychotherapie — wenn jemand
+    # 'praxis-zahnarzt-x.ch' hat, soll healthcare zuerst greifen.
+    # 'praxis' alleine ist hier raus (zu generisch) — sonst landen klassische
+    # Arzt-Praxen falsch in therapie. Dafuer haben wir 'heilpraxis'.
     "therapie": [
         "naturheil", "heilpraktiker", "heilpraxis", "alternativ",
         "komplementaer", "komplementär", "komplmed",
@@ -279,8 +295,6 @@ _INDUSTRY_KEYWORDS = {
         "osteopath", "kinesio", "shiatsu", "akupunktur", "akupressur",
         "craniosacral", "feldenkrais", "polarity", "reflexzonen",
         "atemtherap", "energetisch", "reiki", "bach-bluet", "bachblut",
-        "praxis", "therapie",  # Wenn "praxis"/"therapie" in domain, ist's oft EMR/RME
-        "psycho", "psychotherap", "psychologin", "psychologe",
         "hypno", "mbsr", "mindful", "achtsam", "yoga",
         "coaching", "coach.", "geist", "seele",
     ],
@@ -347,6 +361,26 @@ def _industry_cta_html(industry: str, brand_color: str = "#2563eb") -> str:
             'text-decoration:none;font-weight:600;">→ HIN-Service</a>'
             '</div></td></tr></table>'
         )
+    elif industry == "psychotherapie":
+        return (
+            '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+            'margin:14px 0 18px 0;border-collapse:separate;background:linear-gradient'
+            '(135deg, rgba(124,58,237,.05), rgba(99,102,241,.05));border:1px solid rgba(124,58,237,.3);'
+            'border-radius:12px;"><tr><td style="padding:18px 22px;">'
+            '<div style="font-weight:700;font-size:14px;color:#1f2937;margin-bottom:6px;">'
+            '🧠 Psychotherapie-Spezifikum: PsyG + Anordnungsmodell + Berufsgeheimnis</div>'
+            '<div style="color:#475569;font-size:13.5px;line-height:1.6;">'
+            'Psychotherapeut·innen mit PsyG-Bewilligung (FSP/ASP/SBAP/SVNP) haben '
+            'besondere IT-Anforderungen: <strong>Schweigepflicht nach StGB 321</strong>, '
+            '<strong>Anordnungsmodell-Korrespondenz</strong> mit Krankenkassen seit '
+            '07/2022, revDSG-Vorgaben für Therapie-Notizen, DSG-konforme Video-Sprech'
+            'stunde. Wir machen <strong>komplette IT-Begleitung</strong> für eure Praxis '
+            '— Mail, Praxis-Software, Cloud, Video, Dokumentation. Audit ab CHF 690, '
+            'Komplett-Setup ab CHF 2490.<br><br>'
+            f'<a href="https://dmarc-geeks.ch/services/psychotherapie-it" '
+            'style="color:#7c3aed;text-decoration:none;font-weight:600;">→ Psychotherapie-IT ansehen</a>'
+            '</div></td></tr></table>'
+        )
     elif industry == "therapie":
         return (
             '<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
@@ -406,6 +440,15 @@ def _industry_cta_plain(industry: str) -> str:
             "Praxen/Kliniken/Therapeut*innen haben besondere Anforderungen (HIN-Anschluss, "
             "DSG, Verband-Vorgaben). Healthcare-IT-Audit ab CHF 690.\n"
             "→ https://dmarc-geeks.ch/services/healthcare-audit\n"
+        )
+    elif industry == "psychotherapie":
+        return (
+            "\n\n🧠 Psychotherapie-IT: PsyG + Anordnungsmodell + Berufsgeheimnis\n"
+            "Psychotherapeut·innen mit PsyG-Bewilligung haben besondere Anforderungen: "
+            "Schweigepflicht nach StGB 321, Anordnungsmodell-Korrespondenz, revDSG für "
+            "Therapie-Notizen, DSG-konforme Video-Sprechstunde. Komplett-IT-Beratung "
+            "ab CHF 690 (Audit) bis CHF 2490 (Komplett-Setup).\n"
+            "→ https://dmarc-geeks.ch/services/psychotherapie-it\n"
         )
     elif industry == "therapie":
         return (

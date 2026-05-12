@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IT-Beratung für Psychotherapeut·innen · PsyG · FSP/ASP/SBAP/SVNP · DMARC Geeks</title>
+  <meta name="description" content="Umfassende IT-Beratung für Schweizer Psychotherapeut·innen: Mail-Sicherheit, Praxis-Software, Video-Sprechstunden, Cloud-Speicher, DSG-Compliance, Krankenkassen-Abrechnung im Anordnungsmodell. Ab CHF 690.">
+  <meta name="keywords" content="Psychotherapie IT Schweiz, Psychotherapeut Datenschutz, PsyG IT-Sicherheit, FSP Mail-Setup, ASP IT-Compliance, SBAP Praxis-Software, Anordnungsmodell IT, Psychotherapie Video-Sprechstunde, Psychologie DSG, Krankenkassen-Abrechnung Psychotherapie">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="IT-Beratung für Schweizer Psychotherapeut·innen">
+  <meta property="og:description" content="Mail, Praxis-Software, Video-Therapie, Cloud, DSG, Krankenkassen-Abrechnung — komplette IT-Begleitung für PsyG-Psychotherapeut·innen (FSP/ASP/SBAP/SVNP).">
+  <meta property="og:image" content="https://dmarc-geeks.ch/static/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>
+    (function() { const t = localStorage.getItem('theme');
+      if (t === 'dark') document.documentElement.classList.add('dark'); })();
+  </script>
+  <script src="/static/nav-dropdown.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "IT-Beratung und Compliance-Audit für Psychotherapeut·innen",
+    "name": "Komplette IT-Begleitung für Schweizer Psychotherapie-Praxen",
+    "description": "Umfassende IT-Beratung für PsyG-Psychotherapeut·innen in der Schweiz: Mail-Sicherheit, Praxis-Management-Software, Video-Sprechstunden, Cloud-Storage, DSG-Konformität, Krankenkassen-Korrespondenz im Anordnungsmodell. Für Verbände FSP, ASP, SBAP, SVNP.",
+    "areaServed": "CH",
+    "provider": { "@type": "Organization", "name": "DMARC Geeks", "url": "https://dmarc-geeks.ch" },
+    "offers": { "@type": "Offer", "price": "690.00", "priceCurrency": "CHF" }
+  }
+  </script>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/report-viewer"><strong>📄 XML Report Viewer</strong><span>RUA-Reports lesbar machen</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/wissen">Wissen ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/wissen"><strong>📚 Mail-Security-Wissen</strong><span>Glossar &amp; Erklärungen</span></a>
+        <a href="/blog"><strong>✍️ Blog &amp; How-Tos</strong><span>Konkrete Anleitungen</span></a>
+        <a href="/vergleich"><strong>🔬 Tool-Vergleich</strong><span>DMARC Geeks vs DMARCian, etc.</span></a>
+      </div>
+    </div>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/services">Services ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/services"><strong>Alle Services</strong><span>Übersicht</span></a>
+        <a href="/services/dmarc"><strong>📨 DMARC, SPF, DKIM</strong><span>Mail-Authentifizierung</span></a>
+        <a href="/services/bimi"><strong>🎨 BIMI + VMC</strong><span>Logo neben jeder Mail</span></a>
+        <a href="/services/m365"><strong>🛡 M365 Threat-Hardening</strong><span>EOP &amp; Defender</span></a>
+        <a href="/services/seppmail"><strong>🔐 SEPPmail</strong><span>CH-Encryption</span></a>
+        <a href="/services/hin"><strong>⚕️ HIN</strong><span>CH-Gesundheitssektor</span></a>
+        <a href="/services/healthcare-audit"><strong>🏥 Healthcare-Audit</strong><span>Zahnaerzte · Aerzte · Kliniken</span></a>
+        <a href="/services/therapie-audit"><strong>🌿 KomplMed-Audit</strong><span>Naturheilpraxis · EMR/RME</span></a>
+        <a href="/services/psychotherapie-it"><strong>🧠 Psychotherapie-IT</strong><span>PsyG · FSP/ASP · Komplett-Begleitung</span></a>
+        <a href="/services/finma-audit"><strong>🏛 FINMA-Audit</strong><span>Banken · Vermögensverwalter</span></a>
+        <a href="/partner-werden"><strong>🤝 Partner werden</strong><span>Reseller &amp; Affiliate</span></a>
+      </div>
+    </div>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/demo" class="btn-primary">🎯 Live-Demo</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+<section class="svc-hero" style="background: linear-gradient(135deg, rgba(124,58,237,0.05), rgba(99,102,241,0.04));">
+  <div class="container-mkt">
+    <p class="muted small svc-breadcrumb"><a href="/services">← alle Services</a></p>
+    <span class="eyebrow svc-eyebrow-ico"><span class="svc-eyebrow-ico-glyph">🧠</span> Service · Psychotherapie-IT-Beratung</span>
+    <h1 class="svc-h1">IT für Psychotherapie-Praxen.<br><span class="grad-text" style="background:linear-gradient(135deg,#7c3aed,#6366f1);-webkit-background-clip:text;background-clip:text;color:transparent;">Diskret. Sicher. Konform.</span></h1>
+    <p class="lede">Eidg. anerkannte Psychotherapeut·innen mit <strong>PsyG-Bewilligung</strong> (FSP, ASP, SBAP, SVNP): seit dem <strong>Anordnungsmodell 07/2022</strong> rechnet ihr direkt mit Krankenkassen ab — dafür braucht eure IT mehr als nur „funktioniert irgendwie". Wir machen <strong>komplette IT-Begleitung</strong>: Mail, Praxis-Software, Video-Sprechstunde, Cloud, DSG-Dokumentation, Schweigepflicht-konformes Setup.</p>
+    <div class="svc-hero-cta">
+      <a href="/kontakt?topic=psychotherapie-it" class="btn-primary big" style="background:linear-gradient(135deg,#7c3aed,#6366f1);">IT-Beratung anfragen</a>
+      <a href="/check" class="btn-ghost-arrow">Schnell-Check meiner Praxis-Domain <span>→</span></a>
+    </div>
+    <div class="svc-hero-meta">
+      <span><strong>★ PsyG-tauglich</strong> · revDSG-konform</span>
+      <span class="sep">·</span>
+      <span>Anordnungsmodell-ready</span>
+      <span class="sep">·</span>
+      <span>Festpreis ab CHF 690</span>
+      <span class="sep">·</span>
+      <span>1-4 Wochen Setup</span>
+    </div>
+  </div>
+</section>
+
+<!-- Warum Psychotherapie speziell ist -->
+<section class="container-mkt">
+  <h2 class="section-h">Warum Psychotherapie-IT ein eigenes Thema ist</h2>
+  <p class="section-sub">Klassische „Praxis-IT" reicht für Psychotherapeut·innen nicht — drei Gründe:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">🔐</div>
+      <h3>Berufsgeheimnis nach StGB Art. 321</h3>
+      <p>Psychotherapeut·innen sind <strong>strafrechtlich</strong> zur Schweigepflicht verpflichtet — gleicher Status wie Ärzt·innen und Anwält·innen. Wenn deine Therapie-Notizen auf einem Dropbox-Server in den USA liegen, hast du ein konkretes Problem. Wir prüfen den ganzen Datenpfad: wo speicherst du wirklich was?</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📋</div>
+      <h3>revDSG ab 09/2023 — strenger als alte Welt</h3>
+      <p>Gesundheits-Daten sind <strong>besonders schützenswerte Personendaten</strong> (revDSG Art. 5 lit. c). Heisst: Verzeichnis der Verarbeitungstätigkeiten Pflicht, Datenschutz-Folgenabschätzung bei kritischen Vorgängen (z.B. Video-Sprechstunden), Bussgelder bis CHF 250'000 (Art. 65). Die meisten Einzel-Praxen sind hier nicht sauber aufgestellt.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">💳</div>
+      <h3>Anordnungsmodell + Krankenkassen-Abrechnung</h3>
+      <p>Seit 07/2022 rechnen PsyG-Psychotherapeut·innen direkt über die Grundversicherung ab. Heisst: Korrespondenz mit Krankenkassen, Tarpsy/Tarmed-Abrechnungen, Patient·innen-Berichte. Deine <strong>Mail-Reputation</strong> entscheidet ob die Rückerstattung pünktlich kommt — oder im Spam-Ordner der KK festhängt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Was wir abdecken -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">8 IT-Bereiche die wir für dich anpacken</h2>
+    <p class="section-sub">Volle Tiefe — von der Mail bis zum Handy. Wir bauen ein Setup, das du <strong>nicht mehr selber pflegen musst</strong>.</p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 22px; margin-top: 24px;">
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📧 Mail-Setup</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Eigene Praxis-Domain (statt @gmail.com)</li>
+          <li>SPF / DKIM / DMARC sauber konfiguriert</li>
+          <li>Spam-Schutz (rspamd / EOP / Defender)</li>
+          <li>End-to-End-Verschlüsselung bei sensiblen Anhängen</li>
+          <li>Mail-Archivierung 10 Jahre (Akten-Aufbewahrungspflicht)</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📚 Praxis-Software (PMS)</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Auswahl/Evaluation: Vitomed, Pegasos, ePrax, Solutio</li>
+          <li>Migrations-Begleitung von alten Systemen</li>
+          <li>Tarpsy/Tarmed-Anbindung für Anordnungsmodell</li>
+          <li>Verschlüsselung der Therapie-Notizen</li>
+          <li>Zugriffslogs + Audit-Trail aktiviert</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">🎥 Video-Sprechstunde</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>DSG-konforme Plattform-Wahl (NICHT Zoom-Free)</li>
+          <li>Empfohlen: Jitsi self-hosted, Whereby Pro, Wire</li>
+          <li>Aufzeichnungs-Verbot durchsetzen / Konsens dokumentiert</li>
+          <li>Bandbreiten + Audio-Setup für Therapie-Qualität</li>
+          <li>Backup-Plan bei Connection-Drops</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">☁️ Cloud-Storage</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Keine US-Cloud für Patient·innen-Daten</li>
+          <li>Empfehlung: <strong>SwissDrive</strong>, <strong>kdrive</strong> (Infomaniak), <strong>Tresorit</strong></li>
+          <li>End-to-End-verschlüsselte Ordner für Therapie-Notizen</li>
+          <li>3-2-1-Backup-Regel (3 Kopien, 2 Medien, 1 offline)</li>
+          <li>Backup-Wiederherstellung getestet</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📅 Termin- &amp; Erinnerungs-Tools</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Online-Buchung DSG-konform (Calendly? Doctolib? SimplyBook?)</li>
+          <li>SMS-Reminder ohne Namens-Erwähnung</li>
+          <li>WhatsApp Business für Termin-Bestätigung → DSG-Risiko-Bewertung</li>
+          <li>Selbst-gehostete Alternative (Cal.com self-hosted)</li>
+          <li>Integration mit Praxis-Software</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">💻 Geräte-Sicherheit</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Festplatten-Verschlüsselung (BitLocker / FileVault)</li>
+          <li>MFA für alle Konten (Mail, Cloud, PMS)</li>
+          <li>Password-Manager (1Password Familie / KeePass)</li>
+          <li>Praxis-Handy mit Patient·innen-Kontakten — abgesichert</li>
+          <li>Geräte-Verlust-Plan + Remote-Wipe</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">📜 DSG-Dokumentation</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Verzeichnis der Verarbeitungstätigkeiten (revDSG-Pflicht)</li>
+          <li>Datenschutzerklärung auf Praxis-Website</li>
+          <li>Patient·innen-Einwilligung dokumentiert (Behandlungsvertrag-Anhang)</li>
+          <li>DSG-Folgenabschätzung bei Video-Therapie</li>
+          <li>Löschkonzept (10 Jahre, dann gezielt löschen)</li>
+        </ul>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:14px; padding: 22px;">
+        <div style="font-size:24px; margin-bottom: 8px;">🚨 Notfall &amp; Datenpanne</div>
+        <ul style="padding-left:20px; line-height:1.8; font-size:13.5px;">
+          <li>Notfall-Protokoll bei IT-Ausfall</li>
+          <li>Meldepflicht-Konzept revDSG Art. 24 (EDÖB)</li>
+          <li>Backup-Wiederherstellung getestet</li>
+          <li>Patient·innen-Information bei Datenpanne</li>
+          <li>Cyber-Versicherung evaluiert</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Verbände -->
+<section class="container-mkt">
+  <h2 class="section-h">Verbands-Bezug (FSP / ASP / SBAP / SVNP)</h2>
+  <p class="section-sub">Konkret was eure Verbände erwarten — auch wenn's selten in starren IT-Regeln steht:</p>
+
+  <div class="svc-pain-grid">
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📘</div>
+      <h3>FSP (Föderation Schweizer Psycholog·innen)</h3>
+      <p>Berufsordnung Art. 17-19: „Sorgfältige Aufbewahrung der Patient·innen-Akten" + „Schutz vor unbefugtem Zugriff". Konkret heisst das: verschlüsselte Speicherung, MFA, Backup-Strategie, dokumentierte Löschung. FSP-Mitglieder werden bei Verbandskontrolle gefragt.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📗</div>
+      <h3>ASP (Assoziation Schweizer Psychotherapeut·innen)</h3>
+      <p>Ethik-Codex verlangt Wahrung der Schweigepflicht „mit allen heute üblichen Mitteln" — bedeutet konkret: zeitgemässe IT-Sicherheit. Bei Beschwerden gegen Mitglieder wird die IT-Praxis mitgeprüft.</p>
+    </div>
+    <div class="svc-pain">
+      <div class="svc-pain-ico">📕</div>
+      <h3>SBAP / SVNP</h3>
+      <p>Berufsordnung mit Datenschutz-Klauseln. SVNP-Neuropsychologie-Praxen haben oft sensitivere Daten (kognitive Testresultate) — höhere IT-Anforderungen empfohlen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pakete -->
+<section class="band">
+  <div class="container-mkt">
+    <h2 class="section-h">Pakete</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 24px;">
+
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">IT-Audit Light</h3>
+        <p class="muted small" style="margin:0 0 16px;">Einzel-Praxis · Bestandsaufnahme + Empfehlungen</p>
+        <div style="font-size:28px; font-weight:900;">CHF 690</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Mail-Check (SPF/DKIM/DMARC)</li>
+          <li>PMS-Quick-Review (vorhandenes System)</li>
+          <li>Cloud-Storage-Datenpfad-Mapping</li>
+          <li>DSG-Selbst-Check-Anleitung</li>
+          <li>Audit-Bericht 10-15 Seiten</li>
+          <li>1h Abschluss-Call</li>
+        </ul>
+        <a href="/kontakt?topic=psychotherapie-it&amp;package=light" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Buchen →</a>
+      </div>
+
+      <div style="background:white; border:2px solid #7c3aed; border-radius:16px; padding: 28px; position: relative;">
+        <div style="position:absolute; top:-12px; left:24px; background:#7c3aed; color:white; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase;">⭐ Empfohlen</div>
+        <h3 style="margin:0 0 4px;">Komplett-Setup</h3>
+        <p class="muted small" style="margin:0 0 16px;">Audit + Umsetzung + 6 Monate Begleitung</p>
+        <div style="font-size:28px; font-weight:900;">CHF 2490</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Alles aus IT-Audit Light</li>
+          <li>Mail-Setup auf Praxis-Domain</li>
+          <li>Cloud-Migration auf DSG-konformen Speicher</li>
+          <li>Video-Sprechstunden-Plattform-Setup</li>
+          <li>MFA + Password-Manager überall aktiv</li>
+          <li>Verzeichnis Verarbeitungstätigkeiten erstellt</li>
+          <li>Datenschutzerklärung für Website</li>
+          <li>6 Monate Mail/Support-Begleitung</li>
+        </ul>
+        <a href="/kontakt?topic=psychotherapie-it&amp;package=komplett" class="btn-primary" style="margin-top:18px; display:block; text-align:center; background:linear-gradient(135deg,#7c3aed,#6366f1);">Buchen →</a>
+      </div>
+
+      <div style="background:white; border:1px solid var(--border); border-radius:16px; padding: 28px;">
+        <h3 style="margin:0 0 4px;">Gemeinschaftspraxis</h3>
+        <p class="muted small" style="margin:0 0 16px;">Mehrere Therapeut·innen · gemeinsames IT-Setup</p>
+        <div style="font-size:28px; font-weight:900;">ab CHF 4900</div>
+        <ul style="padding-left:18px; line-height:1.8; font-size:13.5px; margin-top:14px;">
+          <li>Audit pro Therapeut·in</li>
+          <li>Gemeinsame Praxis-Domain + getrennte Mailboxen</li>
+          <li>Geteilte PMS-Lizenz koordiniert</li>
+          <li>Zentrale DSG-Dokumentation</li>
+          <li>Praxis-Manager·in im Notfall-Plan eingebunden</li>
+          <li>Festpreis nach Discovery</li>
+        </ul>
+        <a href="/kontakt?topic=psychotherapie-it&amp;package=gemeinschaft" class="btn-primary" style="margin-top:18px; display:block; text-align:center;">Anfragen →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="container-mkt">
+  <h2 class="section-h">Häufige Fragen</h2>
+  <div style="max-width:760px; margin: 24px auto 0;">
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Brauche ich als Einzel-Therapeut·in wirklich so viel IT-Aufwand?</summary>
+      <p style="margin:12px 0 0;">Ja — revDSG gilt für alle, egal ob 1 Patient·in oder 100. Aber wir machen das skaliert: für Einzel-Praxis reichen oft 70% der Komplett-Pakete, restliche 30% wären Overkill. Im Erstgespräch klären wir was du wirklich brauchst und was unnötiger Ballast ist.</p>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Was kostet eine Datenpanne realistisch?</summary>
+      <p style="margin:12px 0 0;">Direkte Bussgelder: bis CHF 250'000 (revDSG Art. 65). Indirekte Schäden meist gravierender: Verbandsausschluss (z.B. FSP), Praxis-Bewilligungs-Probleme bei kantonsärztlichem Dienst, Reputationsschaden, Patient·innen-Klagen, Zwang zur Patient·innen-Information (Meldepflicht revDSG Art. 24). Eine professionelle IT-Setup kostet einen Bruchteil davon.</p>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Welche Video-Plattform empfehlt ihr für Online-Sprechstunden?</summary>
+      <p style="margin:12px 0 0;">Tier-1 (DSG-konform): <strong>Jitsi self-hosted</strong> in CH/EU-Datacenter, <strong>Wire</strong> (Schweiz-basiert), <strong>Whereby Pro</strong> (EU). Tier-2 (mit Vertrag möglich): <strong>Microsoft Teams</strong> mit M365 EU-DSC + ADV. Tier-3 (problematisch): <strong>Zoom Free</strong>, <strong>Google Meet Free</strong> — kein ADV, US-Server, nicht für Psychotherapie geeignet. Wir helfen bei der Auswahl + Setup.</p>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Brauche ich einen Datenschutzbeauftragten (DSB)?</summary>
+      <p style="margin:12px 0 0;">Einzelne Psychotherapeut·in: <strong>nein</strong>, kein DSB Pflicht. Gemeinschaftspraxis ab gewisser Grösse oder bei „regelmässiger und systematischer Überwachung im grossen Stil" (revDSG Art. 10): vielleicht. Wir prüfen das individuell. Falls Pflicht: wir können DSB-Funktion auch übernehmen (separates Mandat).</p>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-weight:700;">Was unterscheidet euch von einem normalen IT-Dienstleister?</summary>
+      <p style="margin:12px 0 0;">Wir kennen die <strong>Schweizer Psychotherapie-Welt</strong>: PsyG, Anordnungsmodell seit 07/2022, Tarpsy-Abrechnung, FSP/ASP/SBAP-Verbände, revDSG-Spezifika für Heilberufe, StGB Art. 321. Generische IT-Dienstleister installieren dir M365 und sind weg. Wir bauen ein Setup, das deine spezifischen Anforderungen abdeckt — und dokumentieren das so, dass du bei Verbandskontrolle Antworten parat hast.</p>
+    </details>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="container-mkt" style="padding: 60px 0; text-align:center;">
+  <h2 style="font-size:clamp(26px, 3.5vw, 34px); margin: 0 0 14px;">Lass uns 30 Min reden.</h2>
+  <p style="color:var(--muted); max-width: 580px; margin: 0 auto 28px;">
+    Kostenloses Erstgespräch — wir hören uns deine Situation an, schauen kurz auf deine Domain, und sagen dir ehrlich was du brauchst und was unnötig wäre.
+  </p>
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a href="/kontakt?topic=psychotherapie-it" class="btn-primary big" style="background:linear-gradient(135deg,#7c3aed,#6366f1);">📅 Erstgespräch buchen</a>
+    <a href="tel:+41779503152" class="btn-link">📞 +41 77 950 31 52</a>
+  </div>
+</section>
+
+{% include '_marketing_footer.html' %}
+</body>
+</html>
