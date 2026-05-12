@@ -119,8 +119,10 @@
           {% endif %}
         </td>
         <td class="small">
-          {% if lead.source == 'mailtest' %}
-            <span class="badge brand">📨 Mail-Tester</span>
+          {% if lead.source == 'mailtest-incoming' %}
+            <span class="badge brand">📨 Mail-Tester (auto)</span>
+          {% elif lead.source == 'mailtest' %}
+            <span class="badge brand">📨 Mail-Tester (unlock)</span>
           {% elif lead.source == 'snapshot-public' %}
             <span class="badge brand">📄 Snapshot</span>
           {% elif lead.source == 'crawler-batch' %}
