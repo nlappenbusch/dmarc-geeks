@@ -54,20 +54,38 @@ def poll_mailtest_inbox() -> dict:
     """Hauptfunktion: einmal pollen, alle neuen Mails einsortieren.
 
     Schedulig: alle MAILTEST_POLL_SECONDS Sekunden via APScheduler.
+    Returns dict mit checked/matched/skipped/errors UND optional error_msg
+    + error_hint fuer manuelle Diagnose im Admin-UI.
     """
     s = get_settings()
     if not s.mailtest_imap_host or not s.mailtest_domain:
         log.debug("mailtest: not configured (host=%r domain=%r)",
                   s.mailtest_imap_host, s.mailtest_domain)
-        return {"status": "not_configured"}
+        missing = []
+        if not s.mailtest_domain: missing.append("MAILTEST_DOMAIN")
+        if not s.mailtest_imap_host: missing.append("MAILTEST_IMAP_HOST")
+        return {"status": "not_configured", "checked": 0, "matched": 0,
+                 "skipped": 0, "errors": 0,
+                 "error_msg": f"Fehlende Settings: {', '.join(missing)}",
+                 "error_hint": "ENV-Vars in /admin/system → Mail-Tester-Gruppe ausfüllen + speichern."}
+    if not s.mailtest_imap_user or not s.mailtest_imap_password:
+        return {"status": "not_configured", "checked": 0, "matched": 0,
+                 "skipped": 0, "errors": 0,
+                 "error_msg": "MAILTEST_IMAP_USER oder MAILTEST_IMAP_PASSWORD fehlt.",
+                 "error_hint": "User-Form: catch-all@<MAILTEST_DOMAIN>, Passwort aus Mailcow."}
 
-    summary = {"checked": 0, "matched": 0, "skipped": 0, "errors": 0}
+    summary: dict = {"checked": 0, "matched": 0, "skipped": 0, "errors": 0,
+                      "host": s.mailtest_imap_host, "port": s.mailtest_imap_port,
+                      "user": s.mailtest_imap_user, "ssl": s.mailtest_imap_ssl}
 
     try:
         from imap_tools import AND, MailBox, MailBoxUnencrypted
     except ImportError:
         log.warning("mailtest: imap-tools not installed")
-        return {"status": "imap_tools_missing"}
+        return {"status": "imap_tools_missing", "checked": 0, "matched": 0,
+                 "skipped": 0, "errors": 1,
+                 "error_msg": "Python-Library 'imap-tools' fehlt im Container.",
+                 "error_hint": "requirements.txt prüfen + Container rebuilden."}
 
     try:
         if s.mailtest_imap_ssl:
@@ -168,7 +186,34 @@ def poll_mailtest_inbox() -> dict:
             _expire_old_tests(db)
 
     except Exception as e:  # noqa: BLE001
+        # Konkrete Diagnose-Hints fuer haeufige Fehler -- damit User im UI
+        # sofort versteht woran's lag (statt nur "1 Fehler").
+        err_str = str(e)
+        err_lower = err_str.lower()
+        hint = None
+        if "authentication" in err_lower or "login failed" in err_lower or "auth failed" in err_lower:
+            hint = ("IMAP-Login abgelehnt. User/Passwort prüfen — meist ist's der Username "
+                    "(Mailcow erwartet die volle Adresse, z.B. catch-all@mt.dmarc-geeks.ch).")
+        elif "connection refused" in err_lower:
+            hint = ("Port 993 nicht erreichbar. Firewall offen? Aus dem App-Container testen: "
+                    f"nc -zv {s.mailtest_imap_host} {s.mailtest_imap_port}")
+        elif "timed out" in err_lower or "timeout" in err_lower:
+            hint = ("Connection-Timeout. DNS resolved den IMAP-Host nicht oder Firewall blockt. "
+                    f"Aus dem App-Container: dig +short {s.mailtest_imap_host}")
+        elif "name or service" in err_lower or "no such host" in err_lower or "name resolution" in err_lower:
+            hint = (f"Hostname '{s.mailtest_imap_host}' kann nicht aufgelöst werden — "
+                    "DNS fehlt oder MAILTEST_IMAP_HOST falsch geschrieben.")
+        elif "ssl" in err_lower or "certificate" in err_lower or "tls" in err_lower:
+            hint = ("SSL/TLS-Problem. Wenn Mailcow ein Self-Signed-Cert hat: SSL-Verify "
+                    "ist in imap-tools default an. Hostname muss EXAKT zum Cert passen.")
+        elif "no such mailbox" in err_lower or "folder" in err_lower:
+            hint = (f"Folder '{s.mailtest_imap_folder}' existiert nicht. "
+                    "Default ist 'INBOX' (alle Caps).")
+        else:
+            hint = "Container-Logs der App ansehen für vollständigen Stack-Trace."
         log.warning("mailtest: poll failed: %s", e, exc_info=True)
         summary["errors"] += 1
+        summary["error_msg"] = f"{type(e).__name__}: {err_str}"
+        summary["error_hint"] = hint
 
     return summary

@@ -89,25 +89,40 @@
 (function() {
   const btn = document.getElementById('mt-poll-now-btn');
   if (!btn) return;
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   btn.addEventListener('click', async () => {
     const out = document.getElementById('mt-poll-result');
     btn.disabled = true;
-    out.textContent = 'Polle …';
+    out.innerHTML = '<span class="muted">Polle …</span>';
     try {
       const r = await fetch('/admin/system/mailtest-poll-now', { method: 'POST' });
       const j = await r.json();
-      if (j.ok && j.result) {
-        const x = j.result;
-        if (x.status === 'not_configured') {
-          out.innerHTML = '<span style="color:#d97706;">⚠ Noch nicht konfiguriert.</span>';
-        } else {
-          out.innerHTML = `<span style="color:#16a34a;">✓ ${x.checked || 0} Mails gecheckt, ${x.matched || 0} gematched, ${x.skipped || 0} skipped, ${x.errors || 0} Fehler.</span>`;
+      const x = (j && j.result) || j || {};
+      const errors = x.errors || 0;
+      const headline = errors
+        ? `<span style="color:#dc2626;">✗ ${x.checked || 0} Mails gecheckt, ${x.matched || 0} gematched, ${errors} Fehler.</span>`
+        : `<span style="color:#16a34a;">✓ ${x.checked || 0} Mails gecheckt, ${x.matched || 0} gematched, ${x.skipped || 0} skipped.</span>`;
+
+      let block = '<div>' + headline + '</div>';
+      if (x.error_msg) {
+        block += `<div style="margin-top:8px; padding:10px 12px; background:rgba(220,38,38,0.06); border-left:3px solid #dc2626; border-radius:0 6px 6px 0;">
+          <div style="font-family: ui-monospace, monospace; font-size: 12px; color: #991b1b; word-break: break-word;">${esc(x.error_msg)}</div>`;
+        if (x.error_hint) {
+          block += `<div style="margin-top:6px; font-size: 12.5px; color: #1f2937;">💡 ${esc(x.error_hint)}</div>`;
         }
-      } else {
-        out.innerHTML = '<span style="color:#dc2626;">✗ ' + (j.msg || 'Fehler') + '</span>';
+        block += '</div>';
       }
+      if (x.host) {
+        block += `<div class="muted small" style="margin-top:6px; font-family: ui-monospace, monospace; font-size: 11.5px;">Probiert: ${esc(x.user)}@${esc(x.host)}:${esc(x.port)} ${x.ssl ? '(SSL)' : '(plain)'}</div>`;
+      }
+      out.innerHTML = block;
     } catch (e) {
-      out.innerHTML = '<span style="color:#dc2626;">✗ Netzwerk-Fehler: ' + e.message + '</span>';
+      out.innerHTML = '<span style="color:#dc2626;">✗ Netzwerk-Fehler: ' + esc(e.message) + '</span>';
     } finally {
       btn.disabled = false;
     }
