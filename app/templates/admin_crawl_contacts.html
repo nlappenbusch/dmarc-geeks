@@ -92,6 +92,22 @@ const resList  = document.getElementById('results-list');
 const startBtn = document.getElementById('btn-start');
 const stopBtn  = document.getElementById('btn-stop');
 
+// Prefill aus dem Discover-Tool: wenn ?prefill=session, Domains aus sessionStorage ziehen
+(function() {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('prefill') === 'session') {
+    const data = sessionStorage.getItem('crawler_prefill');
+    if (data) {
+      const ta = document.getElementById('f-domains');
+      if (ta) ta.value = data;
+      sessionStorage.removeItem('crawler_prefill');
+      // Scroll zum Form damit User direkt sieht was passiert ist
+      ta?.focus();
+      ta?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+})();
+
 document.getElementById('crawl-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   results.length = 0;

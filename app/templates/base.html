@@ -60,9 +60,49 @@
       <a href="/reseller" class="{{ 'active' if active=='reseller' else '' }}">Reseller</a>
     {% endif %}
     {% if user.is_superadmin %}
-      <a href="/admin/tenants" class="{{ 'active' if active=='admin' else '' }}">Tenants</a>
-      <a href="/admin/leads" class="{{ 'active' if active=='leads' else '' }}">📩 Leads</a>
-      <a href="/admin/system" class="{{ 'active' if active=='admin-system' else '' }}">System</a>
+      {# === Admin-Dropdown: alle Plattform-Tools in einem Menue (Nav-Breite konsolidiert) === #}
+      <div class="nav-dropdown {{ 'active' if active in ['admin','admin-system','leads','discover'] else '' }}">
+        <button type="button" class="nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+          🛡 Admin
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5l3 3 3-3"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/admin/tenants" role="menuitem">
+            <strong>🏢 Tenants</strong>
+            <span class="muted small">Endkunden + Domains pro Mandant</span>
+          </a>
+          <a href="/admin/resellers" role="menuitem">
+            <strong>🤝 Reseller</strong>
+            <span class="muted small">MSPs + Branding pro Partner</span>
+          </a>
+          <div class="nav-dropdown-sep"></div>
+          <a href="/admin/leads" role="menuitem">
+            <strong>📩 Snapshot-Leads</strong>
+            <span class="muted small">Eingehende Anfragen + Status</span>
+          </a>
+          <a href="/admin/discover" role="menuitem">
+            <strong>🔭 Prospect-Discovery</strong>
+            <span class="muted small">Neue Domains aus Certificate-Logs</span>
+          </a>
+          <a href="/admin/crawl-contacts" role="menuitem">
+            <strong>🕷 Kontakt-Crawler</strong>
+            <span class="muted small">Emails aus Domain-Liste extrahieren</span>
+          </a>
+          <a href="/admin/batch-snapshot" role="menuitem">
+            <strong>⚡ Batch-Snapshot</strong>
+            <span class="muted small">CSV → Grade + Cold-Mail-Drafts</span>
+          </a>
+          <div class="nav-dropdown-sep"></div>
+          <a href="/admin/ingest-log" role="menuitem">
+            <strong>📜 Ingest-Log</strong>
+            <span class="muted small">Mailbox-Polling-Verlauf</span>
+          </a>
+          <a href="/admin/system" role="menuitem">
+            <strong>⚙ System</strong>
+            <span class="muted small">DNS/SMTP/Fernet-Tests, ENV</span>
+          </a>
+        </div>
+      </div>
     {% endif %}
     <div class="nav-dropdown push-right {{ 'active' if active=='generator' else '' }}">
       <button type="button" class="nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">

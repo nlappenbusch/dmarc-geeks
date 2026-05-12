@@ -24,7 +24,9 @@ from sqlalchemy.orm import Session
 from ..crawler import crawl_domain
 from ..database import get_db
 from ..dependencies import require_superadmin
-from ..dns_utils import full_dns_check, score_check
+from ..discovery import (BRANCH_PRESETS, DiscoveryError,
+                          check_dmarc_for_prospects, fetch_prospects)
+from ..dns_utils import full_dns_check, score_check, has_dmarc_record
 from ..models import LeadSnapshot, User
 from ..snapshot_render import (
     grade_color,
@@ -797,6 +799,136 @@ async def crawl_contacts_stream(
         media_type="application/x-ndjson; charset=utf-8",
         headers={
             # Wichtig: kein Buffer-Caching durch den Reverse-Proxy (NPM/nginx)
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+# ============================================================================
+# Prospect-Discovery via crt.sh (Certificate-Transparency-Logs)
+# ============================================================================
+
+@router.get("/discover")
+def discover_form(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """Form-Page fuer den Prospect-Finder."""
+    return render(
+        request, "admin_discover.html",
+        user=user, tenant=user.tenant, active="discover",
+        presets=BRANCH_PRESETS,
+    )
+
+
+@router.post("/discover/stream")
+async def discover_stream(
+    request: Request,
+    user: User = Depends(require_superadmin),
+):
+    """NDJSON-Stream: crt.sh-Query + Dedup + optionaler DMARC-Check.
+
+    Events:
+      {type:"start", total:N, keyword, tld}
+      {type:"fetch", phase:"querying"|"parsing"}
+      {type:"progress", i, total, domain, phase:"dmarc"}
+      {type:"result", domain, cert_count, sans, has_dmarc, skipped?}
+      {type:"done", total, without_dmarc, with_dmarc, skipped}
+    """
+    form = await request.form()
+    keyword = (form.get("keyword") or "").strip().lower()
+    tld = (form.get("tld") or "ch").strip().lower().lstrip(".")
+    try:
+        limit = int((form.get("limit") or "50").strip())
+    except ValueError:
+        limit = 50
+    limit = max(1, min(limit, 200))
+    check_dmarc = bool(form.get("check_dmarc"))
+    only_no_dmarc = bool(form.get("only_no_dmarc"))
+
+    def sse(obj: dict) -> str:
+        return json.dumps(obj, ensure_ascii=False) + "\n"
+
+    def generate():
+        if not keyword:
+            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                        "with_dmarc": 0, "skipped": 0,
+                        "error": "Keyword fehlt."})
+            return
+
+        # 1) crt.sh queryen (blocking, kann 5-30s dauern bei viel Daten)
+        yield sse({"type": "fetch", "phase": "querying",
+                    "msg": f"crt.sh: %{keyword}%.{tld} — kann ein paar Sekunden dauern …"})
+
+        try:
+            prospects = fetch_prospects(keyword, tld, limit=limit)
+        except DiscoveryError as e:
+            log.info("discover: source down: %s", e)
+            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                        "with_dmarc": 0, "skipped": 0,
+                        "error": str(e)})
+            return
+        except Exception as e:  # noqa: BLE001
+            log.warning("discover fetch failed", exc_info=True)
+            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                        "with_dmarc": 0, "skipped": 0,
+                        "error": f"crt.sh-Fehler: {e}"})
+            return
+
+        if not prospects:
+            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                        "with_dmarc": 0, "skipped": 0,
+                        "error": "Keine Domains gefunden. Andere Keyword-Variante probieren?"})
+            return
+
+        yield sse({"type": "start", "total": len(prospects),
+                    "keyword": keyword, "tld": tld})
+
+        without_dmarc = with_dmarc = skipped = 0
+
+        for i, p in enumerate(prospects):
+            if check_dmarc:
+                yield sse({"type": "progress", "i": i, "total": len(prospects),
+                            "domain": p.domain, "phase": "dmarc"})
+                try:
+                    p.has_dmarc = has_dmarc_record(p.domain)
+                except Exception:  # noqa: BLE001
+                    p.has_dmarc = None
+
+            # Filter "nur ohne DMARC": skip emission if has_dmarc is True
+            if check_dmarc and only_no_dmarc and p.has_dmarc is True:
+                skipped += 1
+                continue
+
+            if p.has_dmarc is True:
+                with_dmarc += 1
+            elif p.has_dmarc is False:
+                without_dmarc += 1
+
+            yield sse({
+                "type": "result",
+                "i": i,
+                "total": len(prospects),
+                "domain": p.domain,
+                "cert_count": p.cert_count,
+                "sans": p.seen_sans,
+                "has_dmarc": p.has_dmarc,
+            })
+
+        yield sse({
+            "type": "done",
+            "total": len(prospects),
+            "without_dmarc": without_dmarc,
+            "with_dmarc": with_dmarc,
+            "skipped": skipped,
+        })
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson; charset=utf-8",
+        headers={
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
