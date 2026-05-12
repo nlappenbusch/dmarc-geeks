@@ -118,7 +118,20 @@
             <span class="badge warn">⏳ offen</span>
           {% endif %}
         </td>
-        <td class="small">{{ lead.source or '—' }}{% if lead.utm_campaign %}<br><span class="muted">{{ lead.utm_campaign }}</span>{% endif %}</td>
+        <td class="small">
+          {% if lead.source == 'mailtest' %}
+            <span class="badge brand">📨 Mail-Tester</span>
+          {% elif lead.source == 'snapshot-public' %}
+            <span class="badge brand">📄 Snapshot</span>
+          {% elif lead.source == 'crawler-batch' %}
+            <span class="badge brand">🕷 Crawler</span>
+          {% elif lead.source == 'batch-admin' %}
+            <span class="badge brand">⚡ Batch</span>
+          {% else %}
+            {{ lead.source or '—' }}
+          {% endif %}
+          {% if lead.utm_campaign %}<br><span class="muted small">{{ lead.utm_campaign }}</span>{% endif %}
+        </td>
         <td><a href="/admin/leads/{{ lead.id }}" class="btn-link">öffnen →</a></td>
       </tr>
     {% endfor %}

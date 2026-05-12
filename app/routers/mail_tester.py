@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..dependencies import get_current_user as current_user_optional
-from ..models import MailTest, User
+from ..models import LeadSnapshot, MailTest, User
 from ..templating import render
 
 log = logging.getLogger(__name__)
@@ -195,6 +195,59 @@ async def unlock_detail(token: str, request: Request, db: Session = Depends(get_
     test.lead_email = email
     test.lead_email_at = datetime.now(timezone.utc)
     db.commit()
+
+    # Lead-Snapshot-Eintrag spiegeln: damit der Mail-Tester-Lead im selben
+    # Dashboard auftaucht wie Snapshot-/Crawler-Leads. Wir nutzen die
+    # Sender-Domain als "domain" — bei Test ohne Domain (z.B. wenn Worker
+    # noch nicht durch war) skippen wir das.
+    if test.sender_domain:
+        try:
+            existing = db.execute(
+                select(LeadSnapshot).where(
+                    LeadSnapshot.email == email,
+                    LeadSnapshot.domain == test.sender_domain,
+                )
+            ).scalars().first()
+            # Score 0-10 -> Grade A-F mapping (analog zum DNS-Score)
+            ml_score = test.score or 0
+            ml_grade = ("A" if ml_score >= 9 else
+                         "B" if ml_score >= 7 else
+                         "C" if ml_score >= 5 else
+                         "D" if ml_score >= 3 else "F")
+            # Top-Issue aus dem ersten failed Check
+            top_action = None
+            try:
+                bd = json.loads(test.breakdown_json or "{}")
+                for c in bd.get("checks", []):
+                    if c.get("status") in ("fail", "warn"):
+                        top_action = c.get("fix_hint") or c.get("detail")
+                        if top_action:
+                            break
+            except Exception:  # noqa: BLE001
+                pass
+
+            if existing is None:
+                lead = LeadSnapshot(
+                    email=email,
+                    domain=test.sender_domain,
+                    grade=ml_grade,
+                    score=int(round(ml_score * 10)),  # 0..100 scale
+                    top_action=top_action,
+                    source="mailtest",
+                    utm_campaign=f"mt-{test.token}",
+                    requester_ip=request.client.host if request.client else None,
+                )
+                db.add(lead)
+            else:
+                # Update: könnte es schon vom Snapshot-Form geben
+                existing.grade = ml_grade
+                existing.score = int(round(ml_score * 10))
+                if top_action and not existing.top_action:
+                    existing.top_action = top_action
+            db.commit()
+        except Exception:  # noqa: BLE001
+            log.warning("mailtest -> LeadSnapshot mirror failed", exc_info=True)
+            db.rollback()
 
     # Lead-Notify ans Operator-Postfach (haben wir Helper in marketing.py)
     try:

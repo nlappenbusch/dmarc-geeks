@@ -18,6 +18,103 @@
   </ul>
 </section>
 
+{# ============== MAIL-TESTER STATUS / SETUP-WIZARD ============== #}
+<section class="card" style="border: 1px solid {% if mt_status.configured %}rgba(22,163,74,0.3){% else %}rgba(217,119,6,0.4){% endif %}; background: {% if mt_status.configured %}rgba(22,163,74,0.04){% else %}rgba(217,119,6,0.04){% endif %};">
+  <div style="display:flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px;">
+    <h2 style="margin: 0;">📨 Mail-Tester Status</h2>
+    {% if mt_status.configured %}
+      <span class="badge ok">✓ konfiguriert</span>
+    {% else %}
+      <span class="badge warn">⚠ noch nicht konfiguriert</span>
+    {% endif %}
+  </div>
+
+  {% if mt_status.configured %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 14px 0 6px 0;">
+    <div>
+      <div class="muted small">Test-Adresse</div>
+      <code style="font-size: 12.5px;">{{ mt_status.expected_address_example }}</code>
+    </div>
+    <div>
+      <div class="muted small">IMAP-Host</div>
+      <code style="font-size: 12.5px;">{{ mt_status.imap_host }}</code>
+    </div>
+    <div>
+      <div class="muted small">Catch-All-User</div>
+      <code style="font-size: 12.5px;">{{ mt_status.imap_user }}</code>
+    </div>
+    <div>
+      <div class="muted small">Tests letzte 24h</div>
+      <div style="font-size: 20px; font-weight: 800;">{{ mt_status.tests_24h }} <span class="muted small" style="font-size: 12px; font-weight: 400;">davon {{ mt_status.received_24h }} empfangen</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+    <button type="button" id="mt-poll-now-btn" class="btn-primary">🔄 Catch-All jetzt einmal pollen</button>
+    <a href="/mailtest" target="_blank" class="btn-link">📨 Self-Test: neue Test-Adresse generieren →</a>
+    <span id="mt-poll-result" class="muted small"></span>
+  </div>
+  {% else %}
+  <p class="muted small" style="margin-top: 10px;">Sobald <code>MAILTEST_DOMAIN</code> und <code>MAILTEST_IMAP_HOST/USER/PASSWORD</code> unten gesetzt sind, taucht die Status-Box mit Live-Counter hier auf.</p>
+  {% endif %}
+
+  <details style="margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 12px;">
+    <summary style="font-size: 13.5px; font-weight: 600; cursor: pointer;">📖 Mailcow-Setup-Anleitung anzeigen</summary>
+    <div style="margin-top: 10px; font-size: 13.5px; line-height: 1.7;">
+      <p><strong>Idee:</strong> Eine Subdomain (z.B. <code>mt.dmarc-geeks.ch</code>) bekommt eine Catch-All-Mailbox in Mailcow. Die App pollt die alle paar Sekunden, matched <code>mt-{token}@mt.dmarc-geeks.ch</code> auf offene Tests, scored die Mail.</p>
+      <ol style="padding-left: 22px;">
+        <li><strong>MX-Record</strong> für <code>mt.dmarc-geeks.ch</code> auf deinen Mailcow-Host setzen.</li>
+        <li>In Mailcow: <strong>Configuration → Mail Setup → Domains → Add Domain</strong> → <code>mt.dmarc-geeks.ch</code> (Mailbox-Quota 50&nbsp;MB reicht).</li>
+        <li><strong>Mailboxes → Add Mailbox</strong>: <code>catch-all@mt.dmarc-geeks.ch</code>, Passwort kopieren.</li>
+        <li><strong>Aliases → Add Alias</strong>: Alias = <code>@mt.dmarc-geeks.ch</code> (leerer Local-Part = Catch-All), Goto = <code>catch-all@mt.dmarc-geeks.ch</code>, Active ✓.</li>
+        <li>Hier unten in der Mail-Tester-Gruppe ENV setzen:
+          <ul style="padding-left: 22px;">
+            <li><code>MAILTEST_DOMAIN</code> = <code>mt.dmarc-geeks.ch</code></li>
+            <li><code>MAILTEST_IMAP_HOST</code> = <code>mail.dmarc-geeks.ch</code> (Mailcow)</li>
+            <li><code>MAILTEST_IMAP_USER</code> = <code>catch-all@mt.dmarc-geeks.ch</code></li>
+            <li><code>MAILTEST_IMAP_PASSWORD</code> = das Passwort aus Schritt 3</li>
+            <li><code>MAILTEST_IMAP_PORT</code> = 993 · <code>SSL</code> = on</li>
+          </ul>
+        </li>
+        <li>App neu starten (oder „💾 Speichern" + 15s warten).</li>
+        <li>Hier oben <strong>„🔄 Catch-All jetzt einmal pollen"</strong> klicken → Resultat zeigt <code>{"status": "ok"}</code>.</li>
+        <li><strong>/mailtest</strong> öffnen → Test-Adresse anzeigen → Mail dahin schicken → Score erscheint.</li>
+      </ol>
+      <p class="muted small" style="margin-top: 8px;">Wenn's nicht klappt: <strong>Mailcow → Logs → Postfix</strong> öffnen — siehst du da die Test-Mail eingehen? Wenn nein, ist der MX-Record falsch. Wenn ja aber kein Score: Poll-Button hier oben drücken + Container-Logs der App ansehen.</p>
+    </div>
+  </details>
+</section>
+
+<script>
+(function() {
+  const btn = document.getElementById('mt-poll-now-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const out = document.getElementById('mt-poll-result');
+    btn.disabled = true;
+    out.textContent = 'Polle …';
+    try {
+      const r = await fetch('/admin/system/mailtest-poll-now', { method: 'POST' });
+      const j = await r.json();
+      if (j.ok && j.result) {
+        const x = j.result;
+        if (x.status === 'not_configured') {
+          out.innerHTML = '<span style="color:#d97706;">⚠ Noch nicht konfiguriert.</span>';
+        } else {
+          out.innerHTML = `<span style="color:#16a34a;">✓ ${x.checked || 0} Mails gecheckt, ${x.matched || 0} gematched, ${x.skipped || 0} skipped, ${x.errors || 0} Fehler.</span>`;
+        }
+      } else {
+        out.innerHTML = '<span style="color:#dc2626;">✗ ' + (j.msg || 'Fehler') + '</span>';
+      }
+    } catch (e) {
+      out.innerHTML = '<span style="color:#dc2626;">✗ Netzwerk-Fehler: ' + e.message + '</span>';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+
 <div class="sys-grid">
 
   <!-- ============== EDITOR ============== -->

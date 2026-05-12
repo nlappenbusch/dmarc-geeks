@@ -406,10 +406,14 @@ def ingest_log(request: Request, user: User = Depends(require_superadmin), db: S
 # ========== SYSTEM / .env-Editor ==========
 
 @router.get("/system")
-def system_panel(request: Request, user: User = Depends(require_superadmin)):
+def system_panel(request: Request, user: User = Depends(require_superadmin),
+                  db: Session = Depends(get_db)):
     """Show .env editor + test buttons. Only superadmin."""
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import func
     from ..env_file import EDITABLE_FIELDS, read_env, is_sensitive, mask_value, _env_path
     from ..config import get_settings
+    from ..models import MailTest
     env = read_env()
     settings = get_settings()
     fields = []
@@ -427,8 +431,43 @@ def system_panel(request: Request, user: User = Depends(require_superadmin)):
     for f in fields:
         groups.setdefault(f["group"], []).append(f)
 
+    # Mail-Tester Health-Stats: konfiguriert? letzte 24h Test-Counts?
+    now = datetime.now(timezone.utc)
+    mt_24h = db.execute(
+        select(func.count(MailTest.id)).where(MailTest.created_at >= now - timedelta(hours=24))
+    ).scalar() or 0
+    mt_received_24h = db.execute(
+        select(func.count(MailTest.id)).where(
+            MailTest.received_at.is_not(None),
+            MailTest.received_at >= now - timedelta(hours=24),
+        )
+    ).scalar() or 0
+    mt_status = {
+        "configured": bool(settings.mailtest_domain and settings.mailtest_imap_host),
+        "domain": settings.mailtest_domain,
+        "imap_host": settings.mailtest_imap_host,
+        "imap_user": settings.mailtest_imap_user,
+        "tests_24h": mt_24h,
+        "received_24h": mt_received_24h,
+        "expected_address_example": f"mt-abc123@{settings.mailtest_domain}" if settings.mailtest_domain else "—",
+    }
+
     return render(request, "admin_system.html", user=user, tenant=user.tenant,
-                  groups=groups, env_path=str(_env_path()), settings=settings, active="admin-system")
+                  groups=groups, env_path=str(_env_path()), settings=settings,
+                  active="admin-system", mt_status=mt_status)
+
+
+@router.post("/system/mailtest-poll-now")
+def mailtest_poll_now(user: User = Depends(require_superadmin)):
+    """Manueller Poll-Trigger: einmal die Catch-All-Mailbox checken.
+    Praktisch um nach Mailcow-Setup zu validieren ohne 15s warten zu müssen."""
+    from fastapi.responses import JSONResponse
+    from ..mt_worker import poll_mailtest_inbox
+    try:
+        result = poll_mailtest_inbox()
+        return JSONResponse({"ok": True, "result": result})
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"ok": False, "msg": f"Poll-Fehler: {e}"}, status_code=500)
 
 
 @router.post("/system")
