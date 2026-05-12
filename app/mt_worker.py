@@ -78,6 +78,22 @@ def poll_mailtest_inbox() -> dict:
                       "host": s.mailtest_imap_host, "port": s.mailtest_imap_port,
                       "user": s.mailtest_imap_user, "ssl": s.mailtest_imap_ssl}
 
+    # Sanity-Check fuer den haeufigsten Konfig-Fehler: Port 993 ist SSL-only,
+    # Port 143 ist STARTTLS oder plain. Wenn die Kombi nicht passt, fail fast
+    # mit klarer Meldung statt 25s Timeout.
+    if s.mailtest_imap_port == 993 and not s.mailtest_imap_ssl:
+        summary["errors"] = 1
+        summary["error_msg"] = "Config-Fehler: Port 993 + SSL=off"
+        summary["error_hint"] = ("Port 993 ist der SSL-Port — ohne SSL gibt's nur Timeout. "
+                                  "Setting 'MAILTEST_IMAP_SSL' aktivieren ✓ und speichern.")
+        return summary
+    if s.mailtest_imap_port == 143 and s.mailtest_imap_ssl:
+        summary["errors"] = 1
+        summary["error_msg"] = "Config-Fehler: Port 143 + SSL=on"
+        summary["error_hint"] = ("Port 143 ist plain/STARTTLS, nicht reines SSL. "
+                                  "Entweder Port auf 993 (mit SSL) oder SSL deaktivieren (STARTTLS).")
+        return summary
+
     try:
         from imap_tools import AND, MailBox, MailBoxUnencrypted
     except ImportError:
