@@ -59,22 +59,61 @@
     .mt-step h4 { margin: 0 0 4px; font-size: 14px; }
     .mt-step p { margin: 0; color: var(--muted, #64748b); font-size: 13px; line-height: 1.55; }
 
+    /* ============== WAIT-COUNTER (mail-tester.com-Style) ============== */
     .mt-waiting {
-      margin: 24px 0; padding: 20px; text-align: center;
-      background: linear-gradient(135deg, rgba(245,158,11,0.07), rgba(245,158,11,0.04));
-      border: 1px solid rgba(245,158,11,0.25); border-radius: 10px;
+      margin: 24px 0; padding: 24px; text-align: center;
+      background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(124,58,237,0.04));
+      border: 1px solid rgba(37,99,235,0.25); border-radius: 14px;
+      position: relative; overflow: hidden;
     }
-    .mt-waiting .pulse {
-      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
-      background: #f59e0b; margin-right: 8px; vertical-align: -1px;
-      animation: mtPulse 1.4s ease-in-out infinite;
+    .mt-wait-status {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 17px; color: var(--text, #0f172a);
+      margin-bottom: 6px;
     }
-    @keyframes mtPulse {
-      0%,100% { transform: scale(1); opacity: .7; }
-      50% { transform: scale(1.4); opacity: 1; }
+    .mt-wait-spinner {
+      width: 22px; height: 22px; border: 3px solid rgba(37,99,235,0.18);
+      border-top-color: var(--brand, #2563eb); border-radius: 50%;
+      animation: mtSpin 0.9s linear infinite; flex-shrink: 0;
     }
-    .mt-waiting-text { color: #92400e; font-weight: 600; margin: 0; }
-    .mt-waiting-sub { color: var(--muted, #64748b); font-size: 13px; margin: 4px 0 0; }
+    @keyframes mtSpin { to { transform: rotate(360deg); } }
+    .mt-wait-counter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 28px; font-weight: 800;
+      color: var(--brand, #2563eb);
+      margin: 6px 0 4px; line-height: 1;
+    }
+    .mt-wait-counter-label { font-size: 12px; color: var(--muted, #64748b); text-transform: uppercase; letter-spacing: .04em; }
+    .mt-wait-bar {
+      width: 100%; height: 4px; background: rgba(37,99,235,0.1);
+      border-radius: 2px; margin: 14px 0 16px; overflow: hidden; position: relative;
+    }
+    .mt-wait-bar-fill {
+      position: absolute; top: 0; left: 0; height: 100%;
+      background: linear-gradient(90deg, var(--brand, #2563eb), #7c3aed);
+      width: 0%; transition: width .5s ease;
+    }
+    .mt-wait-log {
+      text-align: left; background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 8px; padding: 10px 14px; font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px; line-height: 1.6; color: var(--text, #0f172a);
+      max-height: 140px; overflow: auto;
+      margin-top: 12px;
+    }
+    .mt-wait-log-line { padding: 2px 0; }
+    .mt-wait-log-line .mt-wait-time { color: var(--muted, #64748b); margin-right: 6px; }
+    .mt-wait-log-line.ok::before { content: '✓ '; color: #16a34a; }
+    .mt-wait-log-line.info::before { content: '· '; color: var(--brand, #2563eb); }
+    .mt-wait-log-line.warn::before { content: '! '; color: #d97706; }
+    .mt-wait-log-line.ready::before { content: '🎉 '; }
+
+    .mt-wait-sub { color: var(--muted, #64748b); font-size: 13px; margin: 8px 0 0; }
+    .mt-waiting.success {
+      background: linear-gradient(135deg, rgba(22,163,74,0.08), rgba(13,148,136,0.06));
+      border-color: rgba(22,163,74,0.4);
+    }
+    .mt-waiting.success .mt-wait-counter { color: #16a34a; }
+    .mt-waiting.success .mt-wait-bar-fill { background: linear-gradient(90deg, #22c55e, #16a34a); width: 100% !important; }
 
     .mt-tip {
       background: var(--card, #f8fafc); border-left: 3px solid var(--brand, #2563eb);
@@ -100,7 +139,7 @@
         <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
         <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
         <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
-        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Score 0–10 für deine echte Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
         <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
         <a href="/dkim-check"><strong>🔑 DKIM Inspector</strong><span>Selektoren auflisten + validieren</span></a>
         <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
@@ -191,8 +230,18 @@
       </div>
 
       <div class="mt-waiting" id="mt-waiting">
-        <p class="mt-waiting-text"><span class="pulse"></span>Warte auf deine Mail …</p>
-        <p class="mt-waiting-sub">Diese Seite aktualisiert sich automatisch — du musst nichts tun. Token-ID: <code>{{ token }}</code></p>
+        <div class="mt-wait-status" id="mt-wait-status">
+          <div class="mt-wait-spinner" id="mt-wait-spinner"></div>
+          <span id="mt-wait-headline">Warte auf deine Mail …</span>
+        </div>
+        <div class="mt-wait-counter" id="mt-wait-counter">0s</div>
+        <div class="mt-wait-counter-label" id="mt-wait-counter-label">vergangen seit Adresse generiert</div>
+
+        <div class="mt-wait-bar"><div class="mt-wait-bar-fill" id="mt-wait-bar-fill"></div></div>
+
+        <div class="mt-wait-log" id="mt-wait-log"></div>
+
+        <p class="mt-wait-sub">Token-ID: <code>{{ token }}</code> · Diese Seite leitet automatisch weiter sobald die Mail bei uns ist.</p>
       </div>
 
       <div class="mt-tip">
@@ -219,15 +268,84 @@ function copyAddr() {
 }
 
 const TOKEN = "{{ token }}";
+const STARTED_AT = Date.now();
+
+// Eingangs-Activity-Log
+const logEl = document.getElementById('mt-wait-log');
+function logLine(msg, kind) {
+  const div = document.createElement('div');
+  div.className = 'mt-wait-log-line ' + (kind || 'info');
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2, '0');
+  const mm = String(t.getMinutes()).padStart(2, '0');
+  const ss = String(t.getSeconds()).padStart(2, '0');
+  div.innerHTML = `<span class="mt-wait-time">${hh}:${mm}:${ss}</span>${msg}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// Initial-Logs
+logLine('Test-Adresse generiert: <code>{{ address }}</code>', 'ok');
+logLine('Warte auf eingehende Mail an dieser Adresse …', 'info');
+
+// Live-Counter (Sekunden seit Start)
+const counterEl = document.getElementById('mt-wait-counter');
+const counterLabel = document.getElementById('mt-wait-counter-label');
+const barEl = document.getElementById('mt-wait-bar-fill');
+const headlineEl = document.getElementById('mt-wait-headline');
+const waitingEl = document.getElementById('mt-waiting');
+const spinnerEl = document.getElementById('mt-wait-spinner');
+
+let elapsed = 0;
+const counterInterval = setInterval(() => {
+  elapsed = Math.floor((Date.now() - STARTED_AT) / 1000);
+  counterEl.textContent = elapsed < 60 ? elapsed + 's' : Math.floor(elapsed/60) + 'min ' + (elapsed%60) + 's';
+  // Progress-Bar: ~80% nach 60s (typische Wartezeit 15-30s), 95% nach 120s,
+  // füllt aber nie zu 100% bevor wirklich Mail da ist
+  const progress = Math.min(95, (elapsed / 60) * 80);
+  barEl.style.width = progress + '%';
+
+  // Headline-Updates fuer Geduld
+  if (elapsed === 5) logLine('Worker pollt Catch-All-Mailbox alle 15s — kann kurz dauern …', 'info');
+  if (elapsed === 20) logLine("Mailcow-Postfix-Queue + Gmail/Outlook brauchen manchmal 30-60s …", 'info');
+  if (elapsed === 45) {
+    logLine('Noch keine Mail eingegangen — Mailclient offen + Mail wirklich abgeschickt?', 'warn');
+    headlineEl.textContent = 'Hat der Mailclient wirklich verschickt?';
+  }
+  if (elapsed === 90) {
+    logLine('Nach 90s ungewöhnlich — MX-Record evtl. nicht propagiert, oder Mail im Spam beim Provider?', 'warn');
+  }
+  if (elapsed === 180) {
+    headlineEl.textContent = 'Längere Wartezeit als üblich';
+    logLine('Wenn nach 3 min nichts: Adresse nochmal kopieren, frischer Versuch oder andere Adresse aus /mailtest holen.', 'warn');
+  }
+}, 1000);
+
+// Pro Poll: minimaler Log-Eintrag
+let pollCount = 0;
 let pollInterval;
 async function poll() {
   try {
+    pollCount++;
+    if (pollCount === 1 || pollCount % 5 === 0) {
+      logLine(`Poll #${pollCount}: kein neues Resultat`, 'info');
+    }
     const r = await fetch(`/api/mailtest/${TOKEN}/status`, {cache: 'no-store'});
     if (!r.ok) return;
     const d = await r.json();
     if (d.status === 'ready') {
+      // Success-State zeigen, dann weiterleiten
       clearInterval(pollInterval);
-      window.location.href = `/mailtest/${TOKEN}`;
+      clearInterval(counterInterval);
+      waitingEl.classList.add('success');
+      spinnerEl.style.borderTopColor = '#16a34a';
+      headlineEl.textContent = '✓ Mail erhalten, Score berechnet!';
+      counterLabel.textContent = 'fertig — leite weiter …';
+      logLine('Mail eingegangen + gescored — leite auf Resultat …', 'ready');
+      barEl.style.width = '100%';
+      setTimeout(() => {
+        window.location.href = `/mailtest/${TOKEN}`;
+      }, 1200);
     }
   } catch (e) { /* swallow, will retry */ }
 }
