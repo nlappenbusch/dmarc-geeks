@@ -20,18 +20,23 @@ from .models import MailTest
 log = logging.getLogger(__name__)
 
 
-_TOKEN_LOCAL_RE = re.compile(r"^([A-Za-z0-9_-]{4,32})(?:\+.*)?$")
+# Adresse hat die Form 'mt-<token>@<domain>' -- _format_address() in
+# routers/mail_tester.py legt das so an. Plus-Adressing tolerieren wir
+# (mt-XXX+sub@... funktioniert genauso) damit User die Adresse z.B. fuer
+# Filter-Tags benutzen kann.
+_TOKEN_LOCAL_RE = re.compile(r"^mt-([A-Za-z0-9]{4,32})(?:\+.*)?$", re.IGNORECASE)
 
 
 def _extract_token(addr: str, domain: str) -> Optional[str]:
-    """E-Mail-Adresse <token>@<domain> → token. Plus-Adressing-tolerant."""
+    """E-Mail-Adresse 'mt-<token>@<domain>' → '<token>' (ohne Prefix).
+    Plus-Adressing-tolerant. Returns None wenn Adresse nicht zum Pattern passt."""
     if not addr or "@" not in addr:
         return None
     local, dom = addr.rsplit("@", 1)
     if dom.lower() != domain.lower():
         return None
-    m = _TOKEN_LOCAL_RE.match(local)
-    return m.group(1) if m else None
+    m = _TOKEN_LOCAL_RE.match(local.strip())
+    return m.group(1).lower() if m else None
 
 
 def _expire_old_tests(db) -> int:
