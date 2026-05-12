@@ -19,7 +19,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -273,6 +273,70 @@ async def unlock_detail(token: str, request: Request, db: Session = Depends(get_
         log.warning("mailtest unlock notify failed: %s", e)
 
     return JSONResponse({"ok": True, "redirect": f"/mailtest/{test.token}"})
+
+
+# ============================================================================
+# Header-Helpers + Re-Score-Endpoint
+# ============================================================================
+
+@router.get("/mailtest/{token}/headers")
+def headers_raw(token: str, db: Session = Depends(get_db),
+                  user: User | None = Depends(current_user_optional)):
+    """Liefert NUR die Mail-Headers (alles vor der ersten Leerzeile) als
+    text/plain — direkt copyable für Microsoft Message Header Analyzer
+    (https://mha.azurewebsites.net/) oder Tools wie mail-tester."""
+    test = db.execute(select(MailTest).where(MailTest.token == token)).scalars().first()
+    if test is None:
+        raise HTTPException(status_code=404, detail="Test nicht gefunden.")
+    # Gating: anonyme User dürfen nur Headers sehen wenn Email-Gate durch
+    if not user and not test.lead_email:
+        raise HTTPException(status_code=403, detail="Detail-Report erst nach Email-Eingabe.")
+    if not test.raw_email:
+        raise HTTPException(status_code=404, detail="Mail-Body nicht gespeichert.")
+
+    # Header = alles bis zur ersten Leerzeile. RFC 5322.
+    raw = test.raw_email
+    # Behandle sowohl \r\n als auch \n (rspamd liefert manchmal nur LF)
+    sep_rn = "\r\n\r\n"
+    sep_n = "\n\n"
+    if sep_rn in raw:
+        headers = raw.split(sep_rn, 1)[0]
+    elif sep_n in raw:
+        headers = raw.split(sep_n, 1)[0]
+    else:
+        headers = raw
+    return PlainTextResponse(headers, media_type="text/plain; charset=utf-8")
+
+
+@router.post("/mailtest/{token}/rescore")
+def rescore(token: str, db: Session = Depends(get_db),
+              user: User | None = Depends(current_user_optional)):
+    """Re-Score die gespeicherte Roh-Mail mit der aktuellen Scoring-Logik.
+    Praktisch wenn wir den Scorer verbessert haben und der User den neuen
+    Score sehen will ohne nochmal eine Mail zu schicken."""
+    test = db.execute(select(MailTest).where(MailTest.token == token)).scalars().first()
+    if test is None:
+        raise HTTPException(status_code=404, detail="Test nicht gefunden.")
+    if not test.raw_email:
+        raise HTTPException(status_code=404, detail="Mail-Body nicht gespeichert.")
+
+    from ..mt_scorer import score_email
+    try:
+        breakdown = score_email(test.raw_email)
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"ok": False, "error": f"Re-Score fehlgeschlagen: {e}"}, status_code=500)
+
+    if test.received_at:
+        breakdown.received_at_utc = test.received_at.isoformat(timespec="seconds")
+    test.subject = (breakdown.subject or "")[:998]
+    test.sender_email = breakdown.sender_email
+    test.sender_ip = breakdown.sender_ip
+    test.sender_domain = breakdown.sender_domain
+    test.score = breakdown.total
+    test.breakdown_json = breakdown.to_json()
+    db.commit()
+
+    return JSONResponse({"ok": True, "redirect": f"/mailtest/{test.token}?rescored=1"})
 
 
 # Convenience: kurze /mt-Adresse als Server-Side 301 -> mailtest.dmarc-geeks.ch
