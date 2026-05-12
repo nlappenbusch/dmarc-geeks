@@ -24,8 +24,9 @@ from sqlalchemy.orm import Session
 from ..crawler import crawl_domain
 from ..database import get_db
 from ..dependencies import require_superadmin
-from ..discovery import (BRANCH_PRESETS, DiscoveryError,
-                          check_dmarc_for_prospects, fetch_prospects)
+from ..discovery import (BRANCH_PRESETS, SWISS_CANTONS, DiscoveryError,
+                          check_dmarc_for_prospects, fetch_crtsh_prospects,
+                          fetch_osm_prospects, get_preset)
 from ..dns_utils import full_dns_check, score_check, has_dmarc_record
 from ..models import LeadSnapshot, User
 from ..snapshot_render import (
@@ -819,7 +820,7 @@ def discover_form(
     return render(
         request, "admin_discover.html",
         user=user, tenant=user.tenant, active="discover",
-        presets=BRANCH_PRESETS,
+        presets=BRANCH_PRESETS, cantons=SWISS_CANTONS,
     )
 
 
@@ -828,16 +829,23 @@ async def discover_stream(
     request: Request,
     user: User = Depends(require_superadmin),
 ):
-    """NDJSON-Stream: crt.sh-Query + Dedup + optionaler DMARC-Check.
+    """NDJSON-Stream: OSM- oder crt.sh-Query + optionaler DMARC-Check.
+
+    source: "osm" (default) oder "crtsh"
+    - osm  -> braucht preset_key + optional canton
+    - crtsh -> braucht keyword + tld
 
     Events:
-      {type:"start", total:N, keyword, tld}
-      {type:"fetch", phase:"querying"|"parsing"}
+      {type:"fetch", msg}
+      {type:"start", total, source}
       {type:"progress", i, total, domain, phase:"dmarc"}
-      {type:"result", domain, cert_count, sans, has_dmarc, skipped?}
-      {type:"done", total, without_dmarc, with_dmarc, skipped}
+      {type:"result", domain, company_name, phone, city, has_dmarc, ...}
+      {type:"done", total, without_dmarc, with_dmarc, skipped, error?}
     """
     form = await request.form()
+    source = (form.get("source") or "osm").strip().lower()
+    preset_key = (form.get("preset_key") or "").strip()
+    canton = (form.get("canton") or "").strip()
     keyword = (form.get("keyword") or "").strip().lower()
     tld = (form.get("tld") or "ch").strip().lower().lstrip(".")
     try:
@@ -852,39 +860,70 @@ async def discover_stream(
         return json.dumps(obj, ensure_ascii=False) + "\n"
 
     def generate():
-        if not keyword:
-            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
-                        "with_dmarc": 0, "skipped": 0,
-                        "error": "Keyword fehlt."})
-            return
+        # ---- Source: OSM (primär, strukturiert) ----
+        if source == "osm":
+            preset = get_preset(preset_key)
+            if not preset:
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": "Bitte eine Branche oben auswählen."})
+                return
 
-        # 1) crt.sh queryen (blocking, kann 5-30s dauern bei viel Daten)
-        yield sse({"type": "fetch", "phase": "querying",
-                    "msg": f"crt.sh: %{keyword}%.{tld} — kann ein paar Sekunden dauern …"})
+            canton_label = canton or "ganze Schweiz"
+            yield sse({"type": "fetch",
+                        "msg": f"OpenStreetMap (Overpass): {preset['label']} in {canton_label} — typisch 3-10 Sekunden …"})
 
-        try:
-            prospects = fetch_prospects(keyword, tld, limit=limit)
-        except DiscoveryError as e:
-            log.info("discover: source down: %s", e)
+            try:
+                prospects = fetch_osm_prospects(
+                    preset["osm_filter"], canton=canton, limit=limit
+                )
+            except DiscoveryError as e:
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": f"OSM-Fehler: {e}"})
+                return
+            except Exception as e:  # noqa: BLE001
+                log.warning("osm fetch failed", exc_info=True)
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": f"OSM-Fehler: {e}"})
+                return
+
+        # ---- Source: crt.sh (Fallback für Custom-Keyword) ----
+        elif source == "crtsh":
+            if not keyword:
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": "Custom-Keyword fehlt."})
+                return
+            yield sse({"type": "fetch",
+                        "msg": f"crt.sh: %{keyword}%.{tld} — kann ein paar Sekunden dauern …"})
+            try:
+                prospects = fetch_crtsh_prospects(keyword, tld, limit=limit)
+            except DiscoveryError as e:
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": str(e)})
+                return
+            except Exception as e:  # noqa: BLE001
+                log.warning("crt.sh fetch failed", exc_info=True)
+                yield sse({"type": "done", "total": 0, "without_dmarc": 0,
+                            "with_dmarc": 0, "skipped": 0,
+                            "error": f"crt.sh-Fehler: {e}"})
+                return
+        else:
             yield sse({"type": "done", "total": 0, "without_dmarc": 0,
                         "with_dmarc": 0, "skipped": 0,
-                        "error": str(e)})
-            return
-        except Exception as e:  # noqa: BLE001
-            log.warning("discover fetch failed", exc_info=True)
-            yield sse({"type": "done", "total": 0, "without_dmarc": 0,
-                        "with_dmarc": 0, "skipped": 0,
-                        "error": f"crt.sh-Fehler: {e}"})
+                        "error": f"Unbekannte Source: {source}"})
             return
 
         if not prospects:
             yield sse({"type": "done", "total": 0, "without_dmarc": 0,
                         "with_dmarc": 0, "skipped": 0,
-                        "error": "Keine Domains gefunden. Andere Keyword-Variante probieren?"})
+                        "error": "Keine Domains gefunden — andere Branche/Kanton/Keyword probieren?"})
             return
 
-        yield sse({"type": "start", "total": len(prospects),
-                    "keyword": keyword, "tld": tld})
+        yield sse({"type": "start", "total": len(prospects), "source": source})
 
         without_dmarc = with_dmarc = skipped = 0
 
@@ -897,7 +936,6 @@ async def discover_stream(
                 except Exception:  # noqa: BLE001
                     p.has_dmarc = None
 
-            # Filter "nur ohne DMARC": skip emission if has_dmarc is True
             if check_dmarc and only_no_dmarc and p.has_dmarc is True:
                 skipped += 1
                 continue
@@ -912,6 +950,10 @@ async def discover_stream(
                 "i": i,
                 "total": len(prospects),
                 "domain": p.domain,
+                "company_name": p.company_name,
+                "phone": p.phone,
+                "city": p.city,
+                "website": p.website,
                 "cert_count": p.cert_count,
                 "sans": p.seen_sans,
                 "has_dmarc": p.has_dmarc,

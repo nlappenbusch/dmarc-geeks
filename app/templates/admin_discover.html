@@ -2,51 +2,58 @@
 {% block title %}Prospect-Discovery · Admin{% endblock %}
 {% block content %}
 <div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · Prospect-Discovery</div>
-<h1>🔭 Prospect-Discovery <span class="muted small">— Schweizer KMU aus Certificate-Logs finden</span></h1>
+<h1>🔭 Prospect-Discovery <span class="muted small">— Schweizer KMU mit Branche + Kanton finden</span></h1>
 <p class="muted">
-  Jede TLS-Zertifikat-Ausstellung wird in öffentliche Certificate-Transparency-Logs geschrieben (RFC 6962).
-  Wir queryen <a href="https://crt.sh" target="_blank">crt.sh</a> nach deinem Branchen-Keyword
-  und kriegen <strong>alle aktiven Schweizer Domains</strong>, die dazu passen. Optional gleich filtern auf
-  „<strong>DMARC fehlt</strong>" — also genau die Domains, die unser Service braucht.
+  Wir queryen <strong>OpenStreetMap</strong> (kostenlos, stabil, kuratiert) für eine Branche und einen Kanton.
+  Pro Treffer kriegst du <strong>Firmenname + Website + Telefon + Stadt</strong> — und optional gleich den DMARC-Status, damit du
+  nur die echten Targets siehst (Domains ohne DMARC = unser Sweet-Spot).
 </p>
 
 <!-- Branchen-Presets -->
 <section class="card">
-  <h2 style="margin-top:0;">🎯 Branchen-Presets <span class="muted small">— Klick = Keyword setzen</span></h2>
+  <h2 style="margin-top:0;">🎯 Branche wählen</h2>
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
     {% for p in presets %}
-    <button type="button" class="preset-btn" data-keyword="{{ p.keyword }}"
+    <button type="button" class="preset-btn" data-key="{{ p.key }}"
             style="background: var(--card); border: 1px solid var(--border); border-radius: 10px;
                    padding: 10px 12px; text-align: left; cursor: pointer; font: inherit;
                    transition: background .12s, border-color .12s;">
       <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 2px;">{{ p.icon }} {{ p.label }}</div>
       <div class="muted small" style="font-size: 11.5px; line-height: 1.4;">{{ p.rationale }}</div>
-      <div style="font-size: 11px; color: var(--brand, #2563eb); margin-top: 4px; font-family: ui-monospace, monospace;">→ {{ p.keyword }}</div>
     </button>
     {% endfor %}
   </div>
+  <p class="muted small" style="margin-top: 12px;">
+    Quelle: <code>OpenStreetMap Overpass</code> via Tag-Matching (z.B. <code>office=accountant</code> für Treuhand).
+    OSM ist kuratiert, sehr gut für Schweizer Firmen mit Postadresse + Website.
+  </p>
 </section>
 
-<!-- Form -->
+<!-- Region + Optionen -->
 <section class="card">
-  <h2 style="margin-top:0;">🔍 Suche starten</h2>
+  <h2 style="margin-top:0;">🗺 Region + Optionen</h2>
   <form id="discover-form">
+    <input type="hidden" id="f-source" name="source" value="osm">
+    <input type="hidden" id="f-preset-key" name="preset_key" value="">
+
     <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; align-items: end;">
-      <label>Keyword (kommt in der Domain vor)
-        <input type="text" id="f-keyword" name="keyword" value="treuhand" required style="font-family: ui-monospace, monospace;">
-      </label>
-      <label>TLD
-        <input type="text" id="f-tld" name="tld" value="ch" pattern="[a-z]+" required>
+      <label>Kanton (oder „Ganze Schweiz")
+        <select id="f-canton" name="canton">
+          {% for code, label in cantons %}
+          <option value="{{ code }}">{{ label }}</option>
+          {% endfor %}
+        </select>
       </label>
       <label>Limit
         <input type="number" id="f-limit" name="limit" value="50" min="1" max="200">
       </label>
+      <div></div>
     </div>
 
     <div style="display:flex; gap: 18px; align-items: center; margin-top: 14px; flex-wrap: wrap;">
       <label style="display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="f-check-dmarc" name="check_dmarc" value="1" checked>
-        <span>DMARC pro Domain prüfen <span class="muted small">(+ ~0.5s je Domain)</span></span>
+        <span>DMARC pro Domain prüfen</span>
       </label>
       <label style="display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="f-only-no-dmarc" name="only_no_dmarc" value="1" checked>
@@ -54,8 +61,24 @@
       </label>
       <div style="flex: 1;"></div>
       <button type="button" id="btn-stop" class="btn-link" disabled>⏹ Stop</button>
-      <button type="submit" id="btn-start" class="btn-primary big">🔭 Suchen</button>
+      <button type="submit" id="btn-start" class="btn-primary big" disabled>🔭 Suchen <span id="btn-hint" style="font-weight:400; font-size: 12px; opacity: 0.8;">(Branche oben wählen)</span></button>
     </div>
+
+    <!-- Custom-Keyword (Fallback via crt.sh) -->
+    <details style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 14px;">
+      <summary style="font-size: 13.5px; color: var(--muted); cursor: pointer;">🔍 Stattdessen: Custom-Keyword-Suche via crt.sh (Fallback)</summary>
+      <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; margin-top: 12px; align-items: end;">
+        <label>Keyword
+          <input type="text" id="f-keyword" name="keyword" placeholder="z.B. dental" style="font-family: ui-monospace, monospace;">
+        </label>
+        <label>TLD
+          <input type="text" id="f-tld" name="tld" value="ch" pattern="[a-z]+">
+        </label>
+        <div></div>
+        <button type="button" id="btn-crtsh" class="btn-link">crt.sh statt OSM</button>
+      </div>
+      <p class="muted small" style="margin: 8px 0 0; font-size: 12px;">crt.sh greift Certificate-Transparency-Logs ab — ist breiter aber instabiler (502/504). Nutze das nur wenn OSM für dein Target nichts liefert.</p>
+    </details>
   </form>
 </section>
 
@@ -67,7 +90,7 @@
     <div id="progress-bar" style="background: linear-gradient(90deg, #2563eb, #7c3aed); height: 100%; width: 0%; transition: width .3s ease;"></div>
   </div>
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px;">
-    <div><div class="muted small">Domains gefunden</div><div style="font-size:22px; font-weight:800;" id="kpi-found">0</div></div>
+    <div><div class="muted small">Gefunden</div><div style="font-size:22px; font-weight:800;" id="kpi-found">0</div></div>
     <div><div class="muted small">Ohne DMARC 🎯</div><div style="font-size:22px; font-weight:800; color:#dc2626;" id="kpi-nodmarc">0</div></div>
     <div><div class="muted small">Mit DMARC</div><div style="font-size:22px; font-weight:800; color:#16a34a;" id="kpi-hasdmarc">0</div></div>
     <div><div class="muted small">Übersprungen</div><div style="font-size:22px; font-weight:800; color:#94a3b8;" id="kpi-skipped">0</div></div>
@@ -77,57 +100,72 @@
 <!-- Results -->
 <section id="results-card" class="card" style="display:none;">
   <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-    <h2 style="margin: 0;">Gefundene Domains</h2>
+    <h2 style="margin: 0;">Gefundene Firmen</h2>
     <div style="display: flex; gap: 6px;">
-      <button type="button" class="btn-link" onclick="copyAllAsCsv()">📋 Domains kopieren</button>
+      <button type="button" class="btn-link" onclick="copyAllAsCsv()">📋 Als CSV kopieren</button>
       <button type="button" class="btn-primary" onclick="sendToCrawler()">→ Alle in Crawler einfügen</button>
     </div>
   </div>
   <p class="muted small">
-    🎯 Targets sind die roten — die haben kein DMARC und sind unser Sweet-Spot.
-    Klick „→ Alle in Crawler einfügen" um die Liste direkt in <a href="/admin/crawl-contacts" target="_blank">/admin/crawl-contacts</a> zu pushen.
+    🎯 Rote Badges = kein DMARC = ideale Targets. „+ in Crawler" pro Zeile addiert eine einzelne Firma.
   </p>
   <div id="results-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
 </section>
 
-<!-- Hilfe -->
+<!-- Tipps -->
 <section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
-  <h2 style="margin-top:0;">💡 Wie find ich gute Keywords?</h2>
-  <ul style="padding-left: 20px; line-height: 1.8;">
-    <li><strong>Im Domainnamen denken:</strong> „treuhand" matcht <code>meier-treuhand.ch</code>, <code>treuhand-bern.ch</code>, <code>fiducia.ch</code> nicht.</li>
-    <li><strong>Mehrere Runs:</strong> Pro Branche 2-3 Synonyme durchprobieren (z.B. „treuhand" + „fiduciary" + „buchhaltung").</li>
-    <li><strong>Region targeten:</strong> „zuerich", „basel", „bern" als Keyword + Branchenwort kombinieren — manchmal in zwei Runs auflösen.</li>
-    <li><strong>Negativbeispiele filtern:</strong> Wenn die Resultate viel Müll enthalten (Hoster-Subdomains etc.), wird der noise-Filter automatisch angewandt — wir blocken cloudfront/azure/shopify/etc.</li>
-    <li><strong>DMARC-Filter aktivieren:</strong> Spart enorm Zeit beim Outreach — du siehst direkt nur die „warmen" Targets.</li>
-  </ul>
-  <p class="muted small">Pipeline: Discovery → <a href="/admin/crawl-contacts">Crawler</a> (Emails finden) → <a href="/admin/batch-snapshot">Batch-Snapshot</a> (Cold-Mails) → <a href="/admin/leads">Leads</a>.</p>
+  <h2 style="margin-top:0;">💡 Workflow</h2>
+  <ol style="padding-left: 20px; line-height: 1.9;">
+    <li><strong>Branche oben wählen</strong> (z.B. Treuhand) — Button leuchtet auf</li>
+    <li><strong>Kanton wählen</strong> (z.B. Zürich) — fokussiert die Suche</li>
+    <li><strong>„Nur ohne DMARC" anlassen</strong> — du siehst direkt die warmen Targets</li>
+    <li><strong>„🔭 Suchen"</strong> — typisch 3-15 Sek + 0.5s pro Domain für DMARC-Check</li>
+    <li><strong>„→ Alle in Crawler einfügen"</strong> — Liste fliegt rüber zu /admin/crawl-contacts mit Emails+Mail-Drafts</li>
+  </ol>
+  <p class="muted small">Pipeline: <strong>Discovery</strong> → <a href="/admin/crawl-contacts">Crawler</a> → <a href="/admin/batch-snapshot">Batch-Snapshot</a> → <a href="/admin/leads">Leads</a>.</p>
 </section>
 
 <script>
-const tipsHidden = false;
 let abortCtrl = null;
 const results = [];
 const resCard = document.getElementById('results-card');
 const progCard = document.getElementById('progress-card');
 const resList = document.getElementById('results-list');
 const startBtn = document.getElementById('btn-start');
-const stopBtn  = document.getElementById('btn-stop');
+const stopBtn = document.getElementById('btn-stop');
 
-// Branchen-Presets: Klick = Keyword reinkopieren
+// Branchen-Presets: Klick = Branche markieren
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.getElementById('f-keyword').value = btn.dataset.keyword;
-    document.querySelectorAll('.preset-btn').forEach(b => b.style.background = 'var(--card)');
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.style.background = 'var(--card)';
+      b.style.borderColor = 'var(--border)';
+    });
     btn.style.background = 'rgba(37,99,235,0.08)';
     btn.style.borderColor = 'var(--brand, #2563eb)';
+    document.getElementById('f-preset-key').value = btn.dataset.key;
+    document.getElementById('f-source').value = 'osm';
+    startBtn.disabled = false;
+    document.getElementById('btn-hint').style.display = 'none';
   });
+});
+
+// crt.sh-Modus aktivieren
+document.getElementById('btn-crtsh').addEventListener('click', () => {
+  if (!document.getElementById('f-keyword').value.trim()) {
+    alert('Bitte erst ein Keyword eingeben.');
+    return;
+  }
+  document.getElementById('f-source').value = 'crtsh';
+  // Submit triggern
+  document.getElementById('discover-form').requestSubmit();
 });
 
 document.getElementById('discover-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   results.length = 0;
   resList.innerHTML = '';
-  setKpi('found', 0); setKpi('nodmarc', 0); setKpi('hasdmarc', 0); setKpi('skipped', 0);
+  ['found','nodmarc','hasdmarc','skipped'].forEach(k => setKpi(k, 0));
   document.getElementById('progress-bar').style.width = '0%';
   document.getElementById('progress-h').textContent = '⏳ Suche läuft …';
   document.getElementById('progress-status').textContent = 'Initialisiere …';
@@ -136,12 +174,7 @@ document.getElementById('discover-form').addEventListener('submit', async (e) =>
   startBtn.disabled = true; stopBtn.disabled = false;
 
   abortCtrl = new AbortController();
-  const fd = new FormData();
-  fd.append('keyword', document.getElementById('f-keyword').value);
-  fd.append('tld',     document.getElementById('f-tld').value);
-  fd.append('limit',   document.getElementById('f-limit').value);
-  if (document.getElementById('f-check-dmarc').checked)   fd.append('check_dmarc', '1');
-  if (document.getElementById('f-only-no-dmarc').checked) fd.append('only_no_dmarc', '1');
+  const fd = new FormData(document.getElementById('discover-form'));
 
   try {
     const r = await fetch('/admin/discover/stream', {
@@ -193,7 +226,7 @@ function handleEvent(ev) {
     document.getElementById('progress-status').textContent = '🌐 ' + ev.msg;
   } else if (ev.type === 'start') {
     document.getElementById('progress-status').textContent =
-      `${ev.total} Domain${ev.total === 1 ? '' : 's'} aus CT-Logs · prüfe DMARC für jede …`;
+      `${ev.total} Firma${ev.total === 1 ? '' : 'en'} aus ${ev.source === 'osm' ? 'OpenStreetMap' : 'crt.sh'} · prüfe DMARC pro Domain …`;
   } else if (ev.type === 'progress') {
     document.getElementById('progress-status').textContent =
       `[${ev.i + 1}/${ev.total}] DMARC-Check für ${ev.domain} …`;
@@ -212,10 +245,13 @@ function handleEvent(ev) {
     kpiState.skipped = ev.skipped || 0;
     setKpi('skipped', kpiState.skipped);
     document.getElementById('progress-h').textContent =
-      ev.error ? `❌ ${ev.error}` : `✓ Fertig: ${ev.total} gefunden`;
+      ev.error ? `❌ ${ev.error}` : `✓ Fertig: ${ev.total} Firmen`;
     document.getElementById('progress-status').textContent =
       `${ev.without_dmarc} ohne DMARC · ${ev.with_dmarc} mit · ${ev.skipped} übersprungen`;
     document.getElementById('progress-bar').style.width = '100%';
+    if (ev.error) {
+      results.length = 0; // damit "Alle in Crawler" nicht leer-prefillt
+    }
   }
 }
 
@@ -229,14 +265,20 @@ function renderResult(r) {
   } else {
     badgeColor = '#94a3b8'; badgeText = '? unbekannt';
   }
-  div.style.cssText = 'border:1px solid var(--border); border-left: 4px solid ' + badgeColor + '; border-radius:10px; padding:10px 14px; background: var(--card); display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; align-items: center;';
+  div.style.cssText = 'border:1px solid var(--border); border-left: 4px solid ' + badgeColor + '; border-radius:10px; padding:12px 16px; background: var(--card); display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; align-items: center;';
+
+  const meta = [];
+  if (r.city) meta.push('📍 ' + esc(r.city));
+  if (r.phone) meta.push('📞 ' + esc(r.phone));
+  if (r.cert_count) meta.push(r.cert_count + ' Zertifikate');
 
   div.innerHTML = `
     <div>
-      <div style="font-weight: 700; font-size: 14px; font-family: ui-monospace, monospace;">
+      <div style="font-weight: 700; font-size: 14px; margin-bottom: 1px;">${esc(r.company_name || r.domain)}</div>
+      <div style="font-family: ui-monospace, monospace; font-size: 12.5px;">
         <a href="https://${esc(r.domain)}" target="_blank" rel="noopener">${esc(r.domain)}</a>
       </div>
-      <div class="muted small" style="font-size: 11px;">${r.cert_count} Zertifikat${r.cert_count === 1 ? '' : 'e'} in CT-Logs ${r.sans && r.sans.length ? '· z.B. ' + esc(r.sans.slice(0,2).join(', ')) : ''}</div>
+      ${meta.length ? `<div class="muted small" style="font-size: 11.5px; margin-top: 2px;">${meta.join(' &middot; ')}</div>` : ''}
     </div>
     <span style="display:inline-block; padding: 3px 10px; border-radius: 6px; color: white; font-weight: 700; font-size: 12px; background: ${badgeColor}; white-space: nowrap;">${badgeText}</span>
     <a href="/check?domain=${encodeURIComponent(r.domain)}" target="_blank" class="btn-link small">🔍 Check</a>
@@ -252,25 +294,27 @@ function esc(s) {
 }
 
 function copyAllAsCsv() {
-  const lines = results.map(r => r.domain);
+  const lines = ['domain,first_name,company,phone,city'];
+  results.forEach(r => {
+    const safe = s => {
+      s = (s == null ? '' : String(s));
+      return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    lines.push([r.domain, '', r.company_name || '', r.phone || '', r.city || ''].map(safe).join(','));
+  });
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    alert('✓ ' + lines.length + ' Domains in Zwischenablage.');
+    alert('✓ ' + (lines.length - 1) + ' Zeilen in Zwischenablage.');
   });
 }
 
 function sendToCrawler() {
-  if (!results.length) {
-    alert('Noch keine Resultate da.');
-    return;
-  }
+  if (!results.length) { alert('Noch keine Resultate da.'); return; }
   const text = results.map(r => r.domain).join('\n');
-  // Open crawler in new tab with prefilled domains via sessionStorage
   sessionStorage.setItem('crawler_prefill', text);
   window.open('/admin/crawl-contacts?prefill=session', '_blank');
 }
 
 function addOne(domain) {
-  // Add ONE domain to existing crawler prefill
   const existing = sessionStorage.getItem('crawler_prefill') || '';
   sessionStorage.setItem('crawler_prefill', existing ? existing + '\n' + domain : domain);
   window.open('/admin/crawl-contacts?prefill=session', '_blank');
