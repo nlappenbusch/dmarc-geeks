@@ -30,6 +30,7 @@ from ..snapshot_render import (
     grade_color,
     normalize_domain,
     render_cold_mail,
+    render_cold_mail_html,
     render_snapshot_html,
 )
 from ..templating import render
@@ -251,6 +252,8 @@ async def batch_snapshot_run(
     min_idx = grade_order.index(min_grade) if min_grade in grade_order else None
 
     results: list[dict] = []
+    persist_skipped_no_email = 0
+    persist_saved = 0
     for r in rows_in:
         domain = normalize_domain(r.get("domain") or r.get("Domain") or "")
         if not domain or "." not in domain:
@@ -258,6 +261,8 @@ async def batch_snapshot_run(
         email = (r.get("email") or r.get("Email") or "").strip()
         first_name = (r.get("first_name") or r.get("First Name") or r.get("firstname") or "").strip()
         company = (r.get("company") or r.get("Company") or "").strip()
+        if persist_leads and not email:
+            persist_skipped_no_email += 1
 
         try:
             check_result = full_dns_check(domain)
@@ -279,8 +284,11 @@ async def batch_snapshot_run(
                       else render_cold_mail(domain, score, first_name=first_name,
                                              company=company, email=email))
 
-        # Optional: als Lead persistieren (mit source="batch-admin" + UTM)
+        # Optional: als Lead persistieren (mit source="batch-admin" + UTM).
+        # WICHTIG: ohne Email koennen wir nichts speichern (DB-Constraint).
+        # Pro Zeile ohne Email zaehlen wir hoch -> Warning oben in der UI.
         if persist_leads and email:
+            persist_saved += 1
             try:
                 lead = db.execute(
                     select(LeadSnapshot).where(
@@ -336,6 +344,8 @@ async def batch_snapshot_run(
             "by_grade": {g: sum(1 for r in results if r["grade"] == g) for g in grade_order},
             "min_grade": min_grade,
             "persist_leads": persist_leads,
+            "persist_saved": persist_saved,
+            "persist_skipped_no_email": persist_skipped_no_email,
         },
     )
 
@@ -549,6 +559,7 @@ def _parse_domain_input(paste_text: str, limit: int = 100) -> list[str]:
 async def crawl_contacts_stream(
     request: Request,
     user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
 ):
     """NDJSON-Stream: pro Domain ein JSON-Event mit (crawl + DNS + cold-mail).
 
@@ -568,6 +579,7 @@ async def crawl_contacts_stream(
     limit = max(1, min(limit, 100))
     do_dns = bool(form.get("do_dns"))
     do_mail = bool(form.get("do_mail"))
+    persist_leads = bool(form.get("persist_leads"))
 
     domains = _parse_domain_input(paste_text, limit=limit)
 
@@ -610,6 +622,7 @@ async def crawl_contacts_stream(
             actions: list[str] = []
             cold_mail = None
             dns_error = None
+            dns_result: dict = {}
 
             if do_dns and not cr.error:
                 yield sse({"type": "progress", "i": i, "total": len(domains),
@@ -628,7 +641,7 @@ async def crawl_contacts_stream(
                     yield sse({"type": "progress", "i": i, "total": len(domains),
                                 "domain": d, "phase": "mail"})
                     try:
-                        cold_mail = render_cold_mail(
+                        cold_mail = render_cold_mail_html(
                             d, score,
                             first_name="",
                             company=cr.company_name or "",
@@ -644,8 +657,54 @@ async def crawl_contacts_stream(
             if cr.error:
                 unreachable += 1
 
+            # Optional: als Lead persistieren -- nur wenn wir eine Email haben.
+            # Source = "crawler-batch" damit man Crawler-Leads von Snapshot-
+            # Public-Form-Leads unterscheiden kann.
+            persisted = False
+            if persist_leads and cr.primary_email and not cr.error:
+                try:
+                    email_lower = cr.primary_email.lower()
+                    lead = db.execute(
+                        select(LeadSnapshot).where(
+                            LeadSnapshot.email == email_lower,
+                            LeadSnapshot.domain == d,
+                        )
+                    ).scalars().first()
+                    if lead is None:
+                        lead = LeadSnapshot(
+                            email=email_lower, domain=d,
+                            company=cr.company_name or None,
+                            first_name=None,  # haben wir aus Crawl nicht
+                            grade=grade, score=score_total,
+                            top_action=(actions[0] if actions else None),
+                            has_dmarc=None, has_spf=None, has_dkim=None,
+                            source="crawler-batch",
+                        )
+                        if do_dns:
+                            try:
+                                # Erkennt aus dem dns_result die present-Flags
+                                lead.has_dmarc = (dns_result.get("dmarc") or {}).get("present", False)
+                                lead.has_spf   = (dns_result.get("spf") or {}).get("present", False)
+                                lead.has_dkim  = bool(dns_result.get("dkim"))
+                            except Exception:  # noqa: BLE001
+                                pass
+                        db.add(lead)
+                    else:
+                        if grade:
+                            lead.grade = grade
+                            lead.score = score_total
+                        if cr.company_name and not lead.company:
+                            lead.company = cr.company_name
+                    db.commit()
+                    persisted = True
+                except Exception:  # noqa: BLE001
+                    log.warning("crawler persist failed for %s/%s",
+                                cr.primary_email, d, exc_info=True)
+                    db.rollback()
+
             yield sse({
                 "type": "result",
+                "persisted": persisted,
                 "i": i,
                 "total": len(domains),
                 "domain": cr.domain,
@@ -661,7 +720,10 @@ async def crawl_contacts_stream(
                 "score": score_total,
                 "top_action": (actions[0] if actions else None),
                 "dns_error": dns_error,
-                "cold_mail": cold_mail,
+                # cold_mail ist jetzt ein dict {subject, html, plain} oder None
+                "cold_mail_subject": cold_mail["subject"] if cold_mail else None,
+                "cold_mail_html":    cold_mail["html"] if cold_mail else None,
+                "cold_mail_plain":   cold_mail["plain"] if cold_mail else None,
             })
 
         yield sse({

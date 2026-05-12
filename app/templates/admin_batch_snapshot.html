@@ -97,8 +97,18 @@
   </div>
   <div style="margin-top: 14px;">
     {% if meta.persist_leads %}
-    <span class="badge ok">💾 Leads in DB gespeichert</span>
-    <a href="/admin/leads" class="btn-link">→ Leads ansehen</a>
+      {% if meta.persist_saved %}
+      <span class="badge ok">💾 {{ meta.persist_saved }} Lead{{ '' if meta.persist_saved == 1 else 's' }} in DB gespeichert</span>
+      <a href="/admin/leads" class="btn-link">→ Leads ansehen</a>
+      {% endif %}
+      {% if meta.persist_skipped_no_email %}
+      <div style="background:#fef3c7; border:1px solid #fcd34d; color:#92400e; padding:10px 14px; border-radius:8px; margin-top:10px; font-size:13.5px; line-height:1.55;">
+        <strong>⚠ {{ meta.persist_skipped_no_email }} Zeile{{ '' if meta.persist_skipped_no_email == 1 else 'n' }} ohne Email — nicht gespeichert.</strong><br>
+        Die DB braucht eine Email pro Lead. Wenn deine CSV nur Domains hat, geh erst durch den
+        <a href="/admin/crawl-contacts" style="color: var(--brand);">🕷 Kontakt-Crawler</a> —
+        der zieht Emails aus dem Impressum/Footer und kann gleich als Leads speichern.
+      </div>
+      {% endif %}
     {% endif %}
     <a href="/admin/batch-snapshot" class="btn-link">↺ Neuer Run</a>
   </div>

@@ -129,61 +129,176 @@ def render_snapshot_html(domain: str, result: dict, score: dict) -> str:
 </div></body></html>"""
 
 
+# Plain-Text-Version (Fallback fuer Reply-Threads). Mit echten Umlauten.
 _COLD_MAIL_TEMPLATE = """Betreff: {subject}
 
 Hallo{name_part},
 
-ich war heute kurz bei {company_part} und habe mir den
-Mail-Sicherheits-Status von {domain} angeschaut.
+ich habe mir heute kurz die Mail-Sicherheit von {domain} angeschaut – das mache ich für Schweizer KMU regelmäßig, wenn ich auf eine Firma stoße, deren Setup ich nicht kenne.
 
 {hook}
 
-Auf der Skala von A bis F steht {domain} aktuell bei {grade} ({score}/100):
+Aktueller Stand auf der Skala A bis F:
+{grade} ({score}/100)
 
+Was zuerst angehen:
 {action_lines}
 
-Wenn du Lust hast, schicke ich dir den vollstaendigen 1-Pager-Bericht
-(7 Checks, druckbar, kostenlos) - einfach kurz antworten.
+Falls du den vollständigen 1-Pager-Bericht (PDF, 7 Checks im Detail) haben möchtest – einfach kurz auf diese Mail antworten, dann schicke ich ihn dir per E-Mail.
 
-Wir machen so etwas regelmaessig fuer Schweizer KMU und MSPs: DMARC-
-Einfuehrung ohne Mail-Ausfall, ab CHF 490 als Audit, ab CHF 1990 als
-Voll-Migration. Auch als White-Label fuer Agenturen.
+Wir bauen sowas regelmäßig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab CHF 490 als Audit, ab CHF 1990 als Voll-Migration. Auch als White-Label für Agenturen.
 
-Beste Gruesse
+Liebe Grüsse aus dem Zürcher Unterland
 Nils Lappenbusch
-DMARC Geeks
-https://dmarc-geeks.ch
-+41 77 950 31 52
+
+DMARC Geeks · https://dmarc-geeks.ch
++41 77 950 31 52 · nils@dmarc-geeks.ch
 
 --
-P.S.: Falls du das schon auf dem Schirm hast, gerne ignorieren -
-ich schicke das nicht massenhaft raus, sondern habe gezielt 10-20
-Domains aus der Branche angeschaut.
+P.S.: Falls ihr das schon auf dem Schirm habt – gerne ignorieren. Ich schreibe nicht massenhaft, sondern habe gezielt 10–20 Domains aus eurer Branche angeschaut.
 """
 
 
+# Hooks pro Grade — mit echten Umlauten, persoenlicher Ton.
 _HOOKS_BY_GRADE = {
-    "F": "Kurz gesagt: aktuell kann unter dem Namen {domain} aus dem Internet jeder mailen, ohne dass es als Faelschung erkennbar waere - DMARC und SPF fehlen komplett. Das ist ein Phishing-Risiko, besonders wenn ihr Rechnungen verschickt.",
-    "D": "Kurz gesagt: ihr habt nur Basics gesetzt, kein DMARC oder kein DKIM. Damit erreicht ihr bei strengen Empfaengern (Google, Microsoft, Apple Mail) zunehmend den Spam-Ordner statt der Inbox.",
-    "C": "Kurz gesagt: Basis ist da, aber DMARC ist noch auf 'beobachten' (p=none) oder Reports werden nicht eingesammelt. Heisst: keiner sieht, wer in eurem Namen mailt.",
-    "B": "Kurz gesagt: gut aufgestellt, aber 1-2 Schwaechen lassen sich noch glaetten. Wenn ihr BIMI nutzt, wuerde euer Logo neben jeder Mail im Postfach des Empfaengers stehen - aktuell nicht.",
-    "A": "Kurz gesagt: solide Aufstellung. Falls ihr trotzdem mal eine zweite Meinung wollt - oder BIMI/VMC fuer's Logo-neben-Mail-Branding - kein Stress, melde dich gerne.",
+    "F": "Kurz gesagt: aktuell kann unter dem Namen <strong>{domain}</strong> aus dem Internet jeder eine E-Mail verschicken, ohne dass es als Fälschung erkennbar wäre — DMARC und SPF fehlen komplett. Das ist ein konkretes Phishing-Risiko, besonders wenn ihr Rechnungen, Mahnungen oder Lohnabrechnungen verschickt.",
+    "D": "Kurz gesagt: bei <strong>{domain}</strong> sind nur die Basics gesetzt — kein DMARC oder kein DKIM. Damit landet ihr bei strengen Empfängern (Google, Microsoft, Apple Mail) zunehmend im Spam-Ordner statt in der Inbox.",
+    "C": "Kurz gesagt: die Basis bei <strong>{domain}</strong> ist da, aber DMARC läuft noch auf „beobachten“ (p=none) oder Reports werden nicht eingesammelt. Heißt konkret: niemand bei euch sieht, wer eigentlich in eurem Namen mailt.",
+    "B": "Kurz gesagt: <strong>{domain}</strong> ist gut aufgestellt, aber 1–2 Schwächen lassen sich noch glätten. Falls ihr BIMI nutzt, würde euer Logo bei jeder Mail im Posteingang sichtbar sein — aktuell nicht.",
+    "A": "Kurz gesagt: solide Aufstellung bei <strong>{domain}</strong>. Falls ihr trotzdem mal eine zweite Meinung wollt — oder BIMI/VMC fürs Logo-neben-Mail-Branding — kein Stress, meldet euch gerne.",
 }
+
+
+def _hook_for(grade: str, domain: str, *, plain: bool = False) -> str:
+    raw = _HOOKS_BY_GRADE.get(grade, _HOOKS_BY_GRADE["F"]).format(domain=domain)
+    if plain:
+        # <strong>…</strong> rauswerfen fuer Plain-Text-Version
+        return raw.replace("<strong>", "").replace("</strong>", "").replace("&bdquo;", "„").replace("&ldquo;", '"')
+    return raw
 
 
 def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
                      company: str = "", email: str = "") -> str:
-    """Personalisiertes Cold-Mail-Template basierend auf Grade-Hook."""
+    """Plain-Text-Version (fuer Reply-Threads und Notepad-Copy). Echte Umlaute."""
     grade = score.get("grade", "F")
     total = score.get("total", 0)
     actions = score.get("actions", [])
-    hook = _HOOKS_BY_GRADE.get(grade, _HOOKS_BY_GRADE["F"]).format(domain=domain)
-    action_lines = "\n".join(f"  - {a}" for a in actions[:3]) if actions else "  (keine kritischen Punkte)"
-    subject = f"Kurzer Mail-Sicherheits-Check fuer {domain}: Grade {grade}"
+    hook = _hook_for(grade, domain, plain=True)
+    action_lines = "\n".join(f"  • {a}" for a in actions[:3]) if actions else "  (keine kritischen Punkte)"
+    subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
     name_part = f" {first_name}" if first_name else ""
-    company_part = company or f"`{domain}`"
     return _COLD_MAIL_TEMPLATE.format(
         subject=subject, domain=domain, name_part=name_part,
-        company_part=company_part, hook=hook, grade=grade,
+        hook=hook, grade=grade,
         score=total, action_lines=action_lines,
     )
+
+
+def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
+                          company: str = "", email: str = "") -> dict:
+    """Fancy HTML-Version fuer Outlook-Copy-Paste. Gibt dict mit subject + html + plain.
+
+    Inline-CSS damit es in Mail-Clients sauber rendert (Outlook, Apple Mail,
+    Gmail-Web). Logo als inline SVG. Score-Badge mit Grade-Farbverlauf.
+
+    Sieht aus wie eine persoenliche Nachricht — KEINE Newsletter-/Template-
+    Optik, sondern wie eine eilig aber sauber geschriebene Hand-Mail.
+    """
+    grade = score.get("grade", "F")
+    total = score.get("total", 0)
+    actions = score.get("actions", [])
+    hook = _hook_for(grade, domain, plain=False)
+    color = grade_color(grade)
+    subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
+    greeting = f"Hallo {first_name},".strip() if first_name else "Hallo zusammen,"
+
+    actions_html = ""
+    if actions:
+        for a in actions[:3]:
+            actions_html += (
+                f'<li style="margin-bottom:6px;color:#1f2937;">{a}</li>'
+            )
+    else:
+        actions_html = '<li style="color:#16a34a;">(keine kritischen Punkte — solide Aufstellung)</li>'
+
+    # Score-Badge inline (Outlook-vertraeglich: kein flex, Tabellen+nbsp)
+    score_badge = (
+        f'<table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;">'
+        f'<tr><td style="background:{color};color:white;border-radius:10px;padding:14px 22px;'
+        f'text-align:center;font-family:-apple-system,Inter,sans-serif;line-height:1;">'
+        f'<div style="font-size:36px;font-weight:900;letter-spacing:-0.04em;">{grade}</div>'
+        f'<div style="font-size:11px;font-weight:600;opacity:.9;margin-top:4px;">{total}/100</div>'
+        f'</td></tr></table>'
+    )
+
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:-apple-system,'Segoe UI',Inter,sans-serif;color:#1f2937;background:#ffffff;font-size:14.5px;line-height:1.6;">
+<div style="max-width:620px;margin:0 auto;padding:16px 4px;">
+
+  <p style="margin:0 0 14px 0;">{greeting}</p>
+
+  <p style="margin:0 0 14px 0;">ich habe mir heute kurz die Mail-Sicherheit von <strong>{domain}</strong> angeschaut — das mache ich für Schweizer KMU regelmäßig, wenn ich auf eine Firma stoße, deren Setup ich nicht kenne.</p>
+
+  <p style="margin:0 0 18px 0;">{hook}</p>
+
+  <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px 0;border-collapse:separate;">
+    <tr>
+      <td valign="middle" style="padding-right:18px;">{score_badge}</td>
+      <td valign="middle" style="font-size:13.5px;color:#475569;line-height:1.55;">
+        Mail-Sicherheits-Grade<br>
+        <strong style="font-size:15.5px;color:#1f2937;">{domain}</strong><br>
+        <span style="color:#94a3b8;font-size:12px;">DMARC · SPF · DKIM · MX · BIMI</span>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:0 0 8px 0;font-weight:600;">Was ich konkret zuerst angehen würde:</p>
+  <ol style="margin:0 0 20px 22px;padding:0;">
+    {actions_html}
+  </ol>
+
+  <p style="margin:0 0 14px 0;">Falls du den <strong>vollständigen 1-Pager-Bericht</strong> haben möchtest (PDF, 7 Checks im Detail, druckbar fürs Compliance-Meeting) — einfach kurz auf diese Mail antworten, dann schicke ich ihn dir per E-Mail.</p>
+
+  <p style="margin:0 0 18px 0;color:#475569;font-size:13.5px;">Wir bauen sowas regelmäßig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab <strong>CHF 490</strong> als Audit, ab <strong>CHF 1990</strong> als Voll-Migration. Auch als White-Label für Agenturen.</p>
+
+  <p style="margin:0 0 4px 0;">Liebe Grüsse aus dem Zürcher Unterland</p>
+  <p style="margin:0 0 18px 0;font-weight:600;">Nils Lappenbusch</p>
+
+  <table cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:6px;">
+    <tr>
+      <td valign="middle" style="padding-right:14px;">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DMARC Geeks" width="42" height="42">
+          <defs><linearGradient id="dgCm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+          <rect width="40" height="40" rx="9" fill="url(#dgCm)"/>
+          <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
+          <circle cx="15" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+          <circle cx="25" cy="13" r="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+          <line x1="18" y1="13" x2="22" y2="13" stroke="#fff" stroke-width="1.6"/>
+        </svg>
+      </td>
+      <td valign="middle" style="font-size:13px;line-height:1.55;color:#475569;">
+        <strong style="color:#1f2937;font-size:14px;">DMARC Geeks</strong> · Mail-Security &amp; Deliverability für KMU<br>
+        🌐 <a href="https://dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">dmarc-geeks.ch</a>
+        &nbsp;·&nbsp; 📞 <a href="tel:+41779503152" style="color:#2563eb;text-decoration:none;">+41 77 950 31 52</a>
+        &nbsp;·&nbsp; ✉ <a href="mailto:nils@dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">nils@dmarc-geeks.ch</a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:18px 0 0 0;font-size:12px;color:#94a3b8;line-height:1.55;">
+    P.S.: Falls ihr das schon auf dem Schirm habt — gerne ignorieren. Ich schreibe nicht massenhaft, sondern habe gezielt 10–20 Domains aus eurer Branche angeschaut.
+  </p>
+
+</div>
+</body></html>"""
+
+    # Plain-Version (fuer Mail-Clients ohne HTML-Support oder Copy-as-plain)
+    plain = render_cold_mail(domain, score, first_name=first_name,
+                              company=company, email=email)
+
+    return {
+        "subject": subject,
+        "html": html,
+        "plain": plain,
+    }

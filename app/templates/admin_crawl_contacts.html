@@ -15,7 +15,7 @@
       <textarea id="f-domains" name="domains" rows="8" placeholder="Eine Domain pro Zeile:&#10;mueller-treuhand.ch&#10;acme-it.ch&#10;&#10;Tipp: zum Testen erstmal NUR EINE Domain eingeben (Dry-Run)." style="width:100%; font-family: ui-monospace, monospace; font-size: 13px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
     </label>
 
-    <div style="display:grid; grid-template-columns: auto auto auto 1fr auto; gap: 16px; align-items: end; margin-top: 12px;">
+    <div style="display:grid; grid-template-columns: auto auto auto auto 1fr auto; gap: 14px; align-items: end; margin-top: 12px;">
       <label>Limit
         <input type="number" id="f-limit" name="limit" value="25" min="1" max="100" style="width: 80px;">
       </label>
@@ -26,6 +26,10 @@
       <label style="display:flex; align-items:center; gap:6px; padding-top: 22px;">
         <input type="checkbox" id="f-mail" name="do_mail" value="1" checked>
         <span>Cold-Mail-Draft</span>
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; padding-top: 22px;">
+        <input type="checkbox" id="f-persist" name="persist_leads" value="1">
+        <span>💾 Als Leads speichern</span>
       </label>
       <div></div>
       <div style="display:flex; gap:8px;">
@@ -105,8 +109,9 @@ document.getElementById('crawl-form').addEventListener('submit', async (e) => {
   const fd = new FormData();
   fd.append('domains', document.getElementById('f-domains').value);
   fd.append('limit',   document.getElementById('f-limit').value);
-  if (document.getElementById('f-dns').checked)  fd.append('do_dns',  '1');
-  if (document.getElementById('f-mail').checked) fd.append('do_mail', '1');
+  if (document.getElementById('f-dns').checked)     fd.append('do_dns',  '1');
+  if (document.getElementById('f-mail').checked)    fd.append('do_mail', '1');
+  if (document.getElementById('f-persist').checked) fd.append('persist_leads', '1');
 
   try {
     const r = await fetch('/admin/crawl-contacts/stream', {
@@ -189,19 +194,30 @@ function renderResult(r) {
   div.style.cssText = 'border:1px solid var(--border); border-radius:10px; padding:14px 16px; background: var(--card);';
 
   const gradeColor = r.grade_color || '#94a3b8';
-  const statusBadge = r.error
-    ? `<span class="badge danger">${esc(r.error)}</span>`
-    : (r.primary_email ? `<span class="badge ok">✓ verwertbar</span>` : `<span class="badge warn">keine Email</span>`);
+  let statusBadge;
+  if (r.error) {
+    statusBadge = `<span class="badge danger">${esc(r.error)}</span>`;
+  } else if (r.persisted) {
+    statusBadge = `<span class="badge ok">💾 Lead gespeichert</span>`;
+  } else if (r.primary_email) {
+    statusBadge = `<span class="badge ok">✓ verwertbar</span>`;
+  } else {
+    statusBadge = `<span class="badge warn">keine Email</span>`;
+  }
   const gradeHtml = r.grade
     ? `<span style="display:inline-block; padding: 4px 10px; border-radius: 6px; color: white; font-weight: 700; font-size: 13px; background: ${gradeColor};">${r.grade} <span style="opacity:.7; font-weight: 400; font-size: 11px;">${r.score || 0}</span></span>`
     : `<span class="muted small">— DNS aus</span>`;
 
-  const mailBtnHtml = r.cold_mail
+  const hasMail = r.cold_mail_html || r.cold_mail_plain;
+  const mailBtnHtml = hasMail
     ? `<button type="button" class="btn-link" data-toggle-mail>📝 Mail-Draft</button>`
     : '';
 
+  // mailto-Link mit Subject + Body (Outlook nimmt den Plain-Text-Body)
+  const subject  = r.cold_mail_subject || ('Kurzer Mail-Sicherheits-Check für ' + r.domain);
+  const bodyForMailto = (r.cold_mail_plain || '').replace(/^Betreff:.*\n\n?/, '');
   const mailToBtnHtml = r.primary_email
-    ? `<a href="mailto:${esc(r.primary_email)}?subject=${encodeURIComponent('Kurzer Mail-Sicherheits-Check für ' + r.domain)}" class="btn-link">📧 In Outlook starten</a>`
+    ? `<a href="mailto:${esc(r.primary_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyForMailto)}" class="btn-link">📧 In Outlook starten</a>`
     : '';
 
   div.innerHTML = `
@@ -225,38 +241,100 @@ function renderResult(r) {
         <a href="/check?domain=${encodeURIComponent(r.domain)}" target="_blank" class="btn-link small">🔍 Live-Check</a>
       </div>
     </div>
-    ${r.cold_mail ? `
-    <div data-mail-pre style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
-      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <strong style="font-size: 12px; color: var(--muted);">COLD-MAIL-DRAFT (Dry-Run, nicht gesendet)</strong>
-        <button type="button" class="btn-link" data-copy>📋 In Zwischenablage</button>
+    ${hasMail ? `
+    <div data-mail-pane style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+      <!-- Tabs: Vorschau (HTML) / Plain -->
+      <div style="display:flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+        <strong style="font-size: 12px; color: var(--muted); margin-right: auto;">COLD-MAIL-DRAFT &nbsp;·&nbsp; <span style="color: #16a34a;">Dry-Run – nichts wurde gesendet</span></strong>
+        <button type="button" class="btn-link tab-btn active" data-tab="preview" style="padding: 4px 10px;">👁 Vorschau</button>
+        <button type="button" class="btn-link tab-btn" data-tab="plain" style="padding: 4px 10px;">📝 Plain</button>
+        <button type="button" class="btn-link" data-copy-html title="Kopiert das gerenderte HTML — perfekt für Outlook">📋 Als HTML kopieren</button>
+        <button type="button" class="btn-link" data-copy-plain title="Kopiert nur den Plain-Text">📋 Plain kopieren</button>
       </div>
-      <pre style="background: var(--surface-soft); padding: 14px 16px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12.5px; white-space: pre-wrap; line-height: 1.55; max-height: 360px; overflow: auto;">${esc(r.cold_mail)}</pre>
+
+      <!-- Subject-Vorschau -->
+      <div style="background: var(--surface-soft); padding: 10px 14px; border-radius: 8px 8px 0 0; font-size: 13px; border: 1px solid var(--border); border-bottom: 0;">
+        <span class="muted small">Betreff:</span>&nbsp; <strong>${esc(subject)}</strong>
+      </div>
+
+      <!-- HTML-Vorschau via sandboxed iframe -->
+      <div data-pane="preview" style="border:1px solid var(--border); border-radius: 0 0 8px 8px; background: white; max-height: 560px; overflow: auto;">
+        <iframe data-mail-iframe sandbox="allow-same-origin" style="width:100%; min-height: 540px; border: 0; display: block;"></iframe>
+      </div>
+
+      <!-- Plain-Text-Pane -->
+      <pre data-pane="plain" style="display:none; background: var(--surface-soft); padding: 14px 16px; border-radius: 0 0 8px 8px; font-family: ui-monospace, monospace; font-size: 12.5px; white-space: pre-wrap; line-height: 1.55; max-height: 460px; overflow: auto; border: 1px solid var(--border); border-top: 0; margin: 0;">${esc(r.cold_mail_plain || '')}</pre>
     </div>` : ''}
   `;
 
-  // Toggle Cold-Mail
+  // ---- Toggle Mail-Pane ----
   const tBtn = div.querySelector('[data-toggle-mail]');
-  const pre  = div.querySelector('[data-mail-pre]');
-  if (tBtn && pre) {
+  const pane = div.querySelector('[data-mail-pane]');
+  const iframe = div.querySelector('[data-mail-iframe]');
+  if (tBtn && pane) {
     tBtn.addEventListener('click', () => {
-      pre.style.display = (pre.style.display === 'none') ? '' : 'none';
+      const showing = pane.style.display !== 'none';
+      pane.style.display = showing ? 'none' : '';
+      // iframe lazy-load: erst beim ersten Show das HTML reinpacken
+      if (!showing && iframe && !iframe.dataset.loaded) {
+        // srcdoc rendert den HTML-Inhalt im Sandbox
+        iframe.srcdoc = r.cold_mail_html || '';
+        iframe.dataset.loaded = '1';
+      }
     });
   }
-  // Copy
-  const cBtn = div.querySelector('[data-copy]');
-  if (cBtn && pre) {
-    cBtn.addEventListener('click', () => {
-      const text = pre.querySelector('pre').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const orig = cBtn.textContent;
-        cBtn.textContent = '✓ Kopiert!';
-        setTimeout(() => { cBtn.textContent = orig; }, 1500);
+
+  // ---- Tab-Switch: Vorschau <-> Plain ----
+  div.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      div.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      div.querySelectorAll('[data-pane]').forEach(p => {
+        p.style.display = (p.dataset.pane === target) ? '' : 'none';
+      });
+    });
+  });
+
+  // ---- Copy as HTML (Rich-Text — Outlook pastet's als gerenderte Mail) ----
+  const copyHtmlBtn = div.querySelector('[data-copy-html]');
+  if (copyHtmlBtn) {
+    copyHtmlBtn.addEventListener('click', async () => {
+      const html  = r.cold_mail_html  || '';
+      const plain = r.cold_mail_plain || '';
+      try {
+        // Moderne Clipboard-API mit Rich-Text-Support
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html':  new Blob([html],  { type: 'text/html'  }),
+            'text/plain': new Blob([plain], { type: 'text/plain' }),
+          }),
+        ]);
+        flashBtn(copyHtmlBtn, '✓ HTML kopiert!');
+      } catch (err) {
+        // Fallback: nur plain
+        await navigator.clipboard.writeText(plain);
+        flashBtn(copyHtmlBtn, '✓ (nur Plain) kopiert');
+      }
+    });
+  }
+
+  // ---- Copy as plain ----
+  const copyPlainBtn = div.querySelector('[data-copy-plain]');
+  if (copyPlainBtn) {
+    copyPlainBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(r.cold_mail_plain || '').then(() => {
+        flashBtn(copyPlainBtn, '✓ Kopiert!');
       });
     });
   }
 
   resList.appendChild(div);
+}
+
+function flashBtn(btn, msg) {
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(() => { btn.textContent = orig; }, 1500);
 }
 
 function esc(s) {
