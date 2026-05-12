@@ -270,22 +270,121 @@ def _count_spf_lookups(domain: str, _seen: Optional[set] = None,
     return {"count": count, "breakdown": breakdown}
 
 
+def _analyze_spf_structure(record: str) -> dict:
+    """Strukturanalyse des SPF-Records, parst Mechanismen + Modifier.
+
+    Wichtig wegen RFC 7208 Section 6.1: 'redirect=' ist ein MODIFIER, kein
+    Mechanismus. Wenn 'redirect=' UND andere Mechanismen ohne 'all' im
+    Record stehen, wird die SPF-Auswertung komplett zur Redirect-Domain
+    delegiert — die anderen ip4/include/a/mx werden ignoriert. Das ist
+    fast immer ein Konfigurationsfehler.
+
+    Wenn 'redirect=' UND 'all' im selben Record, gewinnt 'all' — redirect
+    wird ignoriert (auch verwirrend, sollte gemeldet werden).
+
+    Returns dict mit:
+      mechanisms: list of (qualifier, type, value) -- ohne all
+      all_qualifier: '+'/'-'/'~'/'?' oder None
+      redirects: list of redirect-target domains
+      duplicates: dict of {token_type: count} fuer doppelte Modifier
+    """
+    mechanisms: list[tuple] = []
+    all_qualifier: Optional[str] = None
+    redirects: list[str] = []
+    explain: Optional[str] = None
+
+    for token in record.split():
+        t = token.strip()
+        if not t or t.lower().startswith("v=spf1"):
+            continue
+        # Qualifier abtrennen
+        q = "+"
+        if t[0] in "+-~?":
+            q = t[0]
+            t = t[1:]
+        low = t.lower()
+        if low == "all":
+            all_qualifier = q
+        elif low.startswith("redirect="):
+            redirects.append(t[9:])
+        elif low.startswith("exp="):
+            explain = t[4:]
+        elif low.startswith(("ip4:", "ip6:", "include:", "a:", "a", "mx:",
+                              "mx", "exists:", "ptr")):
+            mech_type = low.split(":", 1)[0] if ":" in low else low
+            value = t.split(":", 1)[1] if ":" in t else ""
+            mechanisms.append((q, mech_type, value))
+
+    return {
+        "mechanisms": mechanisms,
+        "all_qualifier": all_qualifier,
+        "redirects": redirects,
+        "explain": explain,
+    }
+
+
 def lookup_spf(domain: str) -> dict:
-    """Return SPF record analysis incl. proper recursive DNS-lookup count."""
+    """Return SPF record analysis incl. proper recursive DNS-lookup count
+    AND redirect-conflict-detection (RFC 7208 Section 6.1)."""
     out: dict = {"present": False, "valid": False, "raw": None,
-                  "issues": [], "lookup_count": 0, "lookup_breakdown": []}
+                  "issues": [], "lookup_count": 0, "lookup_breakdown": [],
+                  "redirect_target": None, "redirect_overrides": False}
     for t in get_txt_records(domain):
         if t.lower().startswith("v=spf1"):
             out["present"] = True
             out["raw"] = t
-            # quick syntax checks
-            if t.endswith("?all") or "?all" in t:
+
+            # Strukturanalyse
+            struct = _analyze_spf_structure(t)
+            mechanisms = struct["mechanisms"]
+            all_q = struct["all_qualifier"]
+            redirects = struct["redirects"]
+
+            # ---- Redirect-Konflikte (RFC 7208 §6.1) ----
+            if len(redirects) > 1:
+                out["issues"].append(
+                    f"Mehrere 'redirect=' Modifier im Record ({len(redirects)} Stück) — "
+                    "RFC 7208 erlaubt nur einen, der Record ist syntaktisch kaputt "
+                    "(permerror bei strengen Resolvern)."
+                )
+
+            if redirects:
+                out["redirect_target"] = redirects[0]
+
+                if all_q is not None:
+                    # redirect= UND 'all' -> 'all' gewinnt, redirect wird ignoriert
+                    out["issues"].append(
+                        f"'redirect={redirects[0]}' wird durch das vorhandene "
+                        f"'{all_q}all' am Ende komplett ignoriert (RFC 7208 §6.1). "
+                        "Vermutlich war 'redirect=' gemeint — dann muss 'all' raus."
+                    )
+                elif mechanisms:
+                    # redirect= OHNE 'all' aber MIT Mechanismen ->
+                    # redirect gewinnt, ip4/include/a/mx werden ignoriert
+                    mech_summary = ", ".join(
+                        f"{q}{m}{':' + v if v else ''}"
+                        for q, m, v in mechanisms[:4]
+                    )
+                    if len(mechanisms) > 4:
+                        mech_summary += f" (+{len(mechanisms)-4} weitere)"
+                    out["issues"].append(
+                        f"'redirect={redirects[0]}' überschreibt alle anderen "
+                        f"Mechanismen im Record ({mech_summary}) — die werden "
+                        "komplett ignoriert (RFC 7208 §6.1). Entweder die "
+                        "Mechanismen raus, oder 'redirect=' raus."
+                    )
+                    out["redirect_overrides"] = True
+
+            # ---- All-Qualifier Standard-Checks ----
+            if all_q == "?":
                 out["issues"].append("Soft policy '?all' — kein wirklicher Schutz.")
-            if t.endswith("+all") or "+all" in t:
+            elif all_q == "+":
                 out["issues"].append("'+all' lässt jeden senden — entspricht keinem Schutz.")
-            if not (t.endswith("-all") or t.endswith("~all")):
-                out["issues"].append("Kein '-all' oder '~all' am Ende — Policy unklar.")
-            # Proper recursive lookup count
+            elif all_q is None and not redirects:
+                # Kein 'all' UND kein 'redirect' = unklar/kaputt
+                out["issues"].append("Kein '-all', '~all' oder 'redirect=' am Ende — Policy unklar.")
+
+            # ---- Recursive lookup count ----
             lc = _count_spf_lookups(domain)
             out["lookup_count"] = lc["count"]
             out["lookup_breakdown"] = lc["breakdown"]

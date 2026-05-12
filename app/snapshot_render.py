@@ -193,6 +193,17 @@ def _build_context_extras(check_result: dict | None) -> list[str]:
     dmarc = check_result.get("dmarc") or {}
     dkim_list = check_result.get("dkim") or []
 
+    # SPF-Redirect-Override: redirect= ignoriert alle anderen Mechanismen
+    if spf.get("redirect_overrides") and spf.get("redirect_target"):
+        extras.append(
+            f"<strong>SPF wird komplett von <code>{spf['redirect_target']}</code> "
+            "überschrieben</strong> — euer eigener Record enthält zwar "
+            "<code>ip4:</code>/<code>include:</code>-Einträge, aber durch das "
+            "<code>redirect=</code> werden die <em>alle</em> ignoriert (RFC 7208 §6.1). "
+            "Heisst: was ihr da geschrieben habt, wirkt nicht — die andere Domain "
+            "bestimmt komplett wer in eurem Namen senden darf."
+        )
+
     # SPF-Lookup-Count Detail
     lc = spf.get("lookup_count")
     if lc is not None and spf.get("present"):
