@@ -55,6 +55,9 @@
     .mtr-icon-warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .mtr-icon-fail { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .mtr-icon-lock { background: linear-gradient(135deg, #94a3b8, #64748b); }
+    .mtr-icon-skip { background: #cbd5e1; color: #475569; }
+    .mtr-check.skipped { opacity: .7; }
+    .mtr-check.skipped h3 { color: var(--muted, #64748b); }
     .mtr-check h3 { margin: 0 0 4px; font-size: 16px; }
     .mtr-check .detail { color: var(--muted, #64748b); font-size: 13.5px; }
     .mtr-check .fix-hint {
@@ -457,15 +460,18 @@
   <div class="mtr-checks">
     {% for c in breakdown.checks %}
       {% set is_locked = c._locked or false %}
-      <div class="mtr-check {% if is_locked %}locked{% endif %}">
+      {% set is_skip = c.status == 'skip' %}
+      <div class="mtr-check {% if is_locked %}locked{% endif %}{% if is_skip %} skipped{% endif %}">
         <div class="mtr-check-icon
           {%- if is_locked %} mtr-icon-lock
           {%- elif c.status == 'pass' %} mtr-icon-pass
           {%- elif c.status == 'warn' %} mtr-icon-warn
+          {%- elif is_skip %} mtr-icon-skip
           {%- else %} mtr-icon-fail{% endif %}">
           {% if is_locked %}🔒
           {%- elif c.status == 'pass' %}✓
           {%- elif c.status == 'warn' %}!
+          {%- elif is_skip %}–
           {%- else %}✕{% endif %}
         </div>
         <div>
@@ -482,7 +488,9 @@
           {% endif %}
         </div>
         <div class="mtr-check-score">
-          {% if not is_locked %}{{ '%.1f'|format(c.score) }}<span class="muted"> / {{ '%.1f'|format(c.max_score) }}</span>{% else %}<span class="muted">🔒</span>{% endif %}
+          {% if is_locked %}<span class="muted">🔒</span>
+          {% elif is_skip %}<span class="muted small">n/a</span>
+          {% else %}{{ '%.1f'|format(c.score) }}<span class="muted"> / {{ '%.1f'|format(c.max_score) }}</span>{% endif %}
         </div>
       </div>
     {% endfor %}

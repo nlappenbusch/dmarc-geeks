@@ -39,6 +39,9 @@ class CheckResult:
     # zum Anzeigen im Detail-View (mail-tester.com-Style — "we retained X as
     # your current SPF record")
     raw_evidence: Optional[str] = None
+    # "skip"-Checks zählen nicht zum applicable max (wie mail-tester) —
+    # z.B. List-Unsub bei 1:1-Mail oder HTML-Checks bei Plain-Text-only.
+    # status="skip" wird im UI als info/grau dargestellt, ohne Punkt-Beitrag.
 
 
 @dataclass
@@ -520,7 +523,7 @@ def score_email(raw_email: str) -> ScoreBreakdown:
                 fix_hint="Sender-IP, PTR und HELO-Hostname sollten zur gleichen Domain gehören — sonst werten viele Filter das als Spoofing-Indiz.",
             ))
 
-    # 3) TLS-Hop
+    # 3) TLS-Hop. Wenn aus Received-Header nicht parsbar -> SKIP.
     tls = _extract_tls(received_headers)
     max_s = _WEIGHTS["tls"]
     if tls and tls.startswith("TLS"):
@@ -530,10 +533,11 @@ def score_email(raw_email: str) -> ScoreBreakdown:
             detail=f"{tls}",
         ))
     else:
+        # SKIP: Mailserver-Logs zeigen TLS oft im Headern aber nicht alle
         breakdown.checks.append(CheckResult(
-            key="tls", label="Transport-Verschlüsselung", status="warn",
-            score=max_s * 0.3, max_score=max_s,
-            detail="TLS-Version aus Received-Header nicht eindeutig lesbar",
+            key="tls", label="Transport-Verschlüsselung", status="skip",
+            score=0.0, max_score=0.0,
+            detail="TLS-Version aus Received-Header nicht eindeutig lesbar (Mailserver loggt's nicht immer)",
         ))
 
     # 4) DNSBL (Spamhaus)
@@ -554,7 +558,8 @@ def score_email(raw_email: str) -> ScoreBreakdown:
                 fix_hint="Delisting bei Spamhaus beantragen. Vorher Ursache klären (kompromittierter Account? offener Relay?).",
             ))
 
-    # 5) rspamd-Score aus dem Header (Mailcow setzt ihn)
+    # 5) rspamd-Score aus dem Header (Mailcow setzt ihn).
+    # Wenn KEIN rspamd-Header gefunden -> Check SKIPPEN (nicht prüfbar).
     rspamd_score_str = (
         _get_first(msg, "X-Spam-Score") or
         _get_first(msg, "X-Rspamd-Score") or
@@ -581,21 +586,43 @@ def score_email(raw_email: str) -> ScoreBreakdown:
             score=max_s * pct, max_score=max_s,
             detail=f"rspamd-Score: {rs:+.2f} (niedriger = besser)",
         ))
+    else:
+        # SKIP: kein rspamd-Header gefunden -> dieser Check zählt nicht
+        breakdown.checks.append(CheckResult(
+            key="rspamd", label="Spam-Score (rspamd)", status="skip",
+            score=0.0, max_score=0.0,
+            detail="Kein rspamd-Header — Score auf empfangenden Mailserver angewiesen, der ihn nicht setzt",
+        ))
 
-    # 6) List-Unsubscribe-Header
+    # 6) List-Unsubscribe-Header — nur für Bulk-Mail relevant (heuristisch).
+    # Bei 1:1-Mail (genau 1 To, kein Mailing-List-Header) SKIP.
+    to_count = len([a for a in (msg.get_all("To") or []) for _ in a.split(",")])
+    is_bulk_mail = (
+        to_count > 5
+        or bool(msg.get("List-Id"))
+        or bool(msg.get("List-Help"))
+        or bool(msg.get("Precedence"))
+    )
     max_s = _WEIGHTS["list_unsub"]
     if msg.get("List-Unsubscribe"):
         breakdown.checks.append(CheckResult(
             key="list_unsub", label="List-Unsubscribe-Header", status="pass",
             score=max_s, max_score=max_s,
-            detail="Vorhanden",
+            detail="Vorhanden — Bulk-Best-Practice erfüllt",
         ))
-    else:
+    elif is_bulk_mail:
         breakdown.checks.append(CheckResult(
             key="list_unsub", label="List-Unsubscribe-Header", status="warn",
             score=max_s * 0.3, max_score=max_s,
             detail="Fehlt — Gmail/Outlook verlangen ihn seit 2024 bei Bulk-Mail",
             fix_hint="<code>List-Unsubscribe: &lt;mailto:unsub@…&gt;</code> + <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code>",
+        ))
+    else:
+        # 1:1-Mail braucht keinen List-Unsub → SKIP
+        breakdown.checks.append(CheckResult(
+            key="list_unsub", label="List-Unsubscribe-Header", status="skip",
+            score=0.0, max_score=0.0,
+            detail="Nicht relevant — 1:1-Mail (kein Bulk-Versand erkannt)",
         ))
 
     # 7) Subject all-caps?
@@ -765,7 +792,18 @@ def score_email(raw_email: str) -> ScoreBreakdown:
                 fix_hint="MX-Record auf den Empfangs-Mailserver setzen, sonst kommen Bounces/Replies ins Leere.",
             ))
 
-    breakdown.total = round(sum(c.score for c in breakdown.checks), 2)
+    # ============================================================================
+    # Final Score: proportional über alle PRÜFBAREN Checks
+    # ============================================================================
+    # Statt absoluter Summe (was bei nicht-anwendbaren Checks Phantom-Abzüge
+    # gibt) rechnen wir wie mail-tester: prozentual über alle Checks die
+    # wirklich evaluiert wurden. status="skip" Checks zählen nicht zur Max.
+    applicable_max = sum(c.max_score for c in breakdown.checks if c.status != "skip")
+    earned = sum(c.score for c in breakdown.checks if c.status != "skip")
+    if applicable_max > 0:
+        breakdown.total = round(10.0 * earned / applicable_max, 2)
+    else:
+        breakdown.total = 0.0
     if breakdown.total > 10.0:
         breakdown.total = 10.0
     return breakdown
