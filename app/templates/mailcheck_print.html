@@ -164,7 +164,16 @@
       <span class="check-row-status">{{ score.checks.spf.status|upper }}</span>
     </div>
     {% if result.spf.present %}
-      <p class="check-row-detail"><code>{{ result.spf.raw }}</code>{% if result.spf.issues %}<br><strong>Probleme:</strong> {% for i in result.spf.issues %}{{ i }}{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
+      {% set lc = result.spf.lookup_count or 0 %}
+      <p class="check-row-detail"><code>{{ result.spf.raw }}</code></p>
+      <p class="check-row-detail" style="margin-top:6px;">
+        <strong>DNS-Lookups (RFC 7208 Limit = 10):</strong>
+        <strong style="color: {% if lc > 10 %}var(--bad){% elif lc >= 8 %}var(--warn){% else %}var(--ok){% endif %};">{{ lc }}/10</strong>
+        {% if lc > 10 %} — <strong>kaputt</strong>, Record wird komplett verworfen
+        {% elif lc >= 8 %} — grenzwertig, ein weiterer <code>include:</code> kippt SPF
+        {% endif %}
+      </p>
+      {% if result.spf.issues %}<p class="check-row-detail" style="margin-top:6px;"><strong>Probleme:</strong> {% for i in result.spf.issues %}{{ i }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
     {% else %}
       <p class="check-row-detail">Kein SPF-Record. Voraussetzung für DMARC fehlt.</p>
     {% endif %}

@@ -197,24 +197,110 @@ def lookup_mx(domain: str) -> dict:
     return out
 
 
+def _count_spf_lookups(domain: str, _seen: Optional[set] = None,
+                       _depth: int = 0) -> dict:
+    """Rekursiv DNS-Lookups in SPF-Records zaehlen (RFC 7208 Section 4.6.4).
+
+    Pro Domain wird:
+      - der erste 'v=spf1'-TXT-Record geholt
+      - jedes 'include:DOMAIN' = 1 Lookup PLUS rekursive Sub-Lookups
+      - jedes 'a:', 'mx:', 'exists:', 'redirect=' = 1 Lookup (jeweils ggfs. + sub)
+      - 'ip4:'/'ip6:'/'all' kosten 0 Lookups
+    Cycle-Schutz via _seen, Tiefen-Limit via _depth (12 ist > RFC-Maximum).
+    Returns {count, breakdown:[{type,target,sub_count}], error?}.
+    """
+    if _seen is None:
+        _seen = set()
+    domain_l = domain.lower()
+    if domain_l in _seen:
+        return {"count": 0, "breakdown": [], "error": "loop"}
+    if _depth > 12:
+        return {"count": 0, "breakdown": [], "error": "depth>12"}
+    _seen.add(domain_l)
+
+    spf_record = None
+    for t in get_txt_records(domain):
+        if t.lower().startswith("v=spf1"):
+            spf_record = t
+            break
+    if not spf_record:
+        return {"count": 0, "breakdown": []}
+
+    count = 0
+    breakdown: list[dict] = []
+    for token in spf_record.split():
+        t = token.strip()
+        if not t:
+            continue
+        # Strip qualifier prefix (+, -, ~, ?)
+        if t[0] in "+-~?":
+            t = t[1:]
+        low = t.lower()
+
+        if low.startswith("include:"):
+            sub = t[8:]
+            count += 1
+            r = _count_spf_lookups(sub, _seen, _depth + 1)
+            count += r["count"]
+            breakdown.append({"type": "include", "target": sub,
+                               "sub_count": r["count"]})
+        elif low.startswith("redirect="):
+            sub = t[9:]
+            count += 1
+            r = _count_spf_lookups(sub, _seen, _depth + 1)
+            count += r["count"]
+            breakdown.append({"type": "redirect", "target": sub,
+                               "sub_count": r["count"]})
+        elif low.startswith("a:") or low == "a":
+            count += 1
+            breakdown.append({"type": "a", "target": t[2:] if ":" in t else domain,
+                               "sub_count": 0})
+        elif low.startswith("mx:") or low == "mx":
+            count += 1
+            breakdown.append({"type": "mx", "target": t[3:] if ":" in t else domain,
+                               "sub_count": 0})
+        elif low.startswith("exists:"):
+            count += 1
+            breakdown.append({"type": "exists", "target": t[7:], "sub_count": 0})
+        elif low.startswith("ptr"):
+            # ptr kostet zwar Lookups, ist deprecated und sollte rausfliegen
+            count += 1
+            breakdown.append({"type": "ptr", "target": "(deprecated)", "sub_count": 0})
+
+    return {"count": count, "breakdown": breakdown}
+
+
 def lookup_spf(domain: str) -> dict:
-    """Return SPF record analysis."""
-    out: dict = {"present": False, "valid": False, "raw": None, "issues": []}
+    """Return SPF record analysis incl. proper recursive DNS-lookup count."""
+    out: dict = {"present": False, "valid": False, "raw": None,
+                  "issues": [], "lookup_count": 0, "lookup_breakdown": []}
     for t in get_txt_records(domain):
         if t.lower().startswith("v=spf1"):
             out["present"] = True
             out["raw"] = t
-            # quick checks
+            # quick syntax checks
             if t.endswith("?all") or "?all" in t:
                 out["issues"].append("Soft policy '?all' — kein wirklicher Schutz.")
             if t.endswith("+all") or "+all" in t:
                 out["issues"].append("'+all' lässt jeden senden — entspricht keinem Schutz.")
             if not (t.endswith("-all") or t.endswith("~all")):
                 out["issues"].append("Kein '-all' oder '~all' am Ende — Policy unklar.")
-            # 10-DNS-lookup limit warning (rough heuristic)
-            includes = t.lower().count("include:") + t.lower().count("a:") + t.lower().count("mx")
-            if includes >= 10:
-                out["issues"].append(f"~{includes} DNS-Lookups — RFC-7208-Limit ist 10.")
+            # Proper recursive lookup count
+            lc = _count_spf_lookups(domain)
+            out["lookup_count"] = lc["count"]
+            out["lookup_breakdown"] = lc["breakdown"]
+            if lc.get("error"):
+                out["issues"].append(f"SPF-Lookup-Fehler: {lc['error']}")
+            if lc["count"] > 10:
+                out["issues"].append(
+                    f"SPF-Lookup-Limit überschritten ({lc['count']} > 10) — "
+                    "Provider verwerfen den Record komplett (RFC 7208)."
+                )
+            elif lc["count"] >= 8:
+                out["issues"].append(
+                    f"SPF-Lookup-Count grenzwertig ({lc['count']}/10) — "
+                    "ein weiterer include reicht und SPF kippt."
+                )
             out["valid"] = True
             break
     return out
@@ -445,12 +531,23 @@ def score_check(result: dict) -> dict:
         sc["checks"]["mx"] = {"status": "fail", "label": "Keine MX-Records — Domain empfängt keine Mails", "points": 0}
 
     spf = result.get("spf") or {}
+    spf_lc = (spf.get("lookup_count") or 0)
     if spf.get("present") and not spf.get("issues"):
-        sc["checks"]["spf"] = {"status": "ok", "label": "SPF gesetzt &amp; sauber", "points": 25}
+        sc["checks"]["spf"] = {"status": "ok",
+            "label": f"SPF gesetzt &amp; sauber ({spf_lc} DNS-Lookups)",
+            "points": 25, "lookup_count": spf_lc}
+    elif spf.get("present") and spf_lc > 10:
+        # Lookup-Overflow ist kritisch: Provider verwerfen den Record komplett
+        sc["checks"]["spf"] = {"status": "fail",
+            "label": f"SPF kaputt: {spf_lc} DNS-Lookups (Limit 10) — wird ignoriert",
+            "points": 0, "lookup_count": spf_lc}
     elif spf.get("present"):
-        sc["checks"]["spf"] = {"status": "warn", "label": "SPF gesetzt, aber Probleme erkannt", "points": 15}
+        sc["checks"]["spf"] = {"status": "warn",
+            "label": f"SPF gesetzt, aber Probleme erkannt ({spf_lc} Lookups)",
+            "points": 15, "lookup_count": spf_lc}
     else:
-        sc["checks"]["spf"] = {"status": "fail", "label": "SPF fehlt komplett", "points": 0}
+        sc["checks"]["spf"] = {"status": "fail", "label": "SPF fehlt komplett",
+            "points": 0, "lookup_count": 0}
 
     dmarc = result.get("dmarc") or {}
     if dmarc.get("present"):

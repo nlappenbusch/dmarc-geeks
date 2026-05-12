@@ -134,7 +134,7 @@ _COLD_MAIL_TEMPLATE = """Betreff: {subject}
 
 Hallo{name_part},
 
-ich habe mir heute kurz die Mail-Sicherheit von {domain} angeschaut – das mache ich für Schweizer KMU regelmäßig, wenn ich auf eine Firma stoße, deren Setup ich nicht kenne.
+ich habe mir heute kurz die Mail-Sicherheit von {domain} angeschaut – das mache ich für Schweizer KMU regelmässig, wenn ich auf eine Firma stosse, deren Setup ich nicht kenne.
 
 {hook}
 
@@ -146,7 +146,7 @@ Was zuerst angehen:
 
 Falls du den vollständigen 1-Pager-Bericht (PDF, 7 Checks im Detail) haben möchtest – einfach kurz auf diese Mail antworten, dann schicke ich ihn dir per E-Mail.
 
-Wir bauen sowas regelmäßig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab CHF 490 als Audit, ab CHF 1990 als Voll-Migration. Auch als White-Label für Agenturen.
+Wir bauen sowas regelmässig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab CHF 490 als Audit, ab CHF 1990 als Voll-Migration. Auch als White-Label für Agenturen.
 
 Liebe Grüsse aus dem Zürcher Unterland
 Nils Lappenbusch
@@ -160,42 +160,170 @@ P.S.: Falls ihr das schon auf dem Schirm habt – gerne ignorieren. Ich schreibe
 
 
 # Hooks pro Grade — mit echten Umlauten, persoenlicher Ton.
+# Werden mit Context-Add-Ons angereichert (rua, SPF-Lookups) wenn der
+# DNS-Check entsprechende Daten liefert.
 _HOOKS_BY_GRADE = {
     "F": "Kurz gesagt: aktuell kann unter dem Namen <strong>{domain}</strong> aus dem Internet jeder eine E-Mail verschicken, ohne dass es als Fälschung erkennbar wäre — DMARC und SPF fehlen komplett. Das ist ein konkretes Phishing-Risiko, besonders wenn ihr Rechnungen, Mahnungen oder Lohnabrechnungen verschickt.",
     "D": "Kurz gesagt: bei <strong>{domain}</strong> sind nur die Basics gesetzt — kein DMARC oder kein DKIM. Damit landet ihr bei strengen Empfängern (Google, Microsoft, Apple Mail) zunehmend im Spam-Ordner statt in der Inbox.",
-    "C": "Kurz gesagt: die Basis bei <strong>{domain}</strong> ist da, aber DMARC läuft noch auf „beobachten“ (p=none) oder Reports werden nicht eingesammelt. Heißt konkret: niemand bei euch sieht, wer eigentlich in eurem Namen mailt.",
+    "C": "Kurz gesagt: die Basis bei <strong>{domain}</strong> ist da, aber DMARC läuft noch auf „beobachten“ (p=none){rua_sniplet}. Heisst konkret: niemand bei euch sieht, wer eigentlich in eurem Namen mailt.",
     "B": "Kurz gesagt: <strong>{domain}</strong> ist gut aufgestellt, aber 1–2 Schwächen lassen sich noch glätten. Falls ihr BIMI nutzt, würde euer Logo bei jeder Mail im Posteingang sichtbar sein — aktuell nicht.",
     "A": "Kurz gesagt: solide Aufstellung bei <strong>{domain}</strong>. Falls ihr trotzdem mal eine zweite Meinung wollt — oder BIMI/VMC fürs Logo-neben-Mail-Branding — kein Stress, meldet euch gerne.",
 }
 
 
-def _hook_for(grade: str, domain: str, *, plain: bool = False) -> str:
-    raw = _HOOKS_BY_GRADE.get(grade, _HOOKS_BY_GRADE["F"]).format(domain=domain)
+def _build_context_extras(check_result: dict | None) -> list[str]:
+    """Konkrete Beobachtungen aus dem DNS-Check, die im Cold-Mail-Body als
+    Bullet-Punkte erscheinen (zusaetzlich zu den generischen actions aus
+    score_check). Macht die Mail glaubwuerdig: 'er hat wirklich geschaut'.
+
+    Returns Liste von HTML-faehigen Strings.
+    """
+    extras: list[str] = []
+    if not check_result:
+        return extras
+
+    spf = check_result.get("spf") or {}
+    dmarc = check_result.get("dmarc") or {}
+    dkim_list = check_result.get("dkim") or []
+
+    # SPF-Lookup-Count Detail
+    lc = spf.get("lookup_count")
+    if lc is not None and spf.get("present"):
+        if lc > 10:
+            extras.append(
+                f"<strong>SPF-Lookup-Limit überschritten</strong> ({lc} > 10) — "
+                "der Record wird von Microsoft/Google komplett ignoriert, eure "
+                "Mails laufen aktuell <em>ohne</em> SPF-Schutz."
+            )
+        elif lc >= 8:
+            extras.append(
+                f"<strong>SPF-Lookup-Count grenzwertig</strong> ({lc}/10) — "
+                "ein weiterer include reicht und SPF kippt. Konsolidierung "
+                "wäre fällig (z.B. via SPF-Flattening)."
+            )
+
+    # DMARC-Report-Empfänger
+    if dmarc.get("present"):
+        rua = dmarc.get("rua") or []
+        policy = (dmarc.get("policy") or "none").lower()
+        if not rua:
+            extras.append(
+                "<strong>Kein DMARC-Report-Empfänger</strong> (kein <code>rua=</code> "
+                "im Record) — ihr seht aktuell <em>nicht</em>, wer in eurem Namen "
+                "mailt. Ohne Reports lässt sich auch <code>p=quarantine/reject</code> "
+                "nicht datengetrieben einführen."
+            )
+        elif policy == "none":
+            who = rua[0] if rua else "?"
+            extras.append(
+                f"Reports gehen an <code>{who}</code>, aber Policy steht noch auf "
+                "<code>p=none</code> — d.h. ihr seht zwar wer mailt, blockiert aber "
+                "noch nichts. Typisch 2-4 Wochen Reports auswerten, dann auf "
+                "<code>p=quarantine</code> wechseln."
+            )
+
+    # DKIM-Selektor-Schwaeche
+    if not dkim_list and (check_result.get("mx") or {}).get("present"):
+        extras.append(
+            "<strong>Kein DKIM-Selektor gefunden.</strong> Entweder ist DKIM nicht "
+            "konfiguriert, oder der Selektor heisst exotisch — beides hab ich "
+            "in 10 Minuten geklärt."
+        )
+
+    return extras
+
+
+def _hook_for(grade: str, domain: str, check_result: dict | None = None,
+              *, plain: bool = False) -> str:
+    """Hook mit Context-Anreicherung. Fuer Grade C wird der rua_sniplet
+    dynamisch eingesetzt damit man konkret 'oder Reports werden nicht
+    eingesammelt' (wenn rua leer) vs 'aber niemand kuckt rein' bekommt.
+    """
+    template = _HOOKS_BY_GRADE.get(grade, _HOOKS_BY_GRADE["F"])
+
+    rua_sniplet = ""
+    if "{rua_sniplet}" in template and check_result:
+        dmarc = check_result.get("dmarc") or {}
+        if not (dmarc.get("rua") or []):
+            rua_sniplet = " und es ist auch keine Report-Adresse gesetzt (kein <code>rua=</code>)"
+        else:
+            rua_sniplet = ""  # leer = der Satz wird klassich weitergefuehrt
+    raw = template.format(domain=domain, rua_sniplet=rua_sniplet)
+
     if plain:
-        # <strong>…</strong> rauswerfen fuer Plain-Text-Version
-        return raw.replace("<strong>", "").replace("</strong>", "").replace("&bdquo;", "„").replace("&ldquo;", '"')
+        # HTML-Tags rauswerfen fuer Plain-Text-Version
+        raw = raw.replace("<strong>", "").replace("</strong>", "")
+        raw = raw.replace("<em>", "").replace("</em>", "")
+        raw = raw.replace("<code>", "").replace("</code>", "")
     return raw
 
 
 def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
-                     company: str = "", email: str = "") -> str:
+                     company: str = "", email: str = "",
+                     check_result: dict | None = None) -> str:
     """Plain-Text-Version (fuer Reply-Threads und Notepad-Copy). Echte Umlaute."""
     grade = score.get("grade", "F")
     total = score.get("total", 0)
     actions = score.get("actions", [])
-    hook = _hook_for(grade, domain, plain=True)
+    hook = _hook_for(grade, domain, check_result, plain=True)
     action_lines = "\n".join(f"  • {a}" for a in actions[:3]) if actions else "  (keine kritischen Punkte)"
+
+    # Context-Extras als zusaetzliche Bullet-Punkte unter den Actions
+    extras_plain = ""
+    if check_result:
+        extras = _build_context_extras(check_result)
+        if extras:
+            extras_plain = "\nKonkret bei euch:\n" + "\n".join(
+                "  • " + e.replace("<strong>", "").replace("</strong>", "")
+                         .replace("<em>", "").replace("</em>", "")
+                         .replace("<code>", "").replace("</code>", "")
+                for e in extras
+            ) + "\n"
+
     subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
     name_part = f" {first_name}" if first_name else ""
     return _COLD_MAIL_TEMPLATE.format(
         subject=subject, domain=domain, name_part=name_part,
         hook=hook, grade=grade,
-        score=total, action_lines=action_lines,
+        score=total, action_lines=action_lines + extras_plain,
+    )
+
+
+def _render_check_strip_html(check_result: dict, score: dict) -> str:
+    """Mini-Snapshot-Card mit den 5 Haupt-Checks als Ampel-Strip — wird in
+    der Cold-Mail unter dem Score-Badge eingebettet. Outlook-vertraegliches
+    Table-Layout."""
+    if not check_result:
+        return ""
+    checks = score.get("checks", {})
+    rows = [("SPF", "spf"), ("DKIM", "dkim"), ("DMARC", "dmarc"),
+            ("MX", "mx"), ("BIMI", "bimi")]
+    # ok=green, warn=amber, fail=red, info=gray
+    color_map = {"ok": "#16a34a", "warn": "#d97706",
+                  "fail": "#dc2626", "info": "#94a3b8"}
+    icon_map = {"ok": "✓", "warn": "!", "fail": "✗", "info": "·"}
+    cells = []
+    for label, key in rows:
+        c = checks.get(key) or {}
+        status = c.get("status", "info")
+        col = color_map.get(status, "#94a3b8")
+        ic = icon_map.get(status, "·")
+        cells.append(
+            f'<td align="center" style="padding:6px 8px;font-family:-apple-system,Inter,sans-serif;">'
+            f'<div style="width:36px;height:36px;border-radius:50%;background:{col};color:white;'
+            f'line-height:36px;font-weight:800;font-size:18px;margin:0 auto 4px;">{ic}</div>'
+            f'<div style="font-size:11px;color:#475569;font-weight:600;">{label}</div></td>'
+        )
+    return (
+        '<table cellpadding="0" cellspacing="0" border="0" '
+        'style="margin:0 0 20px 0;width:100%;border-collapse:collapse;">'
+        '<tr>' + "".join(cells) + '</tr></table>'
     )
 
 
 def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
-                          company: str = "", email: str = "") -> dict:
+                          company: str = "", email: str = "",
+                          check_result: dict | None = None) -> dict:
     """Fancy HTML-Version fuer Outlook-Copy-Paste. Gibt dict mit subject + html + plain.
 
     Inline-CSS damit es in Mail-Clients sauber rendert (Outlook, Apple Mail,
@@ -207,7 +335,7 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
     grade = score.get("grade", "F")
     total = score.get("total", 0)
     actions = score.get("actions", [])
-    hook = _hook_for(grade, domain, plain=False)
+    hook = _hook_for(grade, domain, check_result, plain=False)
     color = grade_color(grade)
     subject = f"Kurzer Mail-Sicherheits-Check für {domain} — Grade {grade}"
     greeting = f"Hallo {first_name},".strip() if first_name else "Hallo zusammen,"
@@ -216,59 +344,119 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
     if actions:
         for a in actions[:3]:
             actions_html += (
-                f'<li style="margin-bottom:6px;color:#1f2937;">{a}</li>'
+                f'<li style="margin-bottom:8px;color:#1f2937;line-height:1.6;">{a}</li>'
             )
     else:
         actions_html = '<li style="color:#16a34a;">(keine kritischen Punkte — solide Aufstellung)</li>'
 
-    # Score-Badge inline (Outlook-vertraeglich: kein flex, Tabellen+nbsp)
-    score_badge = (
-        f'<table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;">'
-        f'<tr><td style="background:{color};color:white;border-radius:10px;padding:14px 22px;'
-        f'text-align:center;font-family:-apple-system,Inter,sans-serif;line-height:1;">'
-        f'<div style="font-size:36px;font-weight:900;letter-spacing:-0.04em;">{grade}</div>'
-        f'<div style="font-size:11px;font-weight:600;opacity:.9;margin-top:4px;">{total}/100</div>'
+    # Extras: konkrete Beobachtungen aus dem Check (rua, SPF-Lookups, ...)
+    extras = _build_context_extras(check_result) if check_result else []
+    extras_html = ""
+    if extras:
+        extras_items = "".join(
+            f'<li style="margin-bottom:10px;color:#1f2937;line-height:1.6;">{e}</li>'
+            for e in extras
+        )
+        extras_html = (
+            '<div style="background:#fef3c7;border-left:4px solid #d97706;'
+            'padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px 0;">'
+            '<div style="font-weight:700;color:#92400e;font-size:13px;'
+            'text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">'
+            '🔍 Konkret bei euch entdeckt</div>'
+            f'<ul style="margin:0;padding-left:20px;">{extras_items}</ul>'
+            '</div>'
+        )
+
+    # Mini-Snapshot-Card (5 Ampeln) — visualisiert was geprueft wurde
+    snapshot_strip = _render_check_strip_html(check_result or {}, score)
+
+    # Score-Badge mit Grade-Label
+    grade_labels = {"A": "Exzellent", "B": "Gut, mit Feinschliff",
+                     "C": "Solide Basis, Lücken", "D": "Riskant",
+                     "F": "Akut handlungsbedürftig"}
+    grade_label = score.get("grade_label") or grade_labels.get(grade, "")
+    score_card = (
+        f'<table cellpadding="0" cellspacing="0" border="0" '
+        f'style="width:100%;margin:0 0 8px 0;border-collapse:collapse;'
+        f'background:linear-gradient(135deg,{color} 0%,{color}dd 100%);'
+        f'border-radius:14px;">'
+        f'<tr>'
+        f'<td valign="middle" style="padding:22px 26px;color:white;'
+        f'font-family:-apple-system,Inter,sans-serif;">'
+        f'<div style="font-size:11px;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.08em;opacity:0.85;margin-bottom:4px;">Mail-Sicherheits-Grade</div>'
+        f'<div style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px;">'
+        f'<code style="font-family:inherit;background:rgba(255,255,255,.18);'
+        f'padding:2px 10px;border-radius:6px;">{domain}</code></div>'
+        f'<div style="font-size:13.5px;opacity:0.9;margin-top:4px;">{grade_label}</div>'
+        f'</td>'
+        f'<td valign="middle" align="right" style="padding:22px 26px;color:white;'
+        f'font-family:-apple-system,Inter,sans-serif;text-align:right;">'
+        f'<div style="font-size:64px;font-weight:900;line-height:1;letter-spacing:-0.05em;">{grade}</div>'
+        f'<div style="font-size:13px;font-weight:600;opacity:0.85;margin-top:6px;">{total}/100</div>'
+        f'</td>'
+        f'</tr></table>'
+    )
+
+    # Snapshot-CTA-Box (auffaelliger Button + Link zum 1-Pager)
+    snapshot_url = f"https://dmarc-geeks.ch/check?domain={domain}&print=true"
+    cta_box = (
+        f'<table cellpadding="0" cellspacing="0" border="0" style="width:100%;'
+        f'margin:24px 0;border-collapse:separate;">'
+        f'<tr><td align="center" style="background:linear-gradient(135deg,#2563eb,#7c3aed);'
+        f'border-radius:14px;padding:24px 24px;">'
+        f'<div style="color:white;font-family:-apple-system,Inter,sans-serif;'
+        f'font-size:16px;font-weight:700;margin-bottom:6px;">📄 Vollständiger 1-Pager-Bericht</div>'
+        f'<div style="color:rgba(255,255,255,0.85);font-family:-apple-system,Inter,sans-serif;'
+        f'font-size:13px;margin-bottom:14px;line-height:1.5;">'
+        f'7 Checks im Detail · druckbar als PDF · perfekt fürs Compliance-Meeting</div>'
+        f'<a href="{snapshot_url}" '
+        f'style="display:inline-block;background:white;color:#2563eb;text-decoration:none;'
+        f'font-family:-apple-system,Inter,sans-serif;font-weight:700;font-size:14.5px;'
+        f'padding:13px 28px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">'
+        f'Bericht öffnen →</a>'
+        f'<div style="color:rgba(255,255,255,0.7);font-family:-apple-system,Inter,sans-serif;'
+        f'font-size:11.5px;margin-top:12px;">Oder einfach kurz antworten — ich schicke ihn dir per Mail.</div>'
         f'</td></tr></table>'
     )
 
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,'Segoe UI',Inter,sans-serif;color:#1f2937;background:#ffffff;font-size:14.5px;line-height:1.6;">
-<div style="max-width:620px;margin:0 auto;padding:16px 4px;">
+<body style="margin:0;padding:0;font-family:-apple-system,'Segoe UI',Inter,sans-serif;color:#1f2937;background:#f8fafc;font-size:14.5px;line-height:1.6;">
+<table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#f8fafc;">
+<tr><td align="center" style="padding:24px 12px;">
+<table cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:white;border-radius:14px;box-shadow:0 2px 20px rgba(15,23,42,0.06);">
+<tr><td style="padding:32px 36px 28px 36px;">
 
   <p style="margin:0 0 14px 0;">{greeting}</p>
 
-  <p style="margin:0 0 14px 0;">ich habe mir heute kurz die Mail-Sicherheit von <strong>{domain}</strong> angeschaut — das mache ich für Schweizer KMU regelmäßig, wenn ich auf eine Firma stoße, deren Setup ich nicht kenne.</p>
+  <p style="margin:0 0 14px 0;">ich habe mir heute kurz die Mail-Sicherheit von <strong>{domain}</strong> angeschaut — das mache ich für Schweizer KMU regelmässig, wenn ich auf eine Firma stosse, deren Setup ich nicht kenne.</p>
 
-  <p style="margin:0 0 18px 0;">{hook}</p>
+  <p style="margin:0 0 22px 0;">{hook}</p>
 
-  <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px 0;border-collapse:separate;">
-    <tr>
-      <td valign="middle" style="padding-right:18px;">{score_badge}</td>
-      <td valign="middle" style="font-size:13.5px;color:#475569;line-height:1.55;">
-        Mail-Sicherheits-Grade<br>
-        <strong style="font-size:15.5px;color:#1f2937;">{domain}</strong><br>
-        <span style="color:#94a3b8;font-size:12px;">DMARC · SPF · DKIM · MX · BIMI</span>
-      </td>
-    </tr>
-  </table>
+  {score_card}
 
-  <p style="margin:0 0 8px 0;font-weight:600;">Was ich konkret zuerst angehen würde:</p>
+  {snapshot_strip}
+
+  <p style="margin:18px 0 8px 0;font-weight:700;color:#1f2937;">Was ich konkret zuerst angehen würde:</p>
   <ol style="margin:0 0 20px 22px;padding:0;">
     {actions_html}
   </ol>
 
-  <p style="margin:0 0 14px 0;">Falls du den <strong>vollständigen 1-Pager-Bericht</strong> haben möchtest (PDF, 7 Checks im Detail, druckbar fürs Compliance-Meeting) — einfach kurz auf diese Mail antworten, dann schicke ich ihn dir per E-Mail.</p>
+  {extras_html}
 
-  <p style="margin:0 0 18px 0;color:#475569;font-size:13.5px;">Wir bauen sowas regelmäßig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab <strong>CHF 490</strong> als Audit, ab <strong>CHF 1990</strong> als Voll-Migration. Auch als White-Label für Agenturen.</p>
+  {cta_box}
+
+  <p style="margin:0 0 18px 0;color:#475569;font-size:13.5px;">Wir bauen sowas regelmässig für Schweizer KMU und MSPs: DMARC-Einführung ohne Mail-Ausfall, ab <strong>CHF 490</strong> als Audit, ab <strong>CHF 1990</strong> als Voll-Migration. Auch als White-Label für Agenturen.</p>
 
   <p style="margin:0 0 4px 0;">Liebe Grüsse aus dem Zürcher Unterland</p>
   <p style="margin:0 0 18px 0;font-weight:600;">Nils Lappenbusch</p>
 
-  <table cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:6px;">
+  <!-- Signatur-Karte -->
+  <table cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e2e8f0;padding-top:18px;margin-top:6px;width:100%;">
     <tr>
-      <td valign="middle" style="padding-right:14px;">
-        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DMARC Geeks" width="42" height="42">
+      <td valign="middle" style="padding-right:14px;width:50px;">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DMARC Geeks" width="48" height="48">
           <defs><linearGradient id="dgCm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
           <rect width="40" height="40" rx="9" fill="url(#dgCm)"/>
           <path d="M10 17 L10 28 Q10 30 12 30 L28 30 Q30 30 30 28 L30 17 L20 23 Z" fill="#fff"/>
@@ -278,24 +466,31 @@ def render_cold_mail_html(domain: str, score: dict, *, first_name: str = "",
         </svg>
       </td>
       <td valign="middle" style="font-size:13px;line-height:1.55;color:#475569;">
-        <strong style="color:#1f2937;font-size:14px;">DMARC Geeks</strong> · Mail-Security &amp; Deliverability für KMU<br>
-        🌐 <a href="https://dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">dmarc-geeks.ch</a>
-        &nbsp;·&nbsp; 📞 <a href="tel:+41779503152" style="color:#2563eb;text-decoration:none;">+41 77 950 31 52</a>
-        &nbsp;·&nbsp; ✉ <a href="mailto:nils@dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">nils@dmarc-geeks.ch</a>
+        <div style="color:#1f2937;font-size:14.5px;font-weight:700;">Nils Lappenbusch</div>
+        <div style="color:#64748b;font-size:12.5px;margin:2px 0 6px 0;">DMARC Geeks · Mail-Security für KMU</div>
+        <div style="font-size:12.5px;">
+          <span style="font-weight:600;color:#16a34a;">📞 +41 77 950 31 52</span>
+          &nbsp;·&nbsp;
+          <a href="mailto:nils@dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">nils@dmarc-geeks.ch</a>
+          &nbsp;·&nbsp;
+          <a href="https://dmarc-geeks.ch" style="color:#2563eb;text-decoration:none;">dmarc-geeks.ch</a>
+        </div>
       </td>
     </tr>
   </table>
 
-  <p style="margin:18px 0 0 0;font-size:12px;color:#94a3b8;line-height:1.55;">
+  <p style="margin:18px 0 0 0;font-size:11.5px;color:#94a3b8;line-height:1.55;">
     P.S.: Falls ihr das schon auf dem Schirm habt — gerne ignorieren. Ich schreibe nicht massenhaft, sondern habe gezielt 10–20 Domains aus eurer Branche angeschaut.
   </p>
 
-</div>
+</td></tr></table>
+</td></tr></table>
 </body></html>"""
 
     # Plain-Version (fuer Mail-Clients ohne HTML-Support oder Copy-as-plain)
     plain = render_cold_mail(domain, score, first_name=first_name,
-                              company=company, email=email)
+                              company=company, email=email,
+                              check_result=check_result)
 
     return {
         "subject": subject,

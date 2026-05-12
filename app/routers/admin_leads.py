@@ -119,19 +119,76 @@ def lead_detail(
         raise HTTPException(status_code=404, detail="Lead not found")
 
     # Auf-die-Schnelle einen frischen Check fahren, damit Operator vor dem Call
-    # weiss ob sich seit Erstanfrage was geaendert hat
+    # weiss ob sich seit Erstanfrage was geaendert hat. Wenn das klappt, gleich
+    # die personalisierte Cold-Mail-HTML mit den frischen Daten generieren --
+    # so sieht der Operator direkt was er senden koennte.
     fresh_score = None
+    fresh_result = None
+    cold_mail = None
     try:
-        result = full_dns_check(lead.domain)
-        fresh_score = score_check(result)
+        fresh_result = full_dns_check(lead.domain)
+        fresh_score = score_check(fresh_result)
     except Exception:  # noqa: BLE001
         log.warning("fresh check failed for %s", lead.domain, exc_info=True)
+
+    if fresh_score and fresh_result:
+        try:
+            cold_mail = render_cold_mail_html(
+                lead.domain, fresh_score,
+                first_name=lead.first_name or "",
+                company=lead.company or "",
+                email=lead.email,
+                check_result=fresh_result,
+            )
+        except Exception:  # noqa: BLE001
+            log.warning("cold-mail render failed for %s", lead.domain, exc_info=True)
 
     return render(
         request, "admin_lead_detail.html",
         user=user, tenant=user.tenant, active="admin",
-        lead=lead, fresh_score=fresh_score,
+        lead=lead, fresh_score=fresh_score, cold_mail=cold_mail,
     )
+
+
+@router.post("/leads/{lead_id}/rerun")
+async def lead_rerun(
+    lead_id: int,
+    request: Request,
+    user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Re-run: frischer Crawl (Email/Phone update) + DNS-Check + Score-Update.
+    Updated den Lead in der DB und leitet auf die Detail-Page zurueck (mit
+    aktualisierten Werten + neuer Cold-Mail)."""
+    lead = db.get(LeadSnapshot, lead_id)
+    if lead is None:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # Crawler (Email + Firma evtl. aktualisieren — falls Website seit Lead-Anlage
+    # geändert hat)
+    try:
+        cr = crawl_domain(lead.domain, rate_limit_seconds=0.5, max_pages=4)
+        if cr.company_name and not lead.company:
+            lead.company = cr.company_name
+    except Exception:  # noqa: BLE001
+        log.warning("rerun crawl failed for %s", lead.domain, exc_info=True)
+
+    # DNS-Check fresh + Score
+    try:
+        fresh_result = full_dns_check(lead.domain)
+        sc = score_check(fresh_result)
+        lead.grade = sc.get("grade")
+        lead.score = sc.get("total")
+        actions = sc.get("actions") or []
+        lead.top_action = actions[0] if actions else None
+        lead.has_dmarc = (fresh_result.get("dmarc") or {}).get("present", False)
+        lead.has_spf = (fresh_result.get("spf") or {}).get("present", False)
+        lead.has_dkim = bool(fresh_result.get("dkim"))
+    except Exception:  # noqa: BLE001
+        log.warning("rerun dns failed for %s", lead.domain, exc_info=True)
+
+    db.commit()
+    return RedirectResponse(f"/admin/leads/{lead.id}?rerun=1", status_code=303)
 
 
 @router.post("/leads/{lead_id}")
@@ -646,6 +703,7 @@ async def crawl_contacts_stream(
                             first_name="",
                             company=cr.company_name or "",
                             email=cr.primary_email or "",
+                            check_result=dns_result,
                         )
                     except Exception as e:  # noqa: BLE001
                         log.warning("stream mail failed for %s: %s", d, e)
