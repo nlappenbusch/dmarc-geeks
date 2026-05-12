@@ -446,7 +446,10 @@ def system_panel(request: Request, user: User = Depends(require_superadmin),
         "configured": bool(settings.mailtest_domain and settings.mailtest_imap_host),
         "domain": settings.mailtest_domain,
         "imap_host": settings.mailtest_imap_host,
+        "imap_port": settings.mailtest_imap_port,
         "imap_user": settings.mailtest_imap_user,
+        "imap_ssl": settings.mailtest_imap_ssl,
+        "imap_folder": settings.mailtest_imap_folder,
         "tests_24h": mt_24h,
         "received_24h": mt_received_24h,
         "expected_address_example": f"mt-abc123@{settings.mailtest_domain}" if settings.mailtest_domain else "—",
@@ -652,7 +655,9 @@ async def test_imap(request: Request, user: User = Depends(require_superadmin)):
     port = int(form.get("port") or 993)
     username = (form.get("user") or "").strip()
     password = (form.get("pass") or "").strip()
-    use_ssl = form.get("ssl") in ("on", "true", "1", None)
+    # checkbox-honest: wenn das Feld nicht im Form-Data ist (Checkbox uncheckt),
+    # ist ssl=off. Vorher hatten wir 'None' in der Match-Liste -> immer True.
+    use_ssl = form.get("ssl") in ("on", "true", "1")
     if not host or not username or not password:
         return {"ok": False, "msg": "Host, User und Passwort sind nötig."}
     try:

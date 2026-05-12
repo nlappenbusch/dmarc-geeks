@@ -30,7 +30,7 @@
   </div>
 
   {% if mt_status.configured %}
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 14px 0 6px 0;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 14px 0 10px 0;">
     <div>
       <div class="muted small">Test-Adresse</div>
       <code style="font-size: 12.5px;">{{ mt_status.expected_address_example }}</code>
@@ -47,6 +47,26 @@
       <div class="muted small">Tests letzte 24h</div>
       <div style="font-size: 20px; font-weight: 800;">{{ mt_status.tests_24h }} <span class="muted small" style="font-size: 12px; font-weight: 400;">davon {{ mt_status.received_24h }} empfangen</span></div>
     </div>
+  </div>
+
+  {# Was der Worker EFFEKTIV nutzt -- wichtigster Debug-Punkt #}
+  <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+    <strong>Worker connectet effektiv:</strong>
+    <code style="background: var(--card); padding: 3px 8px; border-radius: 4px; font-size: 12.5px;">
+      {{ mt_status.imap_host }}:{{ mt_status.imap_port }}
+    </code>
+    {% if mt_status.imap_ssl %}
+      <span class="badge ok">🔒 SSL/TLS (implicit)</span>
+    {% else %}
+      <span class="badge warn">🔓 PLAIN (kein SSL)</span>
+    {% endif %}
+    {# Port/SSL-Sanity: 993 ohne SSL = bug, 143 mit SSL = bug #}
+    {% if mt_status.imap_port == 993 and not mt_status.imap_ssl %}
+      <span style="color:#dc2626; font-weight: 600;">⚠ Port 993 erwartet SSL — Checkbox aktivieren!</span>
+    {% elif mt_status.imap_port == 143 and mt_status.imap_ssl %}
+      <span style="color:#d97706; font-weight: 600;">⚠ Port 143 ist plain — SSL deaktivieren oder Port 993 nutzen</span>
+    {% endif %}
+    <span class="muted small" style="margin-left: auto;">Folder: <code>{{ mt_status.imap_folder }}</code></span>
   </div>
 
   <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
