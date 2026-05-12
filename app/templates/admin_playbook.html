@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% block title %}Sales-Playbook · Admin{% endblock %}
+{% block content %}
+<style>
+  .pb-section { margin-bottom: 28px; }
+  .pb-section h2 { border-bottom: 2px solid var(--brand, #2563eb); padding-bottom: 6px; }
+  .pb-q { background: var(--surface-soft, #f8fafc); border-left: 3px solid var(--brand, #2563eb);
+           padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+  .pb-q strong { color: var(--brand, #2563eb); }
+  .pb-obj { display: grid; grid-template-columns: 240px 1fr; gap: 14px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px dashed var(--border, #e2e8f0); }
+  .pb-obj-label { font-weight: 700; color: #dc2626; }
+  .pb-obj-resp { color: var(--text, #1f2937); line-height: 1.6; }
+  .pb-script { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+                padding: 14px 18px; font-family: ui-monospace, monospace; font-size: 12.5px;
+                line-height: 1.6; white-space: pre-wrap; }
+</style>
+
+<div class="breadcrumb"><a href="/admin/tenants">Admin</a> · Sales-Playbook</div>
+<h1>📞 Sales-Playbook</h1>
+<p class="muted">Discovery-Fragen, Einwände-Behandlung, Erstgesprächs-Skript. Für Cold-Calls + Demo-Termine.</p>
+
+<!-- ============ Discovery-Fragen ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">🔍 Discovery-Fragen (15-Min Erstgespräch)</h2>
+  <p class="muted">In dieser Reihenfolge fragen — von „leicht/Smalltalk" zu „kaufentscheidungs-relevant".</p>
+
+  <div class="pb-q">
+    <strong>1. Warm-up:</strong> „Bevor wir reingehen — wie habt ihr von uns gehört?
+    Hat eine Mail/Werbung was bei euch ausgelöst?"
+    <br><em class="muted small">Ziel: entspannte Atmosphäre, Kontext über die Vorgeschichte.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>2. Situation:</strong> „Erzähl kurz — wie macht ihr Mail aktuell?
+    Eigener Server, M365, Google Workspace, Mailcow?"
+    <br><em class="muted small">Ziel: technischer Stand kennen. Triagiert sofort: Hosted=einfach, On-Prem=komplex.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>3. Pain-Point:</strong> „Gibt's ein konkretes Mail-Problem das euch nervt?
+    Mails landen im Spam? Phishing-Vorfall? Kunden-Beschwerden?"
+    <br><em class="muted small">Ziel: SCHMERZ finden. Ohne Schmerz kein Verkauf.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>4. Größe + Volumen:</strong> „Wie viele Mailboxen habt ihr? Wie viel Mailvolumen
+    pro Monat (grob)? Sendet ihr Newsletter, Rechnungen via Mail, Termin-Erinnerungen?"
+    <br><em class="muted small">Ziel: Auftragswert kalibrieren. 5 Mailboxen ≠ 50 Mailboxen.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>5. Regulatorisches:</strong> „Habt ihr Compliance-Anforderungen — FINMA,
+    revDSG, Verbands-Vorgaben, ISO 27001, NIS2?"
+    <br><em class="muted small">Ziel: Urgency. Compliance-Druck = schnellere Entscheidungen.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>6. Stakeholder:</strong> „Wer entscheidet bei euch über IT-Budgets?
+    Du selbst, ein IT-Verantwortlicher, oder die Geschäftsleitung?"
+    <br><em class="muted small">Ziel: Decision-Maker früh identifizieren. Sonst Verkaufs-Zyklus +6 Wochen.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>7. Timing:</strong> „Falls wir's machen würden — wann müsste's bei
+    euch live sein? Diesen Monat? Q2? Q4?"
+    <br><em class="muted small">Ziel: Urgency-Calibration. „Q4 vielleicht" = nicht jetzt, in Pipeline schieben.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>8. Budget-Sondierung (vorsichtig):</strong> „Habt ihr für solche Sachen
+    typischerweise einen Rahmen — eher tiefer 4-stellig, mittlerer 4-stellig, 5-stellig?"
+    <br><em class="muted small">Ziel: nicht „wieviel?" sondern „in welcher Liga?". Spar dir Stunden.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>9. Hauptkriterium:</strong> „Wenn ihr mit zwei Anbietern reden würdet —
+    was wäre für euch der wichtigste Punkt um zu entscheiden?"
+    <br><em class="muted small">Ziel: Differentiator anschärfen. Wenn er „Preis" sagt → Pivot oder weg. Wenn „Vertrauen/CH-Server/Erreichbarkeit" → matchen wir.</em>
+  </div>
+
+  <div class="pb-q">
+    <strong>10. Next Step:</strong> „Was wäre für dich der ideale nächste Schritt?
+    Soll ich euch ein konkretes Angebot mailen oder erst nochmal mit jemand aus eurem Team telefonieren?"
+    <br><em class="muted small">Ziel: Buy-In für Folge-Schritt. Sie WÄHLEN, sie OWN den Prozess.</em>
+  </div>
+</section>
+
+<!-- ============ Einwände-Behandlung ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">🛡 Einwände-Behandlung (die 10 häufigsten)</h2>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Kein Budget"</div>
+    <div class="pb-obj-resp">
+      „Verstehe — heisst das, kein Budget jetzt, oder grundsätzlich kein IT-Sicherheits-Budget?
+      Wenn ihr in den nächsten 12 Monaten ein Phishing-Vorfall hättet — was würde der für euch kosten?
+      Wir reden hier von CHF 690-2490 vs. einem Durchschnitts-Phishing-Schaden in CH von CHF 12'000-50'000."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Macht unser IT-Dienstleister"</div>
+    <div class="pb-obj-resp">
+      „Top, gut zu hören. Frag ihn doch beim nächsten Mal: ‚Auf welcher DMARC-Policy stehen wir grad?'
+      Wenn die Antwort ‚p=none' oder ‚wir haben kein DMARC' ist — dann macht er's nicht.
+      Wenn ‚p=reject mit Reports' — perfekt, du brauchst uns nicht. Wir checken's auch gratis: dmarc-geeks.ch/check"
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Zu kompliziert / haben keine Zeit"</div>
+    <div class="pb-obj-resp">
+      „Genau dafür gibt's uns. Wir machen alles — ihr müsst nur einmal kurz DNS-Zugriff freigeben
+      und am Schluss bestätigen dass eure Mails noch ankommen. 4-6 Stunden eurer Zeit über 4 Wochen verteilt."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Nicht relevant für uns / sind zu klein"</div>
+    <div class="pb-obj-resp">
+      „Verstehe. Aber: revDSG seit 09/2023 gilt für alle, egal ob 1 Patient·in oder 1000.
+      Bei einer Datenpanne wäre der Schaden nicht ‚wir sind klein, kein Problem' — sondern Bussgeld bis CHF 250k.
+      Und Gmail/Outlook Spam-Filtering ist genauso streng für 5-Personen-Firmen wie für Grosskonzerne."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Können wir doch selber machen"</div>
+    <div class="pb-obj-resp">
+      „Klar, ist alles dokumentiert. Bevor du das angehst — hast du schon mal einen
+      DMARC-Report XML manuell geparst? Wenn ja, leg los, wir helfen bei Bedarf.
+      Wenn nein: rechnen wir mal — eure Stunden plus die ersten Fehlversuche, vs. unsere
+      CHF 1990 mit garantiert keine Mail-Ausfälle. Was rechnet sich?"
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Schick mal ein PDF-Angebot, schaue ich an"</div>
+    <div class="pb-obj-resp">
+      „Mach ich gerne. Frage zur Hand: wie viel Zeit hast du grad nicht für 10 Min Call?
+      In 10 Min kann ich dir 80% mehr Klarheit geben als eine PDF — weil ich auf deine Fragen
+      reagieren kann. Wenn 10 Min wirklich zu viel ist: ja, PDF kommt heute Abend."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Sind eh in Cloud-Migration / IT-Projekt"</div>
+    <div class="pb-obj-resp">
+      „PERFEKT timing. Genau jetzt ist der richtige Moment Mail-Auth mitzudenken — sonst
+      baust du auf einer kaputten Grundlage. Wir koordinieren uns mit eurem IT-Dienstleister
+      und stellen sicher dass nach der Migration alles stimmt."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Wir warten bis es kaputt geht"</div>
+    <div class="pb-obj-resp">
+      „Fair point. Frage zurück: wisst ihr wie ihr's merkt wenn's kaputt geht?
+      Mails-im-Spam-merkt-keiner-bis-die-Beschwerde-kommt. Phishing-mit-eurem-Namen-merkt-ihr-nicht-die-Kunden-schon.
+      Lass uns kurz einen Schnell-Check machen — wenn alles steht, super, dann hast du Klarheit.
+      Wenn was hakt, weisst du wenigstens wo's hängt."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Kenne ich nicht, du / DMARC Geeks"</div>
+    <div class="pb-obj-resp">
+      „Total verständlich. Wir sind eine Schweizer Mail-Security-Boutique, einer der wenigen
+      die nur das Thema machen — kein All-You-Can-Eat IT-Dienstleister. Schau dir die Tools an
+      bei uns auf der Seite — alle gratis. Wenn die hilfreich sind, hast du eine erste Idee von der Qualität."
+    </div>
+  </div>
+
+  <div class="pb-obj">
+    <div class="pb-obj-label">„Lass mich überlegen / melde mich"</div>
+    <div class="pb-obj-resp">
+      „Klar. Damit ich dich nicht hetze — wann passt's dir konkret weiterzureden? Donnerstag in 2 Wochen?
+      Dann setze ich dir einen Reminder und melde mich. Sonst geht's bei mir in der Schublade verloren."
+      <br><em class="muted small">(WICHTIG: konkretes Datum holen. „Ich melde mich" = nie wieder.)</em>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Cold-Call-Skript ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">📞 Cold-Call-Skript (90 Sekunden)</h2>
+  <p class="muted">Wenn du angerufst direkt (nicht Mail-Followup). Maximum 90 Sek bis zur Frage.</p>
+  <pre class="pb-script">[Sek 0-10] Aufmacher:
+„Hallo, hier Nils von DMARC Geeks aus Buchs ZH —
+störe ich kurz?"
+[Antwort abwarten. 80% sagen „kurz".]
+
+[Sek 10-30] Konkreter Reason:
+„Ich rufe weil ich heute Morgen die Mail-Sicherheit
+von [FIRMA].ch geprüft habe — bei euch fehlt
+[KONKRETES PROBLEM, z.B. DMARC oder DKIM].
+Heisst praktisch: eure [RECHNUNGEN/MAILS] können
+gerade bei Gmail/Outlook im Spam landen, oder
+jemand könnte in eurem Namen Phishing-Mails
+verschicken."
+
+[Sek 30-50] Wert-Versprechen:
+„Ich mache das genau bei Schweizer KMU — ihr seid
+in guter Gesellschaft. Ich brauche nicht euer
+Budget heute zu wissen. Ich wollte fragen:
+hast du grad 5 Min für eine ehrliche Einschätzung,
+wie schlimm das bei euch wirklich ist?"
+
+[Sek 50-90] Antworten:
+
+Wenn JA → 15-Min Discovery (siehe oben).
+
+Wenn „nicht jetzt" → „Verstehe, wann passt's?
+                      Übermorgen 10 Uhr, oder
+                      nächste Woche Dienstag?"
+
+Wenn „kein Bedarf" → „Klar. Eine Frage zur Sicherheit:
+                      verschickt ihr Rechnungen oder
+                      Patient·innen-Kommunikation per
+                      Mail?"
+[Wenn ja → das Risiko nochmal nennen.]
+[Wenn nein → „Verstanden, dann seid ihr safe.
+              Falls jemand aus eurem Team
+              jemandem helfen will, hier meine
+              Nummer." — ENDE]
+
+Wenn „Schick PDF" → „Mach ich. Damit ich dir das
+                     PASSEND aufbereite — 3 Sek:
+                     ungefähr wie viele Mailboxen
+                     habt ihr?" (sammelt Info trotzdem)</pre>
+</section>
+
+<!-- ============ Discovery-Call Demo-Skript ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">🎬 15-Min-Discovery-Call Ablauf</h2>
+  <table style="width:100%; font-size: 13.5px; border-collapse: collapse;">
+    <thead><tr style="background: var(--surface-soft);">
+      <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Min</th>
+      <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Was passiert</th>
+      <th style="padding:8px; text-align:left; border-bottom:1px solid var(--border);">Du sagst</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>0-2</td><td>Warm-up + Rahmen setzen</td><td>„Hi, danke fürs Zeit nehmen. Lass mich 15 Min Zeit von dir nehmen — ich frage 5-6 Sachen, danach hast du Klarheit ob's überhaupt für euch passt. OK so?"</td></tr>
+      <tr><td>2-5</td><td>Situation + Pain</td><td>Discovery-Fragen 2-3</td></tr>
+      <tr><td>5-8</td><td>Größe + Compliance</td><td>Discovery-Fragen 4-5</td></tr>
+      <tr><td>8-11</td><td>Decision + Timing</td><td>Discovery-Fragen 6-7</td></tr>
+      <tr><td>11-13</td><td>Konkretes Pitch nach Bedarf</td><td>„Bei euch klingt das nach [PAKETNAME] — typisch CHF [XXX], dauert [WOCHEN]. Wenn das in den Rahmen passt, schick ich dir bis morgen ein konkretes Angebot."</td></tr>
+      <tr><td>13-15</td><td>Next Step buchen</td><td>Discovery-Frage 10. KONKRETER Folge-Termin.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ Preis-Kommunikation ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">💰 Preis-Kommunikation</h2>
+
+  <h3 style="font-size:15px; margin-top:14px;">Goldene Regel: NIE Preis als Erstes nennen.</h3>
+  <p>Discovery first, dann Wert-Versprechen, dann erst Preis. Wenn der Kunde nach 30 Sek nach dem Preis fragt:</p>
+
+  <div class="pb-q">
+    „Total verständlich dass du das wissen willst. Lass mich kurz 3 Fragen stellen
+    bevor ich dir was nenne, sonst geb ich dir eine Zahl die nicht zu eurer Situation passt.
+    OK?"
+  </div>
+
+  <h3 style="font-size:15px; margin-top:18px;">Anker-Preis-Strategie</h3>
+  <p>Immer das mittlere Paket zuerst nennen. Wenn der Kunde reagiert mit „zu teuer" → kleineres Paket.
+  Wenn er gar nicht reagiert → größeres Paket vorschlagen.</p>
+
+  <h3 style="font-size:15px; margin-top:18px;">Preise zum Auswendig-Können</h3>
+  <ul style="line-height:1.9;">
+    <li><strong>Audit-Light (alle Branchen)</strong>: CHF 590-690 · 1-3 Wochen</li>
+    <li><strong>DMARC-Implementation</strong>: CHF 1990 · 4-6 Wochen · inkl. Reports-Setup</li>
+    <li><strong>Komplett-Setup KMU</strong>: CHF 2490-2990 · 6-8 Wochen · inkl. M365-Härtung</li>
+    <li><strong>FINMA-Audit</strong>: CHF 1490 Light, CHF 4900 Remediation</li>
+    <li><strong>Psychotherapie-Komplett</strong>: CHF 2490 · inkl. PMS, Cloud, Video</li>
+    <li><strong>Reseller-MRR</strong>: CHF 199/Mo für 10 Tenants (skaliert)</li>
+    <li><strong>Stundensatz Add-Ons</strong>: CHF 180/h für Sonderwünsche</li>
+  </ul>
+
+  <h3 style="font-size:15px; margin-top:18px;">Wenn Preis nicht passt</h3>
+  <p>NIEMALS sofort rabattieren. Stattdessen:</p>
+  <div class="pb-q">
+    „Verstehe. Welcher Teil des Pakets ist für euch grad nicht wichtig?
+    Wir können einen Light-Lauf machen, der das Wichtigste abdeckt.
+    Aber Achtung: bei einem reinen Audit ohne Umsetzung habt ihr danach
+    den Stress und kein Resultat. Lieber jetzt korrekt als zweimal zahlen."
+  </div>
+</section>
+
+<!-- ============ Reseller-Pitch ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">🤝 Reseller-Pitch (für IT-Dienstleister)</h2>
+  <p class="muted">Wenn du auf einen IT-Dienstleister triffst — NICHT versuchen ihm als Kunden was zu verkaufen. Reseller-Pitch ist anders:</p>
+
+  <pre class="pb-script">„Hi [NAME], hab gesehen ihr macht [WAS_SIE_MACHEN] für KMU.
+Wir machen Mail-Security — DMARC, SPF, DKIM, BIMI — und
+sind genau die Spezialisten die du anrufen würdest WENN
+es kompliziert wird.
+
+Statt dass ihr das selbst aufbaut oder Kunden enttäuschen
+müsst: wir bieten Reseller-Modelle. Du bringst Kunden,
+wir liefern, ihr kassiert Marge. Eigene Subdomain, dein
+Branding, 60% Marge auf Endkunden-Preise.
+
+Reseller-Pakete ab CHF 199/Mo für 10 Tenants —
+break-even bei zwei Kunden á CHF 49/Mo VK.
+
+Hast du grad 15 Min damit ich dir die Plattform-Demo
+zeige? Oder wenn's nicht passt, kann ich dir Mail-
+Sample-Kit zuschicken zum Selber-Anschauen."</pre>
+</section>
+
+<!-- ============ Notizen-Template ============ -->
+<section class="card pb-section">
+  <h2 style="margin-top:0;">📝 Call-Notiz-Template (für /admin/leads/{id} Notes-Feld)</h2>
+  <pre class="pb-script">CALL [DATUM] mit [NAME], [ROLLE]
+================================
+
+Situation:
+- [Was nutzen sie aktuell]
+- [Wie viele Mailboxen]
+- [Mailvolumen ungefähr]
+
+Pain:
+- [Konkretes Problem das sie nervt]
+- [Wie lange schon, was haben sie versucht]
+
+Compliance:
+- [revDSG / FINMA / Verband / nichts]
+
+Decision-Maker:
+- [Person + Position]
+- [Anwesend oder muss noch eingebunden werden]
+
+Timing:
+- [Wann müsste live: Monat]
+- [Was triggert den Druck]
+
+Budget-Signal:
+- [Welche Liga: tief 4-stellig / mittlere 4 / 5-stellig]
+
+Hauptkriterium:
+- [Was ist ihnen wichtig: Preis / Vertrauen / CH / Geschwindigkeit]
+
+Einwände gehört:
+- [Konkrete Einwände + meine Antwort]
+
+NEXT STEP:
+- [ ] Angebot raus bis [DATUM]
+- [ ] Re-Call am [DATUM_UHRZEIT]
+- [ ] Demo-Termin gebucht: [DATUM]
+- [ ] Email-Followup mit [SPEZIFISCHEM_ATTACHMENT]
+
+Lead-Quality: 🟢 hot / 🟡 warm / 🔴 cold / 🌱 nurture
+Reminder-Datum: [JJJJ-MM-TT]</pre>
+</section>
+
+{% endblock %}

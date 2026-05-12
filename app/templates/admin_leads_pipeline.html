@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Lead-Pipeline · Admin{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Leads</a> · Pipeline</div>
+<h1>🎯 Lead-Pipeline <span class="muted small">— Kanban-View, alle Leads nach Status</span></h1>
+
+<!-- KPI-Row -->
+<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 18px;">
+    <div>
+      <div class="muted small">Aktive Leads</div>
+      <div style="font-size: 28px; font-weight: 800;">{{ active_count }}</div>
+    </div>
+    <div>
+      <div class="muted small">Total</div>
+      <div style="font-size: 28px; font-weight: 800;">{{ total_count }}</div>
+    </div>
+    <div>
+      <div class="muted small">💰 Quoted-Wert</div>
+      <div style="font-size: 22px; font-weight: 800; color: #d97706;">CHF {{ '{:,}'.format(quoted_value).replace(',', "'") }}</div>
+    </div>
+    <div>
+      <div class="muted small">🎉 Won-Wert</div>
+      <div style="font-size: 22px; font-weight: 800; color: #16a34a;">CHF {{ '{:,}'.format(won_value).replace(',', "'") }}</div>
+    </div>
+    <div style="margin-left:auto;">
+      <a href="/admin/leads" class="btn-link">↩ Tabellen-View</a>
+    </div>
+  </div>
+</section>
+
+<!-- Wiedervorlage-Inbox (heute fällig) -->
+{% if reminders_due %}
+<section class="card" style="background:#fef3c7; border-color:#fcd34d;">
+  <h2 style="margin-top:0;">⏰ Wiedervorlage heute ({{ reminders_due|length }})</h2>
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    {% for lead in reminders_due %}
+    <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:14px;">
+      <div>
+        <strong>{{ lead.company or lead.domain }}</strong>
+        <span class="muted small"> · {{ lead.email }} · seit {{ lead.reminder_at.strftime('%d.%m.%Y') }}</span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <a href="/admin/leads/{{ lead.id }}" class="btn-link small">öffnen →</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Kanban -->
+<section style="overflow-x: auto; padding-bottom: 12px;">
+  <div style="display: grid; grid-template-columns: repeat({{ stages|length }}, minmax(240px, 1fr)); gap: 12px;">
+    {% for key, label, color in stages %}
+    <div style="background: var(--surface-soft, #fafbfd); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 360px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding: 4px 6px 10px; border-bottom: 2px solid {{ color }};">
+        <strong style="font-size: 13px;">{{ label }}</strong>
+        <span class="muted small">{{ by_stage[key]|length }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top: 8px;">
+        {% for lead in by_stage[key] %}
+        <a href="/admin/leads/{{ lead.id }}" style="text-decoration:none; color:inherit;">
+          <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; transition: box-shadow .12s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; gap: 6px;">
+              <strong style="font-size: 13.5px; line-height: 1.3;">{{ (lead.company or lead.domain)[:32] }}</strong>
+              {% if lead.grade %}
+              <span style="display:inline-block; padding:1px 6px; border-radius:4px; color:white; font-size:10px; font-weight:700;
+                background: {% if lead.grade == 'A' %}#16a34a{% elif lead.grade == 'B' %}#65a30d{% elif lead.grade == 'C' %}#d97706{% elif lead.grade == 'D' %}#dc2626{% else %}#991b1b{% endif %};">{{ lead.grade }}</span>
+              {% endif %}
+            </div>
+            <div class="muted small" style="font-size: 11.5px; margin-top: 3px;">
+              {{ lead.email[:28] }}{% if lead.email|length > 28 %}…{% endif %}
+            </div>
+            {% if lead.deal_value_chf %}
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #d97706; margin-top: 4px;">
+              CHF {{ '{:,}'.format(lead.deal_value_chf).replace(',', "'") }}
+            </div>
+            {% endif %}
+            {% if lead.reminder_at %}
+            <div style="font-size: 10.5px; color: var(--muted); margin-top: 3px;">⏰ {{ lead.reminder_at.strftime('%d.%m.') }}</div>
+            {% endif %}
+            <div style="font-size: 10.5px; color: var(--muted); margin-top: 3px;">{{ lead.created_at.strftime('%d.%m.') }}{% if lead.followup_count %} · {{ lead.followup_count }}× ↻{% endif %}</div>
+          </div>
+        </a>
+        {% else %}
+        <div class="muted small" style="text-align:center; padding: 20px 0; font-size: 11.5px;">— leer —</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2 style="margin-top:0;">Verwendung</h2>
+  <p>Klick auf eine Karte → Lead-Detail mit Status-Update-Form. In den Detail-Seiten kannst du:</p>
+  <ul style="padding-left: 20px; line-height: 1.8;">
+    <li><strong>Status setzen</strong>: 📭 Open → ✉ Kontaktiert → 💬 Antwort → 📅 Call → 💰 Quoted → 🎉 Won (oder ❌ Lost / 🌱 Nurture)</li>
+    <li><strong>Wiedervorlage in N Tagen</strong>: „In 7 Tagen erinnern" — landet oben im 🟡 Inbox-Block</li>
+    <li><strong>Deal-Wert</strong> setzen bei Status quoted/won → wandert in die KPI oben</li>
+    <li><strong>Followup-Counter</strong> +1 nach jedem Re-Cold-Mail</li>
+  </ul>
+</section>
+
+{% endblock %}

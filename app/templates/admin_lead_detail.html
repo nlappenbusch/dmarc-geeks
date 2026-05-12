@@ -1,8 +1,43 @@
 {% extends "base.html" %}
 {% block title %}Lead: {{ lead.domain }} · Admin{% endblock %}
 {% block content %}
-<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Snapshot-Leads</a> · {{ lead.domain }}</div>
+<div class="breadcrumb"><a href="/admin/tenants">Plattform-Admin</a> · <a href="/admin/leads">Leads</a> · <a href="/admin/leads/pipeline">Pipeline</a> · {{ lead.domain }}</div>
 <h1>{{ lead.domain }} <span class="muted small">— {{ lead.email }}</span></h1>
+
+{# === Pipeline-Status + Wiedervorlage + Deal-Wert ============= #}
+<section class="card" style="background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));">
+  <form method="post" action="/admin/leads/{{ lead.id }}/pipeline">
+    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 14px; align-items: end;">
+      <label><strong>Pipeline-Status</strong>
+        <select name="pipeline_status" style="width:100%;">
+          <option value="open" {% if lead.pipeline_status == 'open' %}selected{% endif %}>📭 Offen</option>
+          <option value="contacted" {% if lead.pipeline_status == 'contacted' %}selected{% endif %}>✉ Kontaktiert</option>
+          <option value="replied" {% if lead.pipeline_status == 'replied' %}selected{% endif %}>💬 Antwort da</option>
+          <option value="call_booked" {% if lead.pipeline_status == 'call_booked' %}selected{% endif %}>📅 Call gebucht</option>
+          <option value="quoted" {% if lead.pipeline_status == 'quoted' %}selected{% endif %}>💰 Angebot draussen</option>
+          <option value="won" {% if lead.pipeline_status == 'won' %}selected{% endif %}>🎉 Gewonnen</option>
+          <option value="lost" {% if lead.pipeline_status == 'lost' %}selected{% endif %}>❌ Verloren</option>
+          <option value="nurture" {% if lead.pipeline_status == 'nurture' %}selected{% endif %}>🌱 Nurture (später)</option>
+        </select>
+      </label>
+      <label>Deal-Wert (CHF)
+        <input type="number" name="deal_value_chf" value="{{ lead.deal_value_chf or '' }}" placeholder="2490">
+      </label>
+      <label>Wiedervorlage in
+        <select name="reminder_days">
+          <option value="">— nicht ändern —</option>
+          <option value="1">1 Tag</option>
+          <option value="3">3 Tagen</option>
+          <option value="7">1 Woche</option>
+          <option value="14">2 Wochen</option>
+          <option value="30">1 Monat</option>
+        </select>
+        {% if lead.reminder_at %}<div class="muted small">aktuell: {{ lead.reminder_at.strftime('%d.%m.%Y') }} <button type="submit" name="reminder_at" value="clear" class="btn-link" style="padding: 0; font-size: 11px;">löschen</button></div>{% endif %}
+      </label>
+      <button type="submit" class="btn-primary">💾 Speichern</button>
+    </div>
+  </form>
+</section>
 
 {% if request.query_params.get('saved') %}
 <div class="card" style="background:#f0fdf4; border-color:#86efac; padding: 12px 16px;">✓ Gespeichert.</div>
@@ -179,6 +214,20 @@
     <li><a href="/admin/batch-snapshot/snapshot/{{ lead.domain }}" target="_blank">📄 1-Pager-Snapshot öffnen</a></li>
     <li><a href="/check?domain={{ lead.domain }}&amp;print=true" target="_blank">🔍 Vollständigen Check öffnen</a></li>
   </ol>
+</section>
+
+<section class="card">
+  <h2 style="margin-top:0;">📨 Followup-Sequenz</h2>
+  <p class="muted small" style="margin-top:0;">Bereits {{ lead.followup_count }}× Followup geschickt. Templates:</p>
+  <ol style="padding-left: 18px; line-height: 1.9; font-size: 14px;">
+    <li><a href="/admin/leads/{{ lead.id }}/followup/1" target="_blank">Followup #1: „Nochmal kurz nachhaken" (3-5 Tage nach Erst-Mail)</a></li>
+    <li><a href="/admin/leads/{{ lead.id }}/followup/2" target="_blank">Followup #2: „Neuer Aspekt + Cheatsheet" (7-14 Tage)</a></li>
+    <li><a href="/admin/leads/{{ lead.id }}/followup/3" target="_blank">Followup #3: „Letzte Mail + Loslassen" (14-21 Tage)</a></li>
+  </ol>
+  <form method="post" action="/admin/leads/{{ lead.id }}/pipeline" style="margin-top: 10px;">
+    <input type="hidden" name="inc_followup" value="1">
+    <button type="submit" class="btn-link">↻ Followup-Counter +1</button>
+  </form>
 </section>
 
 <section class="card">

@@ -53,6 +53,25 @@ def _migrate_alter_columns() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE mailboxes ADD COLUMN reseller_id INTEGER"))
             log.info("migrated: mailboxes.reseller_id added")
+    if "lead_snapshots" in inspector.get_table_names():
+        cols = {c["name"] for c in inspector.get_columns("lead_snapshots")}
+        if "pipeline_status" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE lead_snapshots ADD COLUMN pipeline_status VARCHAR(24) DEFAULT 'open' NOT NULL"))
+            log.info("migrated: lead_snapshots.pipeline_status added")
+        if "reminder_at" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE lead_snapshots ADD COLUMN reminder_at TIMESTAMP"))
+            log.info("migrated: lead_snapshots.reminder_at added")
+        if "followup_count" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE lead_snapshots ADD COLUMN followup_count INTEGER DEFAULT 0 NOT NULL"))
+            log.info("migrated: lead_snapshots.followup_count added")
+        if "deal_value_chf" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE lead_snapshots ADD COLUMN deal_value_chf INTEGER"))
+            log.info("migrated: lead_snapshots.deal_value_chf added")
+
     if "blacklist_checks" in inspector.get_table_names():
         cols = {c["name"] for c in inspector.get_columns("blacklist_checks")}
         if "alerted_event" not in cols:

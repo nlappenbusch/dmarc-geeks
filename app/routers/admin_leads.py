@@ -13,7 +13,7 @@ import io
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
@@ -34,6 +34,7 @@ from ..snapshot_render import (
     normalize_domain,
     render_cold_mail,
     render_cold_mail_html,
+    render_followup_mail,
     render_snapshot_html,
 )
 from ..templating import render
@@ -46,6 +47,143 @@ router = APIRouter(prefix="/admin")
 # ============================================================================
 # Lead-Dashboard
 # ============================================================================
+
+# ============================================================================
+# Sales-Playbook (Discovery-Fragen, Einwaende, Call-Skripte)
+# ============================================================================
+
+@router.get("/playbook")
+def playbook(request: Request, user: User = Depends(require_superadmin)):
+    """Sales-Playbook mit Discovery-Fragen, Einwaende-Behandlung, Call-Skripten."""
+    return render(request, "admin_playbook.html",
+                   user=user, tenant=user.tenant, active="admin")
+
+
+# Pipeline-Stages mit Reihenfolge, Label, Farbe — fuer Kanban-View
+PIPELINE_STAGES = [
+    ("open",        "📭 Offen",          "#94a3b8"),
+    ("contacted",   "✉ Kontaktiert",     "#3b82f6"),
+    ("replied",     "💬 Antwort da",      "#8b5cf6"),
+    ("call_booked", "📅 Call gebucht",    "#06b6d4"),
+    ("quoted",      "💰 Angebot draussen", "#f59e0b"),
+    ("won",         "🎉 Gewonnen",        "#16a34a"),
+    ("lost",        "❌ Verloren",        "#dc2626"),
+    ("nurture",     "🌱 Nurture (später)", "#a855f7"),
+]
+STAGE_KEYS = {s[0] for s in PIPELINE_STAGES}
+
+
+@router.get("/leads/pipeline")
+def leads_pipeline(
+    request: Request,
+    user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Kanban-Pipeline-View aller Leads, gruppiert nach pipeline_status."""
+    leads = db.execute(
+        select(LeadSnapshot).order_by(desc(LeadSnapshot.created_at))
+    ).scalars().all()
+
+    by_stage: dict[str, list] = {s[0]: [] for s in PIPELINE_STAGES}
+    for lead in leads:
+        st = lead.pipeline_status or "open"
+        if st not in by_stage:
+            st = "open"
+        by_stage[st].append(lead)
+
+    # Reminder-Inbox: alle leads mit reminder_at <= now()
+    now = datetime.now(timezone.utc)
+    reminders_due = db.execute(
+        select(LeadSnapshot).where(
+            LeadSnapshot.reminder_at.is_not(None),
+            LeadSnapshot.reminder_at <= now,
+            LeadSnapshot.pipeline_status.notin_(["won", "lost"]),
+        ).order_by(LeadSnapshot.reminder_at)
+    ).scalars().all()
+
+    # Stats
+    won_value = sum(l.deal_value_chf or 0 for l in leads if l.pipeline_status == "won")
+    quoted_value = sum(l.deal_value_chf or 0 for l in leads if l.pipeline_status == "quoted")
+    active_count = sum(1 for l in leads
+                        if l.pipeline_status not in ("won", "lost"))
+
+    return render(
+        request, "admin_leads_pipeline.html",
+        user=user, tenant=user.tenant, active="admin",
+        stages=PIPELINE_STAGES, by_stage=by_stage,
+        reminders_due=reminders_due,
+        won_value=won_value, quoted_value=quoted_value,
+        active_count=active_count, total_count=len(leads),
+    )
+
+
+@router.post("/leads/{lead_id}/pipeline")
+async def lead_pipeline_update(
+    lead_id: int,
+    request: Request,
+    user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Update pipeline_status, reminder_at, deal_value_chf, followup_count."""
+    lead = db.get(LeadSnapshot, lead_id)
+    if lead is None:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    form = await request.form()
+
+    new_status = (form.get("pipeline_status") or "").strip()
+    if new_status in STAGE_KEYS:
+        old = lead.pipeline_status
+        lead.pipeline_status = new_status
+        # Bei Status-Wechsel ggfs. timestamps synchronisieren
+        if new_status == "contacted" and not lead.contacted_at:
+            lead.contacted_at = datetime.now(timezone.utc)
+        if new_status == "won" and not lead.converted_at:
+            lead.converted_at = datetime.now(timezone.utc)
+
+    # Reminder setzen / löschen
+    rem = (form.get("reminder_at") or "").strip()
+    if rem == "clear":
+        lead.reminder_at = None
+    elif rem:
+        # Erwartetes Format YYYY-MM-DD oder ISO 8601
+        try:
+            from dateutil import parser as dtp
+            lead.reminder_at = dtp.parse(rem).replace(tzinfo=timezone.utc)
+        except Exception:  # noqa: BLE001
+            pass
+    elif (form.get("reminder_days") or "").strip():
+        # Quick-Set: in X Tagen
+        try:
+            days = int(form["reminder_days"])
+            lead.reminder_at = datetime.now(timezone.utc) + timedelta(days=days)
+        except Exception:  # noqa: BLE001
+            pass
+
+    # Deal-Wert
+    dv = (form.get("deal_value_chf") or "").strip()
+    if dv:
+        try:
+            lead.deal_value_chf = int(dv)
+        except ValueError:
+            pass
+
+    # Followup-Counter
+    if form.get("inc_followup") == "1":
+        lead.followup_count = (lead.followup_count or 0) + 1
+
+    # Notes
+    notes = form.get("notes")
+    if notes is not None:
+        lead.notes = notes.strip()[:8000] or None
+
+    db.commit()
+
+    # Redirect dorthin wo wir hergekommen sind
+    referer = request.headers.get("referer", "")
+    if "/pipeline" in referer:
+        return RedirectResponse("/admin/leads/pipeline", status_code=303)
+    return RedirectResponse(f"/admin/leads/{lead.id}?saved=1", status_code=303)
+
 
 @router.get("/leads")
 def leads_list(
@@ -427,6 +565,28 @@ def batch_snapshot_one(
         raise HTTPException(status_code=502, detail=f"DNS check failed: {e}")
     html = render_snapshot_html(domain, result, score)
     return HTMLResponse(html)
+
+
+@router.get("/leads/{lead_id}/followup/{seq}")
+def lead_followup(
+    lead_id: int,
+    seq: int,
+    user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Followup-Mail-Template Nr 1/2/3 als text/plain — copy&paste in Outlook."""
+    lead = db.get(LeadSnapshot, lead_id)
+    if lead is None:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    if seq not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="seq must be 1, 2 or 3")
+    out = render_followup_mail(
+        lead.domain, seq,
+        first_name=lead.first_name or "",
+        grade=lead.grade or "F",
+    )
+    text = f"Betreff: {out['subject']}\n\n{out['plain']}"
+    return Response(text, media_type="text/plain; charset=utf-8")
 
 
 @router.get("/batch-snapshot/coldmail/{domain}")

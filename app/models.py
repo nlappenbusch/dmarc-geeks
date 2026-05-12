@@ -479,11 +479,26 @@ class LeadSnapshot(Base):
     source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # "snapshot-public", "cold-outreach", "partner"
     utm_campaign: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    # Lifecycle
+    # Lifecycle (legacy einfach: contacted/converted bool-Indikatoren)
     contacted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     converted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    # ============ CRM-Light: Pipeline + Wiedervorlage =====================
+    # Pipeline-Status: open / contacted / replied / call_booked / quoted / won / lost / nurture
+    # Bei state-Wechsel wird optional contacted_at/converted_at automatisch mit-gesetzt.
+    pipeline_status: Mapped[str] = mapped_column(String(24), default="open",
+                                                   nullable=False, index=True)
+    # Wiedervorlage: wenn gesetzt, taucht der Lead heute/in der Zukunft im
+    # /admin/leads/inbox auf. Klassische CRM-Wiedervorlage.
+    reminder_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True),
+                                                              nullable=True, index=True)
+    # Followup-Counter: wie viele Followups wurden schon geschickt? Nutzt der
+    # Operator manuell — wir liefern nur die Templates.
+    followup_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Geschätzter Auftragswert (CHF) — wird beim status='quoted' oder 'won' gesetzt
+    deal_value_chf: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("email", "domain", name="uq_lead_snapshots_email_domain"),

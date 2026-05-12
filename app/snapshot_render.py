@@ -493,6 +493,95 @@ def _hook_for(grade: str, domain: str, check_result: dict | None = None,
     return raw
 
 
+# ============================================================================
+# Followup-Mail-Sequenzen
+# ============================================================================
+# Drei Followup-Templates, jeweils mit anderem Hook:
+#   1) "Sanftes Nachhaken" — 3-5 Tage nach Erst-Mail
+#   2) "Neuer Aspekt" — 7-14 Tage später, mit anderem Argument
+#   3) "Abschluss" — 14-21 Tage später, klares Statement + Loslassen
+#
+# Wichtig: jede Mail steht für sich, soll nicht den vorherigen Thread spammen.
+# User schickt die einfach als neue Mail an die selbe Adresse.
+
+_FOLLOWUP_TEMPLATES = {
+    1: {
+        "subject": "Nochmal kurz zum Thema {domain}",
+        "body": """Hallo{name_part},
+
+ich wollte nochmal kurz nachhaken — vor einer Woche hatte ich dir einen Mail-Sicherheits-Check für {domain} geschickt (Grade {grade}).
+
+Vielleicht ging die Mail unter — kein Stress. Aber falls es bei euch grad sowieso heisser Punkt ist, lass uns 20 Min telefonieren. Ich erkläre kostenlos:
+
+  - Was die Risiken konkret bedeuten (in Geld, nicht in DNS-Jargon)
+  - Welche zwei Sachen ihr selbst in einer halben Stunde fixen könnt
+  - Wann wir helfen müssten und was das kostet
+
+Ist null Verpflichtung. Antworte einfach mit Wunsch-Slot oder ruf direkt an: +41 77 950 31 52.
+
+Liebe Grüsse
+Nils Lappenbusch
+DMARC Geeks · https://dmarc-geeks.ch
+""",
+    },
+    2: {
+        "subject": "{domain} — vielleicht hilft euch das",
+        "body": """Hallo{name_part},
+
+falls ich mit meinen letzten Mails den falschen Moment getroffen habe — kein Problem.
+
+Ich wollte heute aber noch einen Punkt erwähnen den ich öfters höre: viele KMU realisieren erst dann dass ihre Mail-Setup kaputt ist, wenn die ERSTEN Rechnungen im Spam landen oder ein PHISHING-FALL mit dem Firma-Namen passiert.
+
+Ich hab dafür eine ganz konkrete Check-Liste gebaut — 10 Punkte, alle selbst prüfbar in 30 Minuten. Wenn du mir kurz Bescheid gibst, schicke ich dir die PDF.
+
+Plus: hier ein Direkt-Link auf eure aktuelle Diagnose:
+  https://dmarc-geeks.ch/check?domain={domain}
+
+Liebe Grüsse
+Nils Lappenbusch
++41 77 950 31 52 · nils@dmarc-geeks.ch
+""",
+    },
+    3: {
+        "subject": "Letzte Mail von mir zu {domain}",
+        "body": """Hallo{name_part},
+
+das ist meine letzte Mail zu dem Thema, versprochen.
+
+Mail-Sicherheit ist nicht jedermanns Priorität — ich versteh's. Wenn ihr es trotzdem irgendwann anpacken wollt, hier ist meine Kontakt-Info nochmal für die Schublade:
+
+  Nils Lappenbusch
+  DMARC Geeks
+  +41 77 950 31 52
+  nils@dmarc-geeks.ch
+  https://dmarc-geeks.ch/services/dmarc
+
+Falls du gerade nicht buchen aber meine Cheatsheets im Postfach haben willst:
+  https://dmarc-geeks.ch/wissen
+  https://dmarc-geeks.ch/blog
+
+Sonst alles Gute mit eurem Setup —
+
+Nils
+""",
+    },
+}
+
+
+def render_followup_mail(domain: str, sequence_nr: int, *,
+                          first_name: str = "", grade: str = "F") -> dict:
+    """Followup-Mail Nr. 1, 2 oder 3. Gibt dict {subject, plain} zurück.
+    Keine HTML-Version: Followups sind absichtlich plain-text (wirkt persönlicher).
+    """
+    if sequence_nr not in _FOLLOWUP_TEMPLATES:
+        sequence_nr = 1
+    tpl = _FOLLOWUP_TEMPLATES[sequence_nr]
+    name_part = f" {first_name}" if first_name else ""
+    subject = tpl["subject"].format(domain=domain)
+    body = tpl["body"].format(domain=domain, name_part=name_part, grade=grade)
+    return {"subject": subject, "plain": body, "sequence_nr": sequence_nr}
+
+
 def render_cold_mail(domain: str, score: dict, *, first_name: str = "",
                      company: str = "", email: str = "",
                      check_result: dict | None = None) -> str:
