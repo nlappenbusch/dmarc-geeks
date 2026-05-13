@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -194,3 +194,25 @@ def report_raw(
     if not report.raw_xml:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No raw XML stored")
     return Response(report.raw_xml, media_type="application/xml")
+
+
+@router.post("/{report_id}/delete")
+def report_delete(
+    report_id: int,
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """Loescht einen Report inkl. aller Records + AuthResults (cascade)."""
+    report = db.get(Report, report_id)
+    if not report or report.tenant_id != effective_tenant_id(request, user):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+    label = f"{report.org_name} · {report.external_report_id}"
+    db.delete(report)
+    db.commit()
+    request.session["flash"] = {"kind": "ok", "text": f"Report gelöscht: {label}"}
+    # Wenn die Anfrage von der Detail-Seite kommt, zurueck zur Liste; sonst Referer.
+    referer = request.headers.get("referer", "")
+    if referer and f"/reports/{report_id}" not in referer:
+        return RedirectResponse(referer, status_code=303)
+    return RedirectResponse("/reports", status_code=303)

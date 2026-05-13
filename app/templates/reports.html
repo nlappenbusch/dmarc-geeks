@@ -42,7 +42,7 @@
   <p class="muted small">{{ total|num }} Reports {% if q or status_filter or domain_id %}<span class="badge brand">gefiltert</span>{% endif %}</p>
   {% if rows %}
   <table class="data">
-    <thead><tr><th>Domain</th><th>Reporter</th><th>Zeitraum</th><th>Nachrichten</th><th>Policy</th><th></th></tr></thead>
+    <thead><tr><th>Domain</th><th>Reporter</th><th>Zeitraum</th><th>Nachrichten</th><th>Policy</th><th></th><th></th></tr></thead>
     <tbody>
     {% for report, dname, msgs in rows %}
       <tr>
@@ -52,6 +52,13 @@
         <td>{{ msgs|num }}</td>
         <td><code>p={{ report.policy_p or '—' }} pct={{ report.policy_pct or '—' }}</code></td>
         <td><a href="/reports/{{ report.id }}">Details →</a></td>
+        <td>
+          <form method="post" action="/reports/{{ report.id }}/delete"
+                onsubmit="return confirm('Report von {{ report.org_name }} löschen?');"
+                style="margin:0; display:inline;">
+            <button type="submit" class="btn-link" title="Report löschen" style="color:#c00; padding:0; background:none; border:0; cursor:pointer;">🗑</button>
+          </form>
+        </td>
       </tr>
     {% endfor %}
     </tbody>

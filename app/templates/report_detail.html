@@ -2,7 +2,14 @@
 {% block title %}Report {{ report.external_report_id }} · DMARC Geeks{% endblock %}
 {% block content %}
 <div class="breadcrumb"><a href="/reports">Reports</a> · {{ report.domain.name }}</div>
-<h1>{{ report.org_name }} · <span class="muted">{{ report.external_report_id }}</span></h1>
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+  <h1 style="margin:0;">{{ report.org_name }} · <span class="muted">{{ report.external_report_id }}</span></h1>
+  <form method="post" action="/reports/{{ report.id }}/delete"
+        onsubmit="return confirm('Diesen Report inkl. {{ report.records|length }} Record(s) wirklich löschen?');"
+        style="margin:0;">
+    <button type="submit" class="btn-link" style="color:#c00;">🗑 Report löschen</button>
+  </form>
+</div>
 
 <section class="card grid-2">
   <div>
