@@ -266,17 +266,13 @@ async def unlock_detail(token: str, request: Request, db: Session = Depends(get_
 # ============================================================================
 
 @router.get("/mailtest/{token}/headers")
-def headers_raw(token: str, db: Session = Depends(get_db),
-                  user: User | None = Depends(current_user_optional)):
+def headers_raw(token: str, db: Session = Depends(get_db)):
     """Liefert NUR die Mail-Headers (alles vor der ersten Leerzeile) als
     text/plain — direkt copyable für Microsoft Message Header Analyzer
     (https://mha.azurewebsites.net/) oder Tools wie mail-tester."""
     test = db.execute(select(MailTest).where(MailTest.token == token)).scalars().first()
     if test is None:
         raise HTTPException(status_code=404, detail="Test nicht gefunden.")
-    # Gating: anonyme User dürfen nur Headers sehen wenn Email-Gate durch
-    if not user and not test.lead_email:
-        raise HTTPException(status_code=403, detail="Detail-Report erst nach Email-Eingabe.")
     if not test.raw_email:
         raise HTTPException(status_code=404, detail="Mail-Body nicht gespeichert.")
 

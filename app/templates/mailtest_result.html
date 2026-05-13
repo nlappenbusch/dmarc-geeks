@@ -576,7 +576,7 @@ document.getElementById('btn-copy-headers')?.addEventListener('click', async (e)
     const r = await fetch(`/mailtest/${TOKEN}/headers`);
     if (!r.ok) {
       const t = await r.text();
-      flashBtn(btn, r.status === 403 ? '🔒 Erst Email-Gate' : '✗ ' + r.status);
+      flashBtn(btn, '✗ ' + r.status);
       btn.disabled = false;
       return;
     }
@@ -615,7 +615,7 @@ async function loadAnalyzer() {
   try {
     const r = await fetch(`/mailtest/${TOKEN}/headers`);
     if (!r.ok) {
-      content.innerHTML = `<div class="muted">Headers nicht verfügbar (${r.status})${r.status === 403 ? ' — erst Email-Gate durchlaufen' : ''}.</div>`;
+      content.innerHTML = `<div class="muted">Headers nicht verfügbar (${r.status}).</div>`;
       return;
     }
     const text = await r.text();
