@@ -11,3 +11,4 @@ venv/
 .vscode/
 .DS_Store
 .claude/
+scripts/test_reports/
