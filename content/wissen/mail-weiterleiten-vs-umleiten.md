@@ -204,43 +204,123 @@ tags: [forwarding, redirect, spf, dkim, dmarc, support-wissen, basics]
 .check.warn .badge { background: #f59e0b; color: white; }
 .check .what { font-size: 12.5px; color: var(--muted, #64748b); line-height: 1.5; }
 
-/* Setup-Bastelkasten */
-.builder {
-  background: white;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin: 14px 0;
+/* Bastelkasten 2.0 */
+.bk-step { margin: 18px 0; }
+.bk-step-label {
+  font-size: 13px; font-weight: 700; color: var(--text, #0f172a);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
 }
-.builder label {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin: 4px 0;
-  transition: background .15s;
-  border: 1px solid transparent;
+.bk-num {
+  background: linear-gradient(135deg, #2563eb, #7c3aed); color: white;
+  width: 24px; height: 24px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
 }
-.builder label:hover { background: #f8fafc; }
-.builder label.checked { background: rgba(37,99,235,.06); border-color: rgba(37,99,235,.25); }
-.builder input[type=checkbox] {
-  margin-top: 3px; width: 18px; height: 18px; cursor: pointer;
+
+.bk-mode-toggle {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+@media (max-width: 540px) { .bk-mode-toggle { grid-template-columns: 1fr; } }
+.bk-mode {
+  background: white; border: 2px solid var(--border, #e2e8f0); border-radius: 10px;
+  padding: 12px 16px; cursor: pointer; text-align: left;
+  font-family: inherit; transition: all .15s;
+}
+.bk-mode strong { display: block; font-size: 14px; color: var(--text, #0f172a); }
+.bk-mode small { display: block; font-size: 12px; color: var(--muted, #64748b); margin-top: 3px; }
+.bk-mode.active {
+  border-color: var(--brand, #2563eb);
+  background: rgba(37,99,235,.06);
+}
+.bk-mode.active strong { color: var(--brand, #2563eb); }
+
+.bk-modifiers { display: grid; gap: 8px; }
+.bk-mod {
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start;
+  background: white; border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 10px; padding: 12px 14px; cursor: pointer;
+  transition: all .15s;
+}
+.bk-mod:hover { border-color: rgba(37,99,235,.4); }
+.bk-mod input[type=checkbox] {
+  width: 18px; height: 18px; cursor: pointer; margin-top: 2px;
   accent-color: var(--brand, #2563eb);
 }
-.builder .opt-title { font-weight: 600; font-size: 14px; }
-.builder .opt-sub { display: block; font-size: 12.5px; color: var(--muted, #64748b); margin-top: 2px; line-height: 1.5; }
-
-.verdict {
-  margin-top: 14px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  line-height: 1.6;
+.bk-mod.on { background: rgba(37,99,235,.04); border-color: rgba(37,99,235,.4); }
+.bk-mod-title { font-weight: 600; font-size: 14px; line-height: 1.4; }
+.bk-mod-sub { font-size: 12.5px; color: var(--muted, #64748b); margin-top: 3px; line-height: 1.5; }
+.bk-mod-effect {
+  align-self: center; font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px;
+  white-space: nowrap; letter-spacing: .02em;
 }
-.verdict.good { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
-.verdict.bad { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
-.verdict.meh { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
-.verdict strong { font-size: 15px; }
+.bk-mod-effect.breaks { background: #fee2e2; color: #991b1b; }
+.bk-mod-effect.heals { background: #d1fae5; color: #065f46; }
+.bk-mod-effect.neutral { background: #f1f5f9; color: #475569; }
+@media (max-width: 600px) {
+  .bk-mod { grid-template-columns: 22px 1fr; }
+  .bk-mod-effect { grid-column: 2; justify-self: start; margin-top: 4px; }
+}
+
+.bk-status-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 640px) { .bk-status-grid { grid-template-columns: 1fr; } }
+.bk-status {
+  background: white; border: 2px solid var(--border, #e2e8f0); border-radius: 10px;
+  padding: 12px 14px; transition: all .25s;
+}
+.bk-status.pass { border-color: #10b981; background: #ecfdf5; }
+.bk-status.fail { border-color: #ef4444; background: #fef2f2; }
+.bk-status.warn { border-color: #f59e0b; background: #fffbeb; }
+.bk-status-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: 14px; margin-bottom: 6px;
+}
+.bk-status-badge {
+  font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 700;
+  background: #e2e8f0; color: #475569;
+}
+.bk-status.pass .bk-status-badge { background: #10b981; color: white; }
+.bk-status.fail .bk-status-badge { background: #ef4444; color: white; }
+.bk-status.warn .bk-status-badge { background: #f59e0b; color: white; }
+.bk-status-reason { font-size: 12.5px; color: var(--muted, #64748b); line-height: 1.55; }
+.bk-status.pass .bk-status-reason, .bk-status.fail .bk-status-reason, .bk-status.warn .bk-status-reason {
+  color: var(--text, #0f172a);
+}
+.bk-status-reason code { font-size: 11px; padding: 1px 5px; background: rgba(0,0,0,.05); border-radius: 3px; }
+
+.bk-chain {
+  background: #f8fafc; border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px; padding: 14px 16px;
+}
+.bk-chain-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted, #64748b); font-weight: 700; margin-bottom: 10px;
+}
+.bk-chain-step {
+  display: grid; grid-template-columns: 24px 1fr; gap: 10px;
+  padding: 8px 0; font-size: 13.5px; line-height: 1.55;
+  border-top: 1px dashed var(--border, #e2e8f0);
+}
+.bk-chain-step:first-of-type { border-top: 0; padding-top: 4px; }
+.bk-chain-icon {
+  width: 22px; height: 22px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  background: #e2e8f0; color: #475569;
+}
+.bk-chain-step.ok .bk-chain-icon { background: #10b981; color: white; }
+.bk-chain-step.bad .bk-chain-icon { background: #ef4444; color: white; }
+.bk-chain-step.neutral .bk-chain-icon { background: #94a3b8; color: white; }
+.bk-chain-step.final {
+  margin-top: 8px; padding: 12px 14px; border-radius: 8px; border-top: 0;
+  background: #f1f5f9; font-weight: 500;
+}
+.bk-chain-step.final.good { background: #ecfdf5; }
+.bk-chain-step.final.meh { background: #fffbeb; }
+.bk-chain-step.final.bad { background: #fef2f2; }
+.bk-chain-step.final .bk-chain-icon { background: transparent; font-size: 18px; }
+.bk-chain-step code { font-size: 11.5px; padding: 1px 5px; background: rgba(0,0,0,.06); border-radius: 3px; }
 
 /* Heimtücken */
 .pitfall {
@@ -309,6 +389,85 @@ tags: [forwarding, redirect, spf, dkim, dmarc, support-wissen, basics]
 .quiz .explain.show { display: block; }
 
 abbr[title] { text-decoration: underline dotted; cursor: help; text-decoration-color: var(--brand, #2563eb); }
+
+/* Zeilen-Erklär-Tabelle */
+.line-explain {
+  background: white;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  margin: 14px 0 20px;
+  overflow: hidden;
+}
+.le-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 30%) 1fr;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.le-row:last-child { border-bottom: 0; }
+.le-row code {
+  background: rgba(37,99,235,.08);
+  color: var(--brand, #2563eb);
+  padding: 2px 8px; border-radius: 4px;
+  font: 12.5px/1.5 "JetBrains Mono", monospace;
+  word-break: break-all;
+  align-self: start;
+}
+.le-row span { color: var(--text, #0f172a); }
+@media (max-width: 600px) {
+  .le-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* Info-Box mit gelbem Akzent */
+.info-box {
+  background: linear-gradient(135deg, rgba(245,158,11,.05), rgba(245,158,11,.1));
+  border: 1px solid rgba(245,158,11,.3);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0 22px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* Alignment-Tabelle */
+.align-table {
+  background: white;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.align-row {
+  display: grid;
+  grid-template-columns: 28% 1fr 1fr;
+  gap: 1px;
+  background: var(--border, #e2e8f0);
+}
+.align-row > div {
+  background: white;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.align-row.align-header > div {
+  background: #f8fafc;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted, #64748b);
+}
+.align-row small { color: var(--muted, #64748b); display: block; margin-top: 3px; font-size: 11.5px; }
+.align-yes { background: #ecfdf5 !important; }
+.align-no { background: #fef2f2 !important; }
+.align-row.align-result > div { font-size: 15px; padding: 14px; }
+@media (max-width: 640px) {
+  .align-row { grid-template-columns: 1fr; }
+}
 
 /* Glossar-Card */
 .glossar {
@@ -388,6 +547,124 @@ Jede Mail wird beim Empfänger (Gmail, Microsoft 365, …) durch drei Sicherheit
 </div>
 
 **Merksatz für Helpdesk:** SPF schaut auf den Umschlag, DKIM schaut in den Brief, DMARC schaut auf beides zusammen.
+
+## Und jetzt mal ehrlich: wie sieht das technisch aus?
+
+Genug Analogien — jetzt der echte Code. Aber Zeile für Zeile erklärt. Du musst nichts auswendig lernen, aber wenn du das *einmal gesehen* hast, fluchst du beim nächsten Helpdesk-Ticket weniger.
+
+### Der SPF-Record — eine Liste im DNS
+
+Jede Domain hat (oder sollte haben) im DNS einen TXT-Record, der die Gästeliste ist:
+
+```dns
+firma-a.ch.    IN  TXT  "v=spf1 include:spf.protection.outlook.com ip4:185.12.7.42 -all"
+```
+
+<div class="line-explain">
+<div class="le-row"><code>v=spf1</code><span>"Hallo, ich bin ein SPF-Record, Version 1."</span></div>
+<div class="le-row"><code>include:spf.protection.outlook.com</code><span>"Microsoft 365 darf in meinem Namen senden." Dahinter steckt eine weitere DNS-Abfrage — Microsoft hat dort wieder eine Liste mit IPs.</span></div>
+<div class="le-row"><code>ip4:185.12.7.42</code><span>"Dieser einzelne Server darf auch senden." (Z.B. dein eigener Mailserver)</span></div>
+<div class="le-row"><code>-all</code><span>"Alle anderen? Strikt ablehnen." (Die wichtigste Zeile! <code>~all</code> wäre "Softfail = behandle als Spam". <code>-all</code> ist "Hardfail = ablehnen".)</span></div>
+</div>
+
+<div class="info-box">
+<strong>🎯 Die 10-Lookup-Falle:</strong> SPF erlaubt <em>maximal 10 DNS-Lookups</em> pro Auflösung. Jedes <code>include:</code> ist ein Lookup. Microsoft braucht intern 1–2, Mailchimp 2, SendGrid 1 … schnell bist du bei 12. Dann wird der ganze SPF-Record ignoriert. Heimtückisch: es fällt nicht direkt auf.
+</div>
+
+### Der DKIM-Header — die Signatur im Brief
+
+Wenn Alice's Mailserver eine Mail rausschickt, hängt er einen Header an die Mail an. Den siehst du normalerweise nicht, aber in jeder Mail steht das drin:
+
+```email
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+    d=firma-a.ch; s=selector1; t=1716285600;
+    h=From:To:Subject:Date:Message-ID;
+    bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
+    b=K7nB9fLpQ2xZ8...vY3wT8oN==
+```
+
+<div class="line-explain">
+<div class="le-row"><code>v=1</code><span>Version 1 von DKIM.</span></div>
+<div class="le-row"><code>a=rsa-sha256</code><span>Welcher Krypto-Algorithmus benutzt wurde (RSA + SHA-256).</span></div>
+<div class="le-row"><code>c=relaxed/relaxed</code><span>"Canonicalization". <em>relaxed</em> = Whitespace darf sich ändern, <em>simple</em> = byte-genau. Erkläre ich gleich.</span></div>
+<div class="le-row"><code>d=firma-a.ch</code><span><strong>Die wichtigste Zeile.</strong> Mit welcher Domain wurde signiert. <em>Genau das prüft DMARC später auf Alignment.</em></span></div>
+<div class="le-row"><code>s=selector1</code><span>Welcher öffentliche Schlüssel. Liegt unter <code>selector1._domainkey.firma-a.ch</code> im DNS.</span></div>
+<div class="le-row"><code>h=From:To:Subject:Date:Message-ID</code><span><strong>Welche Header sind mitsigniert.</strong> Wenn unterwegs Subject oder From geändert werden → DKIM kaputt.</span></div>
+<div class="le-row"><code>bh=47DEQp...</code><span>Hash des Bodys. Wenn auch nur 1 Zeichen im Body geändert wird → Hash stimmt nicht mehr → DKIM kaputt.</span></div>
+<div class="le-row"><code>b=K7nB9...</code><span>Die eigentliche Signatur (über die in <code>h=</code> aufgeführten Header + den Body-Hash).</span></div>
+</div>
+
+Der Empfänger zieht den öffentlichen Schlüssel aus dem DNS (`selector1._domainkey.firma-a.ch`) und prüft: passt die Signatur? Wenn ja: DKIM PASS. Wenn nein: FAIL.
+
+<div class="info-box">
+<strong>🎯 Warum DKIM bei Forwarding rettet:</strong> Das Siegel ist <em>kryptografisch</em> — egal über wie viele Server die Mail wandert, solange der Inhalt nicht verändert wird, bleibt das Siegel gültig. Der Forwarder muss <em>nichts tun</em>, das Siegel reist mit.
+</div>
+
+### Der DMARC-Record — die Policy
+
+Genau wie SPF, ein TXT-Record im DNS, aber unter einer speziellen Subdomain:
+
+```dns
+_dmarc.firma-a.ch.   IN  TXT  "v=DMARC1; p=reject; rua=mailto:reports@firma-a.ch; adkim=r; aspf=r; pct=100"
+```
+
+<div class="line-explain">
+<div class="le-row"><code>v=DMARC1</code><span>Version.</span></div>
+<div class="le-row"><code>p=reject</code><span><strong>Die Policy.</strong> Was soll passieren wenn was nicht passt? Drei Optionen: <code>none</code> (nur reporten, nichts tun), <code>quarantine</code> (Spam-Ordner), <code>reject</code> (ablehnen).</span></div>
+<div class="le-row"><code>rua=mailto:reports@...</code><span>Wohin sollen die täglichen XML-Reports geschickt werden? <em>Hier kommen wir ins Spiel</em>: jemand muss diese XML lesen.</span></div>
+<div class="le-row"><code>adkim=r</code><span>DKIM-Alignment: <em>relaxed</em> (Subdomain reicht) oder <em>strict</em> (exakt gleich). <strong>Gleich erklärt.</strong></span></div>
+<div class="le-row"><code>aspf=r</code><span>SPF-Alignment: dito.</span></div>
+<div class="le-row"><code>pct=100</code><span>Auf wieviel Prozent der Mails soll die Policy angewendet werden? <code>pct=10</code> bedeutet: nur 10% rejecten, 90% durchlassen — nützlich zum schrittweisen Hochziehen.</span></div>
+</div>
+
+### Das Wichtigste: Alignment
+
+Das ist das Konzept, das *fast niemand* sauber erklärt kriegt — aber es ist der Knackpunkt. DMARC sagt: "SPF und DKIM müssen nicht nur passen, sie müssen auch zur *richtigen Domain* gehören."
+
+<div class="demo-card">
+<h4>🎯 Was Alignment bedeutet — visualisiert</h4>
+
+<div class="align-table">
+<div class="align-row align-header">
+  <div>Wo schaut DMARC hin?</div>
+  <div>Beispiel — sauberer Versand</div>
+  <div>Beispiel — Spoofing</div>
+</div>
+<div class="align-row">
+  <div><strong>Header-From</strong><br><small>Was du im Mail-Client siehst</small></div>
+  <div class="align-yes">alice@<b>firma-a.ch</b></div>
+  <div class="align-yes">alice@<b>firma-a.ch</b></div>
+</div>
+<div class="align-row">
+  <div><strong>SPF-Domain</strong><br><small>Aus dem Envelope (MAIL FROM)</small></div>
+  <div class="align-yes">bounce@<b>firma-a.ch</b><br><small>✓ Gleich = aligned</small></div>
+  <div class="align-no">noreply@<b>boeser-server.tk</b><br><small>✗ Andere Domain = NICHT aligned</small></div>
+</div>
+<div class="align-row">
+  <div><strong>DKIM-Domain</strong><br><small>Aus dem <code>d=</code>-Tag</small></div>
+  <div class="align-yes">d=<b>firma-a.ch</b><br><small>✓ Gleich = aligned</small></div>
+  <div class="align-no">d=<b>boeser-server.tk</b><br><small>oder gar keine Signatur</small></div>
+</div>
+<div class="align-row align-result">
+  <div><strong>DMARC-Verdikt</strong></div>
+  <div class="align-yes">✅ <strong>PASS</strong><br>Beide aligned</div>
+  <div class="align-no">❌ <strong>FAIL</strong><br>Weder noch — Reject!</div>
+</div>
+</div>
+
+<p style="margin-top:14px; font-size:13.5px; color:var(--muted,#64748b); line-height:1.6;">
+<strong>relaxed (Standard):</strong> Subdomain reicht — <code>mail.firma-a.ch</code> ist aligned mit <code>firma-a.ch</code>.<br>
+<strong>strict:</strong> Muss exakt gleich sein. Sehr selten benutzt.
+</p>
+</div>
+
+**Warum das für Forwarding wichtig ist:** Wenn Bob's Mailserver eine Mail von Alice umleitet:
+
+- Header-From bleibt `alice@firma-a.ch` (außen sichtbar)
+- SPF-Domain wird `bob@firma-b.ch` (Bob's Server schickt jetzt) — **NICHT aligned**
+- DKIM-Domain bleibt `d=firma-a.ch` (Alice's Siegel ist noch dran) — **aligned**
+
+→ SPF fail, aber DKIM passes Alignment-Check → DMARC PASS. Genau das ist der Mechanismus, der Forwarding rettet.
 
 ## Die Mail-Reise: drück auf Play und schau zu
 
@@ -599,91 +876,245 @@ async function playTrip() {
 
 ## Bastelkasten: bau dein eigenes Setup zusammen
 
-Hier kannst du Häkchen setzen und siehst sofort, was passieren würde. Real-Life-Szenarien aus dem Helpdesk-Alltag.
+Drei Schritte: **(1)** Modus wählen oben, **(2)** anhaken was unterwegs passiert, **(3)** unten ablesen was die drei Türsteher dazu sagen — und *warum*.
 
 <div class="demo-card">
-<h4>🔧 Was hast du gerade live? Häkchen setzen, Status ablesen.</h4>
+<h4>🔧 Setup-Bastelkasten</h4>
 
-<div class="builder" id="builder">
-  <label id="optMode"><input type="checkbox" id="opt_redirect"><span><span class="opt-title">Es wird umgeleitet (statt weitergeleitet)</span><span class="opt-sub">"Umleiten" in Outlook-Regel, ".forward"-Datei, cPanel-Forwarder, M365-Mailbox-Forwarding, Catch-all</span></span></label>
-
-  <label><input type="checkbox" id="opt_footer"><span><span class="opt-title">Mein Mailserver hängt einen Disclaimer/Footer an</span><span class="opt-sub">"Vertraulich. Falls Sie nicht der Empfänger sind…" / "[EXTERN]"-Tag im Subject / Anti-Spam-Stamp</span></span></label>
-
-  <label><input type="checkbox" id="opt_listserv"><span><span class="opt-title">Es geht über eine Mailing-Liste</span><span class="opt-sub">Mailman, Google Groups, GroupWise — Subject kriegt [Liste]-Präfix, List-Unsubscribe-Footer wird angehängt</span></span></label>
-
-  <label><input type="checkbox" id="opt_srs"><span><span class="opt-title">SRS ist aktiv auf meinem Mailserver</span><span class="opt-sub">Schreibt den Absender auf dem Umschlag um, damit SPF wieder passt. Exchange Online kann das, on-prem oft nicht.</span></span></label>
-
-  <label><input type="checkbox" id="opt_arc"><span><span class="opt-title">Mein Mailserver signiert mit ARC</span><span class="opt-sub">Sagt dem Empfänger: "Vertrau mir, ich habe die Mail vorher geprüft, sie war legit." Gmail/M365 akzeptieren das von vertrauenswürdigen Quellen.</span></span></label>
-
-  <label><input type="checkbox" id="opt_strict"><span><span class="opt-title">Der Original-Absender hat <code>p=reject</code></span><span class="opt-sub">Harte DMARC-Policy. Bei FAIL wird die Mail vom Empfänger einfach abgelehnt — ohne Spam-Ordner, ohne Warnung.</span></span></label>
+<!-- STEP 1: Modus -->
+<div class="bk-step">
+  <div class="bk-step-label"><span class="bk-num">1</span>Wie gibt Bob die Mail weiter?</div>
+  <div class="bk-mode-toggle">
+    <button class="bk-mode active" id="bkModeFwd" onclick="bkSetMode('fwd')">
+      <strong>Weiterleiten (Forward)</strong>
+      <small>Neue Mail, Bob = Absender</small>
+    </button>
+    <button class="bk-mode" id="bkModeRed" onclick="bkSetMode('red')">
+      <strong>Umleiten (Redirect)</strong>
+      <small>Gleiche Mail, Alice bleibt Absender</small>
+    </button>
+  </div>
 </div>
 
-<div class="verdict" id="verdict">
-  Klick ein paar Häkchen oben — ich sag dir was passiert.
+<!-- STEP 2: Modifier -->
+<div class="bk-step">
+  <div class="bk-step-label"><span class="bk-num">2</span>Was passiert unterwegs?</div>
+  <div class="bk-modifiers">
+    <label class="bk-mod">
+      <input type="checkbox" id="bk_footer" onchange="bkUpdate()">
+      <div class="bk-mod-content">
+        <div class="bk-mod-title">Mein Mailserver hängt einen Footer/Disclaimer an</div>
+        <div class="bk-mod-sub">"Vertraulich. Falls Sie nicht der Empfänger..." / "[EXTERN]"-Tag im Subject / Anti-Spam-Stamp im Body</div>
+      </div>
+      <div class="bk-mod-effect breaks">→ bricht <b>DKIM</b></div>
+    </label>
+
+    <label class="bk-mod">
+      <input type="checkbox" id="bk_listserv" onchange="bkUpdate()">
+      <div class="bk-mod-content">
+        <div class="bk-mod-title">Es geht über eine Mailing-Liste</div>
+        <div class="bk-mod-sub">Mailman / Google Groups / GroupWise — Subject mit [Liste-XY]-Präfix, List-Unsubscribe-Footer im Body</div>
+      </div>
+      <div class="bk-mod-effect breaks">→ bricht <b>SPF + DKIM</b></div>
+    </label>
+
+    <label class="bk-mod">
+      <input type="checkbox" id="bk_srs" onchange="bkUpdate()">
+      <div class="bk-mod-content">
+        <div class="bk-mod-title">SRS ist aktiv auf dem Forwarder</div>
+        <div class="bk-mod-sub">Bob's Server schreibt den Envelope-Sender um auf <code>SRS0=...=alice=firma-a.ch@firma-b.ch</code> damit SPF wieder passt</div>
+      </div>
+      <div class="bk-mod-effect heals">→ rettet <b>SPF</b></div>
+    </label>
+
+    <label class="bk-mod">
+      <input type="checkbox" id="bk_arc" onchange="bkUpdate()">
+      <div class="bk-mod-content">
+        <div class="bk-mod-title">Bob's Server signiert mit ARC</div>
+        <div class="bk-mod-sub">Hängt eine Vertrauenskette an: "Ich bestätige dass die Mail bei mir noch SPF+DKIM-konform war" — signiert mit ARC-Schlüssel</div>
+      </div>
+      <div class="bk-mod-effect heals">→ rettet <b>DMARC</b> (wenn Empfänger vertraut)</div>
+    </label>
+
+    <label class="bk-mod">
+      <input type="checkbox" id="bk_strict" onchange="bkUpdate()">
+      <div class="bk-mod-content">
+        <div class="bk-mod-title">Alice hat <code>p=reject</code> in DMARC</div>
+        <div class="bk-mod-sub">Harte Policy: bei FAIL wird die Mail abgelehnt. Ohne Spam-Ordner. Ohne Warnung an den Endempfänger.</div>
+      </div>
+      <div class="bk-mod-effect neutral">→ entscheidet was bei FAIL passiert</div>
+    </label>
+  </div>
 </div>
+
+<!-- STEP 3: Live Status -->
+<div class="bk-step">
+  <div class="bk-step-label"><span class="bk-num">3</span>Was die drei Türsteher sagen — live</div>
+  <div class="bk-status-grid">
+    <div class="bk-status" id="bkSpf">
+      <div class="bk-status-head"><span>🛡️ SPF</span><span class="bk-status-badge" id="bkSpfBadge">—</span></div>
+      <div class="bk-status-reason" id="bkSpfReason">—</div>
+    </div>
+    <div class="bk-status" id="bkDkim">
+      <div class="bk-status-head"><span>🔏 DKIM</span><span class="bk-status-badge" id="bkDkimBadge">—</span></div>
+      <div class="bk-status-reason" id="bkDkimReason">—</div>
+    </div>
+    <div class="bk-status" id="bkDmarc">
+      <div class="bk-status-head"><span>🏛️ DMARC</span><span class="bk-status-badge" id="bkDmarcBadge">—</span></div>
+      <div class="bk-status-reason" id="bkDmarcReason">—</div>
+    </div>
+  </div>
+
+  <div class="bk-chain" id="bkChain"></div>
+</div>
+
 </div>
 
 <script>
-function updateBuilder() {
-  const r = document.getElementById('opt_redirect').checked;
-  const f = document.getElementById('opt_footer').checked;
-  const l = document.getElementById('opt_listserv').checked;
-  const srs = document.getElementById('opt_srs').checked;
-  const arc = document.getElementById('opt_arc').checked;
-  const strict = document.getElementById('opt_strict').checked;
+let bkMode = 'fwd';
 
-  // Visuelles Feedback an Labels
-  document.querySelectorAll('#builder label').forEach(lbl => {
-    const cb = lbl.querySelector('input');
-    lbl.classList.toggle('checked', cb && cb.checked);
-  });
-
-  const verdict = document.getElementById('verdict');
-
-  if (!r && !f && !l) {
-    verdict.className = 'verdict good';
-    verdict.innerHTML = '<strong>✅ Direkter Versand, kein Forward.</strong> Hier gibt\'s nichts zu fürchten. SPF, DKIM, DMARC laufen sauber durch.';
-    return;
-  }
-
-  // Berechnen
-  // Forward (kein Redirect, kein Listserv): macht eine neue Mail, Header-From = du → alles ok
-  if (!r && !l) {
-    verdict.className = 'verdict good';
-    verdict.innerHTML = '<strong>✅ Klassisches Weiterleiten (Forward).</strong> Mail kommt sauber an, aber unter <em>deinem</em> Namen — Antworten gehen an dich, nicht an den Original-Absender. Footer macht nichts, weil sowieso neue Mail.';
-    return;
-  }
-
-  // Redirect/Listserv
-  const dkimBricht = f || l; // Footer oder Liste → Inhalt geändert → DKIM kaputt
-  const spfOk = srs; // Nur SRS rettet SPF
-  const dmarcOk = spfOk || !dkimBricht || arc; // Eines muss passen, oder ARC rettet
-
-  if (dmarcOk && !dkimBricht && spfOk) {
-    verdict.className = 'verdict good';
-    verdict.innerHTML = '<strong>✅ Bestcase: SRS rettet SPF, keine Inhalts-Änderung → DKIM bleibt.</strong> Das ist das, was ein moderner Mailserver tun sollte.';
-  } else if (dmarcOk && !dkimBricht && !spfOk) {
-    verdict.className = 'verdict meh';
-    verdict.innerHTML = '<strong>⚠️ Hängt am DKIM-Strohhalm.</strong> SPF bricht, aber das DKIM-Siegel des Original-Absenders rettet die Mail. Solange unterwegs nichts am Inhalt geändert wird, bleibt das stabil. <em>Heimtückisch:</em> jeder Anti-Virus-Scanner, der den Body neu verpackt, kann das brechen.';
-  } else if (dmarcOk && arc) {
-    verdict.className = 'verdict meh';
-    verdict.innerHTML = '<strong>⚠️ ARC rettet den Tag.</strong> SPF und DKIM beide kaputt, aber dein Mailserver signiert mit ARC und der Empfänger vertraut dir. Funktioniert mit Gmail ↔ M365 gut, mit kleinen Mailservern unzuverlässig.';
-  } else if (!dmarcOk && strict) {
-    verdict.className = 'verdict bad';
-    verdict.innerHTML = '<strong>🚨 Mail verschwindet.</strong> SPF: kaputt. DKIM: kaputt (' + (l ? 'Mailing-Liste hat Footer angehängt' : 'dein Server hat Footer angehängt') + '). Original-Absender hat <code>p=reject</code> → Gmail/M365 werfen die Mail weg. <em>Ohne Bounce zum Endempfänger.</em> Der Endkunde merkt es nie, der Original-Absender denkt es kam an.';
-  } else if (!dmarcOk && !strict) {
-    verdict.className = 'verdict meh';
-    verdict.innerHTML = '<strong>⚠️ Mail landet im Spam-Ordner.</strong> SPF und DKIM beide kaputt, aber Original-Absender hat (noch) keinen <code>p=reject</code> — wahrscheinlich <code>p=none</code> oder <code>p=quarantine</code>. Spam-Ordner ist das wahrscheinliche Ziel.';
-  } else {
-    verdict.className = 'verdict good';
-    verdict.innerHTML = '<strong>✅ Geht durch.</strong> Mindestens eine Prüfung passt.';
-  }
+function bkSetMode(m) {
+  bkMode = m;
+  document.getElementById('bkModeFwd').classList.toggle('active', m === 'fwd');
+  document.getElementById('bkModeRed').classList.toggle('active', m === 'red');
+  bkUpdate();
 }
 
-document.querySelectorAll('#builder input[type=checkbox]').forEach(cb => {
-  cb.addEventListener('change', updateBuilder);
-});
-updateBuilder();
+function bkUpdate() {
+  const footer = document.getElementById('bk_footer').checked;
+  const listserv = document.getElementById('bk_listserv').checked;
+  const srs = document.getElementById('bk_srs').checked;
+  const arc = document.getElementById('bk_arc').checked;
+  const strict = document.getElementById('bk_strict').checked;
+
+  // Modifier-Labels visuell aktualisieren
+  document.querySelectorAll('.bk-mod input').forEach(cb => {
+    cb.closest('.bk-mod').classList.toggle('on', cb.checked);
+  });
+
+  let spfStatus, spfReason;
+  let dkimStatus, dkimReason;
+  let dmarcStatus, dmarcReason;
+  let chainSteps = [];
+  let outcome;
+
+  if (bkMode === 'fwd') {
+    // FORWARD: Bob erstellt komplett neue Mail, From = Bob
+    spfStatus = 'pass';
+    spfReason = 'Bob\'s Server sendet im Namen von firma-b.ch — der steht auf seiner eigenen Gästeliste.';
+    chainSteps.push({ ok: true, text: 'Bob\'s Server erzeugt <strong>neue Mail</strong>, From-Header = bob@firma-b.ch' });
+
+    if (footer) {
+      dkimStatus = 'pass';
+      dkimReason = 'Footer egal — Bob signiert eh die komplett neue Mail neu.';
+      chainSteps.push({ ok: true, text: 'Footer wird hinzugefügt — DKIM-Signatur wird sowieso neu erzeugt' });
+    } else {
+      dkimStatus = 'pass';
+      dkimReason = 'Falls Bob\'s Server DKIM macht: signiert die neue Mail mit firma-b.ch — alles passt.';
+      chainSteps.push({ ok: true, text: 'Bob\'s Server signiert die neue Mail mit eigenem DKIM-Schlüssel' });
+    }
+
+    if (listserv) {
+      chainSteps.push({ ok: null, text: 'Mailing-Liste-Häkchen ist im Forward-Modus weniger relevant — Forward macht eine eigene Mail.' });
+    }
+
+    dmarcStatus = 'pass';
+    dmarcReason = 'Header-From = Bob, SPF-Domain = Bob, DKIM-Domain = Bob → alles aligned.';
+    chainSteps.push({ ok: true, text: 'Alignment-Check: alle drei zeigen auf firma-b.ch → <strong>DMARC PASS</strong>' });
+
+    outcome = 'good';
+    chainSteps.push({ ok: true, special: 'Mail kommt an. Aber: <strong>Bob</strong> erscheint als Absender, nicht Alice. Reply geht an Bob.', final: true });
+
+  } else {
+    // REDIRECT: gleiche Mail, From bleibt Alice
+    chainSteps.push({ ok: true, text: 'Mail bleibt wie sie ist — From-Header = alice@firma-a.ch, nur Empfänger geändert' });
+
+    // SPF
+    if (srs) {
+      spfStatus = 'pass';
+      spfReason = 'SRS hat den Envelope-Sender auf <code>...=firma-b.ch</code> umgeschrieben. SPF prüft jetzt firma-b.ch — passt.';
+      chainSteps.push({ ok: true, text: 'SRS schreibt Envelope-Sender um → SPF prüft jetzt firma-b.ch statt firma-a.ch' });
+    } else {
+      spfStatus = 'fail';
+      spfReason = 'Empfänger fragt: darf firma-b.ch im Namen von firma-a.ch senden? Nein — firma-b.ch steht nicht in Alice\'s SPF-Record.';
+      chainSteps.push({ ok: false, text: 'Server-IP von firma-b.ch ist nicht in Alice\'s SPF-Record → <strong>SPF FAIL</strong>' });
+    }
+
+    // DKIM
+    if (footer || listserv) {
+      dkimStatus = 'fail';
+      dkimReason = footer
+        ? 'Footer im Body verändert den Body-Hash (<code>bh=</code>). Signatur passt nicht mehr → FAIL.'
+        : 'Liste hat [Liste-XY]-Präfix in Subject und Footer im Body angehängt. Beide sind in <code>h=</code> mitsigniert → Hash kaputt → FAIL.';
+      chainSteps.push({ ok: false, text: (footer ? 'Footer wird angehängt' : 'Liste verändert Subject + Body') + ' → DKIM-Hash stimmt nicht mehr → <strong>DKIM FAIL</strong>' });
+    } else {
+      dkimStatus = 'pass';
+      dkimReason = 'Mail wurde unterwegs nicht angefasst. Alice\'s Signatur ist noch heil und prüft sich gegen <code>selector._domainkey.firma-a.ch</code>.';
+      chainSteps.push({ ok: true, text: 'Inhalt unverändert → Alice\'s DKIM-Siegel hält → <strong>DKIM PASS</strong>' });
+    }
+
+    // DMARC
+    const spfAligned = srs ? false : false; // SRS macht SPF "pass" aber NICHT aligned (Domain ist jetzt firma-b.ch, nicht firma-a.ch wie im Header-From)
+    const dkimAligned = (dkimStatus === 'pass'); // DKIM signiert mit d=firma-a.ch, Header-From ist firma-a.ch → aligned
+
+    if (srs) {
+      chainSteps.push({ ok: false, text: 'Subtil aber wichtig: SRS rettet SPF technisch, aber <strong>nicht das Alignment</strong>. SPF zeigt jetzt auf firma-b.ch, Header-From auf firma-a.ch → SPF-aligned: nein.' });
+    }
+
+    if (dkimAligned) {
+      dmarcStatus = 'pass';
+      dmarcReason = 'DMARC braucht nur EINEN aligned Pass. DKIM-Domain = firma-a.ch = Header-From → aligned → PASS.';
+      chainSteps.push({ ok: true, text: 'DKIM-Domain (d=firma-a.ch) = Header-From → aligned → <strong>DMARC PASS</strong>' });
+      outcome = (srs || dkimStatus === 'pass') ? 'good' : 'meh';
+    } else if (arc) {
+      dmarcStatus = 'warn';
+      dmarcReason = 'SPF und DKIM beide nicht aligned. ABER: ARC-Kette signalisiert "war bei mir noch konform". Wenn Empfänger Bob\'s Server vertraut → akzeptiert.';
+      chainSteps.push({ ok: null, text: 'SPF + DKIM beide kaputt — aber ARC-Kette ist da. Empfänger entscheidet: vertraut er Bob\'s ARC-Signatur?' });
+      outcome = 'meh';
+    } else {
+      dmarcStatus = 'fail';
+      dmarcReason = 'Weder SPF noch DKIM sind aligned. Keine ARC-Rettung. DMARC sagt FAIL.';
+      chainSteps.push({ ok: false, text: 'Weder SPF noch DKIM aligned, kein ARC → <strong>DMARC FAIL</strong>' });
+      outcome = strict ? 'bad' : 'meh';
+    }
+
+    // Final outcome
+    if (outcome === 'good') {
+      chainSteps.push({ ok: true, special: 'Mail kommt sauber an. Aber: das hängt am DKIM-Strohhalm — wenn jemand am Inhalt schraubt, fliegt sie raus.', final: true });
+    } else if (outcome === 'meh' && arc && dmarcStatus === 'warn') {
+      chainSteps.push({ ok: null, special: 'Mail kommt wahrscheinlich an (ARC-Vertrauen). Hängt aber davon ab ob der Empfänger deinem ARC-Schlüssel traut. Bei Gmail/M365 untereinander funktioniert das, bei kleinen Servern oft nicht.', final: true });
+    } else if (outcome === 'meh') {
+      chainSteps.push({ ok: false, special: 'Mail landet im Spam-Ordner. Alice hat keine <code>p=reject</code>-Policy — sonst wäre die Mail komplett weg.', final: true });
+    } else if (outcome === 'bad') {
+      chainSteps.push({ ok: false, special: '🚨 <strong>Mail verschwindet komplett.</strong> Alice hat <code>p=reject</code>. Empfänger lehnt ab. Endempfänger merkt nichts (kein Bounce zu ihm). Alice glaubt ihre Mail kam an.', final: true });
+    }
+  }
+
+  // Render checks
+  setCheckBox('bkSpf', spfStatus, spfReason);
+  setCheckBox('bkDkim', dkimStatus, dkimReason);
+  setCheckBox('bkDmarc', dmarcStatus, dmarcReason);
+
+  // Render kette
+  const chainEl = document.getElementById('bkChain');
+  chainEl.innerHTML = '<div class="bk-chain-title">📋 Was Schritt für Schritt passiert</div>' +
+    chainSteps.map((s, i) => {
+      const cls = s.final ? 'final ' + (outcome === 'good' ? 'good' : outcome === 'bad' ? 'bad' : outcome === 'meh' ? 'meh' : '') :
+                  s.ok === true ? 'ok' : s.ok === false ? 'bad' : 'neutral';
+      return `<div class="bk-chain-step ${cls}"><span class="bk-chain-icon">${s.final ? '🎯' : s.ok === true ? '✓' : s.ok === false ? '✗' : 'i'}</span><span>${s.text || s.special}</span></div>`;
+    }).join('');
+}
+
+function setCheckBox(id, status, reason) {
+  const box = document.getElementById(id);
+  const badge = document.getElementById(id + 'Badge');
+  const reasonEl = document.getElementById(id + 'Reason');
+  box.className = 'bk-status ' + status;
+  badge.textContent = status === 'pass' ? '✓ PASS' : status === 'fail' ? '✗ FAIL' : status === 'warn' ? '! WARN' : '—';
+  reasonEl.innerHTML = reason;
+}
+
+bkUpdate();
 </script>
 
 ## Die 5 Heimtücken, an denen Helpdesks verzweifeln
