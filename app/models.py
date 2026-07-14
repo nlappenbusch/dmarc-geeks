@@ -426,6 +426,34 @@ class MailTest(Base):
     lead_email_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class ThreatTest(Base):
+    """Public M365-Threat-Policy-Test mit Empfaenger-Verifikation.
+
+    Anti-Abuse-Flow (Double-Opt-In, damit niemand Fremde beschiessen kann):
+    1. User gibt Ziel-Postfach + Faelle ein -> Row + 6-stelliger Code, EINE
+       Code-Mail geht an das Ziel.
+    2. User liest den Code in seinem Postfach, gibt ihn ein -> verified_at.
+    3. Erst dann geht der eigentliche Test-Batch (EICAR/GTUBE/... ) raus.
+    So ist nur ein Postfach erreichbar, dessen Besitzer den Code lesen konnte.
+    """
+    __tablename__ = "threat_tests"
+
+    id: Mapped[int] = mapped_column(BigPK, primary_key=True)
+    token: Mapped[str] = mapped_column(String(24), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+
+    recipient: Mapped[str] = mapped_column(String(320), nullable=False)
+    case_ids: Mapped[str] = mapped_column(Text, nullable=False)          # kommagetrennt
+    spoof_from: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+
+    verify_code: Mapped[str] = mapped_column(String(12), nullable=False)
+    verify_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class NewsletterSubscriber(Base):
     """Newsletter-Anmeldung mit Double-Opt-In.
 

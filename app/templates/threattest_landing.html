@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M365 Threat-Test · Quarantäne-Policies live prüfen · DMARC Geeks</title>
+  <meta name="description" content="Teste kostenlos, wie dein Microsoft-365-Postfach mit Malware-, Spam-, Phishing- und Spoofing-Mails umgeht. Harmlose EICAR/GTUBE-Teststrings, mit Empfänger-Bestätigung.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMARC Geeks">
+  <meta property="og:title" content="M365 Threat-Policy-Test">
+  <meta property="og:locale" content="de_DE">
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/marketing.css">
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();</script>
+  <style>
+    .tt-wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; }
+    .tt-head { text-align: center; margin-bottom: 24px; }
+    .tt-head h1 { font-size: 34px; line-height: 1.15; margin: 14px 0 8px; }
+    .tt-head .lede { color: var(--muted, #64748b); max-width: 620px; margin: 0 auto; }
+    .tt-card {
+      background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: 16px; padding: 28px; box-shadow: 0 8px 32px -16px rgba(15,23,42,.15);
+      margin-bottom: 20px;
+    }
+    .tt-card h2 { margin-top: 0; }
+    .tt-field { display:block; margin-bottom: 18px; }
+    .tt-field input[type=email], .tt-field input[type=text] {
+      width: 100%; max-width: 460px; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border, #cbd5e1); font-size: 15px;
+      background: var(--card, #fff); color: var(--text, #0f172a);
+    }
+    fieldset.tt-fs {
+      border: 1px solid var(--border, #e2e8f0); border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 12px;
+    }
+    fieldset.tt-fs legend { font-weight: 700; font-size: 13px; padding: 0 6px; }
+    .tt-opt { display:block; margin: 5px 0; font-size: 14px; }
+    .tt-opt code { background: rgba(37,99,235,.1); padding: 1px 6px; border-radius: 3px; }
+    .tt-opt .exp { color: var(--muted, #64748b); font-size: 12.5px; }
+    .tt-btn {
+      background: var(--brand, #2563eb); color: #fff; border: 0; cursor: pointer;
+      padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 15px;
+    }
+    .tt-btn:hover { background: #1d4ed8; }
+    .tt-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    .tt-error { background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:14px 16px;border-radius:10px;margin-bottom:16px; }
+    .tt-ok { background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 0; }
+    .tt-tip { background: var(--card,#f8fafc); border-left:3px solid var(--brand,#2563eb); padding:12px 16px; border-radius:0 6px 6px 0; margin:14px 0; font-size:13.5px; }
+    .tt-code-input {
+      font: 800 30px "JetBrains Mono", monospace; letter-spacing: .35em;
+      text-align: center; width: 220px; padding: 12px; border-radius: 10px;
+      border: 2px solid var(--brand, #2563eb); background: var(--card,#fff); color: var(--text,#0f172a);
+    }
+    table.tt-data { width:100%; border-collapse: collapse; font-size: 13.5px; }
+    table.tt-data th, table.tt-data td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border,#e2e8f0); vertical-align: top; }
+    table.tt-data th { color: var(--muted,#64748b); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    .tt-muted { color: var(--muted,#64748b); }
+    .tt-small { font-size: 12.5px; }
+  </style>
+</head>
+<body class="mkt mkt-v3">
+
+<header class="mkt-nav">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt="" class="brand-logo" width="26" height="26" style="vertical-align:-6px;margin-right:6px">DMARC<span>Geeks</span></a>
+  <nav>
+    <a href="/check" class="nav-mailcheck">Mail-Check</a>
+    <div class="mkt-nav-group" tabindex="0">
+      <a class="mkt-nav-trigger" href="/tool">Tools ▾</a>
+      <div class="mkt-nav-flyout">
+        <a href="/tool"><strong>🛠 Unser Tool</strong><span>Multi-Tenant DMARC-Dashboard</span></a>
+        <a href="/check"><strong>🔍 Mail-Health-Check</strong><span>SPF · DKIM · DMARC · MX · BIMI</span></a>
+        <a href="/snapshot"><strong>📄 Domain-Snapshot</strong><span>1-Pager-Bericht per E-Mail</span></a>
+        <a href="/mailtest"><strong>📨 Mail-Tester</strong><span>Spam-Score 0–10 in 30 Sek · echte Mail prüfen</span></a>
+        <a href="/threattest"><strong>🛡 M365 Threat-Test</strong><span>Quarantäne-Policies mit EICAR/GTUBE prüfen</span></a>
+        <a href="/bimi-generator"><strong>🎨 BIMI Generator</strong><span>Logo neben deiner Mail</span></a>
+        <a href="/dmarc-generator"><strong>🛡 DMARC Generator</strong><span>Record klick-zusammenbauen</span></a>
+        <a href="/spf-generator"><strong>📜 SPF Generator</strong><span>SPF mit Lookup-Counter</span></a>
+        <a href="/sender"><strong>🗂 Sender-Datenbank</strong><span>33+ Sender-Setup-Guides</span></a>
+      </div>
+    </div>
+    <a href="/wissen">Wissen</a>
+    <a href="/services">Services</a>
+    <a href="/compliance">Compliance</a>
+  </nav>
+  <div class="mkt-nav-cta">
+    <button class="theme-toggle-mkt" type="button" onclick="toggleTheme()" title="Hell/Dunkel" aria-label="Theme">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-link">Login</a>
+    <a href="/kontakt" class="btn-primary">📅 Anfragen</a>
+  </div>
+</header>
+
+{% set cat_labels = {
+  'baseline': 'Baseline', 'spam': 'Anti-Spam', 'phishing': 'Anti-Phishing',
+  'malware': 'Anti-Malware (EICAR)', 'attachment': 'Common-Attachment-Filter',
+  'safelinks': 'Safe Links'
+} %}
+
+<main class="tt-wrap">
+
+  <div class="tt-head">
+    <span class="eyebrow"><span class="dot-live"></span>Kostenlos · mit Empfänger-Bestätigung</span>
+    <h1>🛡 Wie reagiert dein <span class="grad-text">Microsoft-365-Postfach</span> auf Bedrohungen?</h1>
+    <p class="lede">Wir schicken eine Serie harmloser Test-Mails (Standard-Teststrings EICAR &amp; GTUBE) an dein Postfach — jede triggert gezielt eine andere Defender-/EOP-Policy. So siehst du, was in <strong>Inbox</strong>, <strong>Junk</strong>, <strong>Quarantäne</strong> landet oder geblockt wird. Kein echter Schadcode.</p>
+  </div>
+
+  {% if error %}<div class="tt-error">⚠ {{ error }}</div>{% endif %}
+
+  {% if not smtp_configured %}
+    <div class="tt-card"><div class="tt-error" style="margin:0;">🛠 Das Tool wird gerade konfiguriert. Bitte gleich nochmal vorbeischauen.</div></div>
+
+  {% elif state == 'form' %}
+    <div class="tt-card">
+      <h2>1 · Postfach &amp; Tests wählen</h2>
+      <p class="tt-muted tt-small">Weil dieses Tool Mails <em>verschickt</em>, bestätigst du im nächsten Schritt per Code, dass dir das Postfach gehört. So kann niemand fremde Adressen beschießen — es geht immer nur an dein eigenes Postfach.</p>
+      <form method="post" action="/threattest/request">
+        <label class="tt-field">
+          <strong>Dein Ziel-Postfach (Microsoft 365)</strong><br>
+          <input name="recipient" type="email" required placeholder="du@deine-domain.de" value="{{ recipient or '' }}">
+        </label>
+
+        {% for cat, items in groups.items() %}
+          <fieldset class="tt-fs">
+            <legend>{{ cat_labels.get(cat, cat) }}</legend>
+            {% for c in items %}
+              <label class="tt-opt">
+                <input type="checkbox" name="cases" value="{{ c.id }}" checked>
+                <code>{{ c.id }}</code> — {{ c.name }}
+                <span class="exp">→ {{ c.expected }}</span>
+              </label>
+            {% endfor %}
+          </fieldset>
+        {% endfor %}
+
+        <fieldset class="tt-fs">
+          <legend>Anti-Spoofing / DMARC (optional)</legend>
+          <label class="tt-opt">
+            <input type="checkbox" name="cases" value="spoof-from">
+            <code>spoof-from</code> — From-Header fälschen
+          </label>
+          <label class="tt-opt" style="margin-top:6px;">
+            <span class="exp">Zu fälschende Absender-Adresse (nimm <strong>deine</strong> Domain):</span><br>
+            <input name="spoof_from" type="email" placeholder="ceo@deine-domain.de" style="max-width:340px;margin-top:4px;">
+          </label>
+        </fieldset>
+
+        <div class="tt-tip">
+          💡 Sende von deinem echten Setup? Dieses Tool schickt <em>von uns</em> an <em>dich</em> — das prüft deine <strong>Empfangs</strong>-Policies (Quarantäne, Junk, Block), nicht deinen Versand.
+        </div>
+
+        <button type="submit" class="tt-btn">Bestätigungs-Code anfordern →</button>
+      </form>
+    </div>
+
+    <div class="tt-card">
+      <h2 class="tt-small" style="text-transform:uppercase;letter-spacing:.05em;color:#64748b;">So läuft's</h2>
+      <ol class="tt-muted tt-small" style="line-height:1.7;margin:0;padding-left:20px;">
+        <li>Postfach + Tests wählen → wir schicken <strong>einen Code</strong> an dein Postfach.</li>
+        <li>Code eingeben (beweist, dass es dein Postfach ist).</li>
+        <li>Erst dann gehen die Test-Mails raus. Danach im <a href="https://security.microsoft.com/quarantine" target="_blank" rel="noopener">M365-Quarantäne-Portal</a> nachschauen, was wo gelandet ist.</li>
+      </ol>
+    </div>
+
+  {% elif state == 'verify' %}
+    <div class="tt-card">
+      <h2>2 · Code bestätigen</h2>
+      <p>Wir haben einen 6-stelligen Code an <code>{{ recipient }}</code> geschickt. Schau in dein Postfach (auch Junk!) und gib ihn hier ein:</p>
+      <form method="post" action="/threattest/{{ token }}/verify" style="text-align:center;margin:22px 0;">
+        <input class="tt-code-input" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••••" autofocus required>
+        <div style="margin-top:16px;">
+          <button type="submit" class="tt-btn">Bestätigen &amp; Test senden</button>
+        </div>
+      </form>
+      <p class="tt-muted tt-small">Der Code gilt {{ ttl }} Minuten. Keine Mail bekommen? Meist ein Tippfehler im Postfach — <a href="/threattest">neu starten</a>. Dass die Code-Mail selbst evtl. im Junk landet, ist übrigens schon ein erstes Ergebnis 😉</p>
+    </div>
+
+  {% elif state == 'done' %}
+    <div class="tt-card" style="border-left:4px solid #16a34a;">
+      <h2 style="margin-top:0;">✓ Bestätigt — {{ count }} Test-Mail(s) gehen an dein Postfach</h2>
+      <p class="tt-muted tt-small">Run-ID <code>{{ run_id }}</code> · Absender <code>{{ sender }}</code> → <code>{{ recipient }}</code>. Der Versand läuft im Hintergrund (ein paar Sekunden). Warte 1–5 Min, dann prüfe unten.</p>
+      <table class="tt-data">
+        <thead><tr><th>Fall</th><th>Erwartung</th><th>Wo prüfen</th></tr></thead>
+        <tbody>
+        {% for c in cases %}
+          <tr>
+            <td><code>{{ c.id }}</code><br><span class="tt-muted tt-small">{{ c.name }}</span></td>
+            <td>{{ c.expected }}</td>
+            <td class="tt-muted tt-small">{{ c.check_where }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="tt-tip" style="margin-top:16px;">
+        <strong>Nachschauen im M365-Portal</strong> (wo jede Mail gelandet ist, sehen wir nicht — das ist deine Umgebung):
+        <ul class="tt-small" style="margin:8px 0 0;">
+          <li>Quarantäne: <a href="https://security.microsoft.com/quarantine" target="_blank" rel="noopener">security.microsoft.com/quarantine</a></li>
+          <li>Message Trace: <a href="https://security.microsoft.com/messagetrace" target="_blank" rel="noopener">security.microsoft.com/messagetrace</a></li>
+          <li>Wiederfinden: Header <code>X-M365Test-Run = {{ run_id }}</code> oder Betreff <code>[M365-TEST][{{ run_id }}]</code></li>
+        </ul>
+      </div>
+      <p style="margin-top:16px;"><a href="/threattest" class="btn-link">↺ Neuen Test starten</a></p>
+    </div>
+  {% endif %}
+
+  <p class="tt-muted tt-small" style="text-align:center;margin-top:24px;">
+    Hinweis: Manche Sende-Server (z.B. Gmail) reißen Malware-Testmails schon ausgehend ab. Bleibt ein Fall komplett aus, kann das daran liegen. · Nur eigene Postfächer testen.
+  </p>
+
+</main>
+
+{% include "_marketing_footer.html" %}
+
+<script src="/static/nav-dropdown.js" defer></script>
+</body>
+</html>

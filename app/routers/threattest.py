@@ -1,34 +1,62 @@
-"""Admin-Tool: M365 Threat-Policy-Test.
+"""Public Tool: M365 Threat-Policy-Test mit Empfaenger-Verifikation.
 
 Schickt eine Matrix markierter Test-Mails an ein M365-Postfach, jede triggert
-gezielt einen Defender-/EOP-Policy-Pfad. Zeigt, was gesendet wurde + wo man
-das Ergebnis prueft. Wo die Mails landen (Inbox/Junk/Quarantaene), sieht man
-im M365-Portal — die App hat darauf keinen Zugriff.
+gezielt einen Defender-/EOP-Policy-Pfad. OEFFENTLICH nutzbar — aber mit
+Double-Opt-In gegen Missbrauch: Bevor der Batch rausgeht, muss der Anfragende
+einen Code bestaetigen, der an das Ziel-Postfach geschickt wurde. So kann
+niemand Fremde beschiessen; nur das eigene Postfach ist erreichbar.
+
+Wo die Mails landen (Inbox/Junk/Quarantaene), sieht man im M365-Portal — die
+App hat darauf keinen Zugriff.
 
 Payloads sind harmlose Industrie-Teststrings (EICAR/GTUBE), kein Schadcode.
-Der eigentliche Fall-Bau liegt in app/threattest.py (geteilt mit dem CLI).
+Der Fall-Bau liegt in app/threattest.py (geteilt mit dem CLI).
 """
 from __future__ import annotations
 
+import hmac
 import logging
 import secrets
 import smtplib
 import ssl
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from .. import mail as mail_mod
 from ..config import get_settings
-from ..dependencies import require_superadmin
-from ..models import User
+from ..database import get_db
+from ..models import ThreatTest
 from ..templating import render
 from ..threattest import build_message, make_cases
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin")
+router = APIRouter()
+
+CODE_TTL_MIN = 30      # Gueltigkeit des Bestaetigungs-Codes
+MAX_ATTEMPTS = 5       # Code-Eingabe-Versuche
+
+
+def _groups():
+    """Faelle nach Kategorie gruppiert (fuer die Formular-Anzeige)."""
+    cases = [c for c in make_cases(None) if not c.skip_reason]
+    groups: dict[str, list] = {}
+    for c in cases:
+        groups.setdefault(c.category, []).append(c)
+    return groups
+
+
+def _render(request: Request, state: str, **extra):
+    s = get_settings()
+    ctx = dict(state=state, groups=_groups(),
+               smtp_configured=bool(s.smtp_host), user=None, tenant=None,
+               active=None)
+    ctx.update(extra)
+    return render(request, "threattest_landing.html", **ctx)
 
 
 def _send_batch(recipient: str, case_ids: list[str], spoof_from: str | None,
@@ -40,10 +68,8 @@ def _send_batch(recipient: str, case_ids: list[str], spoof_from: str | None,
         return
     sender = s.smtp_from or s.smtp_user
     all_cases = make_cases(spoof_from if "spoof-from" in case_ids else None)
-    selected = [c for c in all_cases
-                if c.id in case_ids and not c.skip_reason]
+    selected = [c for c in all_cases if c.id in case_ids and not c.skip_reason]
     if not selected:
-        log.warning("threattest[%s]: keine gueltigen Faelle", run_id)
         return
 
     if s.smtp_tls_verify:
@@ -55,8 +81,7 @@ def _send_batch(recipient: str, case_ids: list[str], spoof_from: str | None,
 
     try:
         if s.smtp_port == 465:
-            srv = smtplib.SMTP_SSL(s.smtp_host, s.smtp_port, context=ctx,
-                                   timeout=20)
+            srv = smtplib.SMTP_SSL(s.smtp_host, s.smtp_port, context=ctx, timeout=20)
             srv.ehlo()
         else:
             srv = smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=20)
@@ -86,73 +111,145 @@ def _send_batch(recipient: str, case_ids: list[str], spoof_from: str | None,
         log.warning("threattest[%s]: SMTP-Fehler: %s", run_id, exc)
 
 
+# ============================================================================ #
+# Routes
+# ============================================================================ #
+
 @router.get("/threattest")
-def form(request: Request, user: User = Depends(require_superadmin)):
-    """Formular: Zielpostfach + Faelle auswaehlen."""
+def landing(request: Request):
+    """Oeffentliches Formular: Ziel-Postfach + Faelle auswaehlen."""
+    return _render(request, "form")
+
+
+@router.post("/threattest/request")
+async def request_code(request: Request, db: Session = Depends(get_db)):
+    """Anfrage validieren, Row anlegen, Bestaetigungs-Code ans Ziel senden."""
     s = get_settings()
-    cases = [c for c in make_cases(None) if not c.skip_reason]
-    # nach Kategorie gruppieren (Reihenfolge des Auftretens beibehalten)
-    groups: dict[str, list] = {}
-    for c in cases:
-        groups.setdefault(c.category, []).append(c)
-    return render(request, "admin_threattest.html", user=user,
-                  tenant=user.tenant, active="threattest",
-                  groups=groups,
-                  smtp_configured=bool(s.smtp_host),
-                  smtp_from=(s.smtp_from or s.smtp_user or "—"),
-                  smtp_host=s.smtp_host or "—",
-                  sent=None)
-
-
-@router.post("/threattest/send")
-async def send(request: Request, background: BackgroundTasks,
-               user: User = Depends(require_superadmin)):
-    """Batch validieren + im Hintergrund senden, Bestaetigung anzeigen."""
-    s = get_settings()
-    form_data = await request.form()
-    recipient = (form_data.get("recipient") or "").strip()
-    case_ids = form_data.getlist("cases")
-    spoof_from = (form_data.get("spoof_from") or "").strip() or None
-
-    cases_all = [c for c in make_cases(None) if not c.skip_reason]
-    groups: dict[str, list] = {}
-    for c in cases_all:
-        groups.setdefault(c.category, []).append(c)
-
-    def _err(msg: str):
-        return render(request, "admin_threattest.html", user=user,
-                      tenant=user.tenant, active="threattest", groups=groups,
-                      smtp_configured=bool(s.smtp_host),
-                      smtp_from=(s.smtp_from or s.smtp_user or "—"),
-                      smtp_host=s.smtp_host or "—", sent=None, error=msg)
-
     if not s.smtp_host:
-        return _err("SMTP ist nicht konfiguriert (SMTP_HOST fehlt). "
-                    "Erst unter Admin → System / .env einrichten.")
+        return _render(request, "form",
+                       error="Das Tool wird gerade konfiguriert (SMTP fehlt). "
+                             "Bitte spaeter erneut versuchen.")
+
+    form = await request.form()
+    recipient = (form.get("recipient") or "").strip().lower()
+    case_ids = [c for c in form.getlist("cases")]
+    spoof_from = (form.get("spoof_from") or "").strip().lower() or None
+
     if "@" not in recipient or "." not in recipient.split("@")[-1]:
-        return _err("Bitte ein gueltiges Ziel-Postfach angeben.")
+        return _render(request, "form", recipient=recipient,
+                       error="Bitte ein gueltiges Ziel-Postfach angeben.")
     if not case_ids:
-        return _err("Mindestens einen Test-Fall auswaehlen.")
+        return _render(request, "form", recipient=recipient,
+                       error="Mindestens einen Test-Fall auswaehlen.")
     if "spoof-from" in case_ids and not spoof_from:
-        return _err("Fuer den Spoof-Fall bitte die zu faelschende Absender-"
-                    "Adresse angeben (z.B. ceo@deine-domain.de).")
+        return _render(request, "form", recipient=recipient,
+                       error="Fuer den Spoof-Fall bitte die zu faelschende "
+                             "Absender-Adresse angeben.")
 
-    run_id = datetime.now(timezone.utc).strftime("%m%d-%H%M") + "-" + \
-        secrets.token_hex(2)
+    # Rate-Limit pro IP/Tag (jede Anfrage sendet eine Code-Mail).
+    ip = request.client.host if request.client else "-"
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
+                                               microsecond=0)
+    n_today = db.execute(
+        select(ThreatTest).where(ThreatTest.requester_ip == ip,
+                                 ThreatTest.created_at >= today)
+    ).scalars().all()
+    if len(n_today) >= s.threattest_max_per_ip_per_day:
+        return _render(request, "form",
+                       error=f"Tages-Limit erreicht "
+                             f"({s.threattest_max_per_ip_per_day} Anfragen/Tag). "
+                             "Bitte morgen wieder.")
 
-    # Auswahl fuer die Bestaetigungs-Ansicht aufloesen (inkl. Spoof-Fall).
-    resolved = make_cases(spoof_from if "spoof-from" in case_ids else None)
-    chosen = [c for c in resolved if c.id in case_ids and not c.skip_reason]
+    token = secrets.token_urlsafe(9)
+    code = f"{secrets.randbelow(1000000):06d}"
+    now = datetime.now(timezone.utc)
+    tt = ThreatTest(
+        token=token, created_at=now,
+        expires_at=now + timedelta(minutes=CODE_TTL_MIN),
+        requester_ip=ip, recipient=recipient,
+        case_ids=",".join(case_ids), spoof_from=spoof_from,
+        verify_code=code, verify_attempts=0,
+    )
+    db.add(tt)
+    db.commit()
 
-    background.add_task(_send_batch, recipient, list(case_ids), spoof_from,
+    # EINZIGE Mail an eine unverifizierte Adresse: der Bestaetigungs-Code.
+    subject = f"DMARC-Geeks Threat-Test — Bestaetigungscode {code}"
+    text = (
+        "Hallo,\n\n"
+        "jemand (hoffentlich du) moechte einen M365-Threat-Policy-Test an dieses\n"
+        "Postfach schicken. Damit niemand Fremde beschiessen kann, bestaetige\n"
+        f"bitte mit diesem Code:\n\n    {code}\n\n"
+        f"Gib ihn auf der Seite ein. Der Code gilt {CODE_TTL_MIN} Minuten.\n\n"
+        "Erst NACH der Bestaetigung gehen die eigentlichen Test-Mails raus\n"
+        "(harmlose EICAR/GTUBE-Teststrings, kein echter Schadcode).\n\n"
+        "Wenn du das nicht warst: ignoriere diese Mail einfach, dann passiert nichts.\n\n"
+        "— DMARC Geeks\n"
+    )
+    sent = mail_mod.send_mail(to=recipient, subject=subject, text=text)
+    if not sent:
+        return _render(request, "form", recipient=recipient,
+                       error="Konnte den Bestaetigungs-Code nicht an diese "
+                             "Adresse senden. Tippfehler im Postfach?")
+
+    return _render(request, "verify", token=token, recipient=recipient,
+                   ttl=CODE_TTL_MIN)
+
+
+@router.post("/threattest/{token}/verify")
+async def verify(token: str, request: Request, background: BackgroundTasks,
+                 db: Session = Depends(get_db)):
+    """Code pruefen; bei Erfolg den Test-Batch im Hintergrund senden."""
+    tt = db.execute(
+        select(ThreatTest).where(ThreatTest.token == token)
+    ).scalars().first()
+    if tt is None:
+        return _render(request, "form",
+                       error="Anfrage nicht gefunden. Bitte neu starten.")
+
+    now = datetime.now(timezone.utc)
+    if tt.sent_at is not None:
+        # Schon bestaetigt + gesendet -> Bestaetigung erneut zeigen (idempotent).
+        return _render(request, "done", **_done_ctx(tt))
+    if now > tt.expires_at:
+        return _render(request, "form",
+                       error="Der Code ist abgelaufen. Bitte neu starten.")
+    if tt.verify_attempts >= MAX_ATTEMPTS:
+        return _render(request, "form",
+                       error="Zu viele Fehlversuche. Bitte neu starten.")
+
+    form = await request.form()
+    entered = (form.get("code") or "").strip()
+    if not hmac.compare_digest(entered, tt.verify_code):
+        tt.verify_attempts += 1
+        db.commit()
+        left = MAX_ATTEMPTS - tt.verify_attempts
+        return _render(request, "verify", token=token, recipient=tt.recipient,
+                       ttl=CODE_TTL_MIN,
+                       error=f"Code stimmt nicht. Noch {left} Versuch(e).")
+
+    # Verifiziert -> Batch planen.
+    tt.verified_at = now
+    tt.sent_at = now
+    db.commit()
+
+    case_ids = [c for c in tt.case_ids.split(",") if c]
+    run_id = now.strftime("%m%d-%H%M") + "-" + token[:4]
+    background.add_task(_send_batch, tt.recipient, case_ids, tt.spoof_from,
                         run_id)
-    log.info("threattest[%s]: Batch geplant (%d Faelle) an %s durch %s",
-             run_id, len(chosen), recipient, user.email)
+    log.info("threattest[%s]: verifiziert + Batch geplant an %s",
+             run_id, tt.recipient)
+    return _render(request, "done", **_done_ctx(tt, run_id))
 
-    sender = s.smtp_from or s.smtp_user or "—"
-    return render(request, "admin_threattest.html", user=user,
-                  tenant=user.tenant, active="threattest", groups=groups,
-                  smtp_configured=True, smtp_from=sender, smtp_host=s.smtp_host,
-                  sent={"run_id": run_id, "recipient": recipient,
-                        "sender": sender, "cases": chosen,
-                        "count": len(chosen)})
+
+def _done_ctx(tt: ThreatTest, run_id: str | None = None) -> dict:
+    s = get_settings()
+    case_ids = [c for c in tt.case_ids.split(",") if c]
+    resolved = make_cases(tt.spoof_from if "spoof-from" in case_ids else None)
+    chosen = [c for c in resolved if c.id in case_ids and not c.skip_reason]
+    if run_id is None:
+        run_id = (tt.sent_at or tt.created_at).strftime("%m%d-%H%M") \
+            + "-" + tt.token[:4]
+    return dict(run_id=run_id, recipient=tt.recipient,
+                sender=(s.smtp_from or s.smtp_user or "—"),
+                cases=chosen, count=len(chosen))

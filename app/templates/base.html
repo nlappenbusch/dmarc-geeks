@@ -61,7 +61,7 @@
     {% endif %}
     {% if user.is_superadmin %}
       {# === Admin-Dropdown: alle Plattform-Tools in einem Menue (Nav-Breite konsolidiert) === #}
-      <div class="nav-dropdown {{ 'active' if active in ['admin','admin-system','leads','discover','threattest'] else '' }}">
+      <div class="nav-dropdown {{ 'active' if active in ['admin','admin-system','leads','discover'] else '' }}">
         <button type="button" class="nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
           🛡 Admin
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5l3 3 3-3"/></svg>
@@ -108,11 +108,6 @@
           <a href="/admin/system" role="menuitem">
             <strong>⚙ System</strong>
             <span class="muted small">DNS/SMTP/Fernet-Tests, ENV</span>
-          </a>
-          <div class="nav-dropdown-sep"></div>
-          <a href="/admin/threattest" role="menuitem">
-            <strong>🛡 M365 Threat-Test</strong>
-            <span class="muted small">EICAR/GTUBE/Spoof an ein Postfach senden</span>
           </a>
         </div>
       </div>
