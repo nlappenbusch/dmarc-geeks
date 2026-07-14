@@ -45,6 +45,10 @@ HARMLESS = (
 
 SAFELINKS_URL = "https://www.microsoft.com/security/business/threat-protection"
 
+# AMTSO-Phishing-Test-Seite: vendor-neutrale, sichere URL zum Testen von
+# Anti-Phishing/URL-Reputation (keine echte Phishing-Seite, kein Schadcode).
+AMTSO_PHISH_URL = "https://www.amtso.org/feature-settings-check-phishing-page/"
+
 
 # --------------------------------------------------------------------------- #
 # ZipCrypto — passwortgeschuetztes ZIP ohne Fremd-Abhaengigkeit (stdlib-only).
@@ -201,9 +205,33 @@ def make_cases(spoof_from: Optional[str] = None) -> list[TestCase]:
         ))
     cases.append(TestCase(
         "gtphish", "GTPHISH Phishing-Test", "phishing",
-        "Phishing-Handling (experimentell, nicht offiziell von MS garantiert)",
-        "Junk/Quarantaene falls unterstuetzt — sonst Inbox (dann greift der Test nicht).",
+        "Meist nur generischer Spam (GTPHISH ist KEIN offizieller MS-Trigger)",
+        "Landet i.d.R. als Spam (General filter, CAT:SPM), nicht als echter "
+        "Phishing-Verdikt — MS kennt GTPHISH nicht. Header X-Forefront-Antispam-"
+        "Report zeigt CAT: und SCL:.",
         b_gtphish,
+    ))
+
+    # Phishing-Test-URL (AMTSO) — zielt via URL-Reputation auf Phish/HPHISH.
+    def b_phishurl(m: EmailMessage) -> None:
+        m.set_content(_base_text(
+            "phish-url", "Phishing / High-conf-Phishing via URL-Reputation",
+            "\r\nSicherheitshinweis: Ihr Konto muss bestaetigt werden.\r\n"
+            f"Bitte hier anmelden: {AMTSO_PHISH_URL}\r\n"
+        ))
+        html = (
+            "<html><body><p>Ihr Konto wurde voruebergehend gesperrt. "
+            f"<a href='{AMTSO_PHISH_URL}'>Jetzt anmelden und verifizieren</a>, "
+            "um die Sperre aufzuheben.</p></body></html>"
+        )
+        m.add_alternative(html, subtype="html")
+    cases.append(TestCase(
+        "phish-url", "Phishing-Test-URL (AMTSO)", "phishing",
+        "Phishing / High-conf-Phishing via URL-Reputation (nicht 100% deterministisch)",
+        "Header X-Forefront-Antispam-Report pruefen: CAT:PHISH bzw. CAT:HPHSH = "
+        "Phishing-Verdikt; CAT:SPM/HSPM = nur Spam. Safe Links kann die URL "
+        "zusaetzlich umschreiben.",
+        b_phishurl,
     ))
 
     # --- Anti-Malware: EICAR-Varianten -------------------------------------- #
