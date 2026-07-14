@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}M365 Threat-Test · DMARC Geeks{% endblock %}
+{% block content %}
+{% set cat_labels = {
+  'baseline': 'Baseline',
+  'spam': 'Anti-Spam',
+  'phishing': 'Anti-Phishing',
+  'malware': 'Anti-Malware (EICAR)',
+  'attachment': 'Common-Attachment-Filter',
+  'safelinks': 'Safe Links'
+} %}
+
+<h1>🛡 M365 Threat-Policy-Test <span class="muted small">— Plattform-Admin</span></h1>
+<p class="muted">
+  Schickt eine Matrix markierter Test-Mails an ein M365-Postfach — jede triggert
+  gezielt einen Defender-/EOP-Policy-Pfad (Malware, Spam, Phishing, Attachment-Filter,
+  Safe Links, Spoofing). So wird sichtbar, welche Mail <strong>wo</strong> landet:
+  Inbox, Junk, Quarantäne oder geblockt. Alle Payloads sind harmlose Industrie-Teststrings
+  (EICAR/GTUBE) — kein echter Schadcode.
+</p>
+
+{% if error %}
+<div class="card" style="border-left:4px solid #ef4444;background:#fef2f2;color:#991b1b;">
+  <strong>⚠ {{ error }}</strong>
+</div>
+{% endif %}
+
+{% if sent %}
+<div class="card" style="border-left:4px solid #16a34a;background:#f0fdf4;">
+  <h2 style="margin-top:0;">✓ {{ sent.count }} Test-Mail(s) werden gesendet</h2>
+  <p class="muted small" style="margin:0 0 12px;">
+    Run-ID <code>{{ sent.run_id }}</code> · Absender <code>{{ sent.sender }}</code>
+    → Postfach <code>{{ sent.recipient }}</code>.
+    Der Versand läuft im Hintergrund (ein paar Sekunden). Warte 1–5 Min, dann prüfe unten.
+  </p>
+  <table class="data">
+    <thead><tr><th>Fall</th><th>Erwartung</th><th>Wo prüfen</th></tr></thead>
+    <tbody>
+    {% for c in sent.cases %}
+      <tr>
+        <td><code>{{ c.id }}</code><br><span class="muted small">{{ c.name }}</span></td>
+        <td>{{ c.expected }}</td>
+        <td class="muted small">{{ c.check_where }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="small" style="margin-top:12px;">
+    <strong>Nachschauen im M365-Portal</strong> (die App kann das nicht anzeigen):
+  </p>
+  <ul class="small">
+    <li>Quarantäne: <a href="https://security.microsoft.com/quarantine" target="_blank" rel="noopener">security.microsoft.com/quarantine</a></li>
+    <li>Message Trace (was landete wo): <a href="https://security.microsoft.com/messagetrace" target="_blank" rel="noopener">security.microsoft.com/messagetrace</a></li>
+    <li>Filter im Postfach/Trace: Header <code>X-M365Test-Run = {{ sent.run_id }}</code> oder Betreff <code>[M365-TEST][{{ sent.run_id }}]</code></li>
+  </ul>
+</div>
+{% endif %}
+
+<section class="card">
+  <h2>Test senden</h2>
+
+  {% if smtp_configured %}
+  <p class="muted small">
+    Absender: <code>{{ smtp_from }}</code> über <code>{{ smtp_host }}</code>.
+  </p>
+  {% else %}
+  <p style="color:#b45309;background:#fffbeb;padding:8px 12px;border-radius:6px;">
+    ⚠ SMTP ist nicht konfiguriert (<code>SMTP_HOST</code> fehlt). Erst unter
+    <a href="/admin/system">Admin → System</a> bzw. in der <code>.env</code> einrichten.
+  </p>
+  {% endif %}
+
+  <form method="post" action="/admin/threattest/send"
+        onsubmit="return confirm('Test-Mails jetzt an das Postfach senden?');">
+    <label style="display:block;margin-bottom:16px;">
+      <strong>Ziel-Postfach (M365)</strong><br>
+      <input name="recipient" type="email" required placeholder="postfach@deine-domain.de"
+             style="width:100%;max-width:420px;" value="{{ sent.recipient if sent else '' }}">
+    </label>
+
+    {% for cat, items in groups.items() %}
+      <fieldset style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <legend class="small" style="font-weight:600;padding:0 6px;">
+          {{ cat_labels.get(cat, cat) }}
+        </legend>
+        {% for c in items %}
+          <label style="display:block;margin:4px 0;">
+            <input type="checkbox" name="cases" value="{{ c.id }}" checked>
+            <code>{{ c.id }}</code> — {{ c.name }}
+            <span class="muted small">→ {{ c.expected }}</span>
+          </label>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+
+    <fieldset style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+      <legend class="small" style="font-weight:600;padding:0 6px;">Anti-Spoofing / DMARC (optional)</legend>
+      <label style="display:block;margin:4px 0;">
+        <input type="checkbox" name="cases" value="spoof-from">
+        <code>spoof-from</code> — From-Header fälschen
+      </label>
+      <label class="small" style="display:block;margin-top:6px;">
+        Zu fälschende Absender-Adresse (nimm <strong>deine</strong> geschützte Domain):<br>
+        <input name="spoof_from" type="email" placeholder="ceo@deine-domain.de"
+               style="width:100%;max-width:420px;">
+      </label>
+    </fieldset>
+
+    <button type="submit" class="btn-primary" {% if not smtp_configured %}disabled{% endif %}>
+      Test senden
+    </button>
+  </form>
+</section>
+
+<section class="card">
+  <h2 class="small" style="text-transform:uppercase;letter-spacing:.05em;color:#64748b;">Wichtig</h2>
+  <ul class="small muted">
+    <li><strong>Ausgehendes Scanning:</strong> Manche SMTP-Server (z.B. Gmail) reißen die
+      EICAR-/Attachment-Mails mit <code>552</code> schon beim Versand ab, bevor sie M365 erreichen.
+      Bleibt eine Mail komplett aus, liegt es meist daran — dann testest du deinen Sende-Server, nicht M365.</li>
+    <li><strong>Nur eigene Postfächer testen.</strong> Das Tool ist für die eigene Umgebung gedacht.</li>
+    <li>Dieselbe Logik gibt's als CLI: <code>python scripts/m365_threatpolicy_test.py --list</code></li>
+  </ul>
+</section>
+{% endblock %}

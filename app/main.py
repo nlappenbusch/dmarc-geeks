@@ -18,7 +18,7 @@ from .routers import (admin, admin_leads, api, api_keys, audit as audit_router, 
                       newsletter, report_pdf, reports, reseller as reseller_router,
                       sender_kb as sender_kb_router,
                       settings as settings_router, snapshot as snapshot_router,
-                      sources, tags, upload, users,
+                      sources, tags, threattest, upload, users,
                       webhooks as webhooks_router, wissen_blog)
 from .scheduler import start_scheduler, stop_scheduler
 from .security import hash_password
@@ -196,6 +196,7 @@ def create_app() -> FastAPI:
     app.include_router(report_pdf.router)
     app.include_router(admin.router)
     app.include_router(admin_leads.router)
+    app.include_router(threattest.router)
     app.include_router(help_router.router)
     app.include_router(generator.router)
     app.include_router(dns_check.router)
