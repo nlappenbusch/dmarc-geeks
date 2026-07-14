@@ -16,7 +16,7 @@ import zipfile
 import zlib
 from dataclasses import dataclass
 from email.message import EmailMessage
-from email.utils import formatdate, make_msgid
+from email.utils import formataddr, formatdate, make_msgid
 from typing import Callable, Optional
 
 # --------------------------------------------------------------------------- #
@@ -151,6 +151,7 @@ class TestCase:
     check_where: str         # wo nachschauen
     build: Callable[[EmailMessage], None]
     header_from: Optional[str] = None   # gesetzter From-Header (Spoof-Test)
+    impersonate_name: Optional[str] = None  # From-Anzeigename (Impersonation-Test)
     skip_reason: Optional[str] = None   # gefuellt, wenn Fall nicht baubar
 
 
@@ -167,8 +168,13 @@ def _base_text(case_id: str, expected: str, extra: str = "") -> str:
     )
 
 
-def make_cases(spoof_from: Optional[str] = None) -> list[TestCase]:
-    """Baut die vollstaendige Fall-Liste. spoof_from aktiviert den Spoof-Fall."""
+def make_cases(spoof_from: Optional[str] = None,
+               impersonate: Optional[str] = None) -> list[TestCase]:
+    """Baut die vollstaendige Fall-Liste.
+
+    spoof_from aktiviert den Spoof-Fall; impersonate (Anzeigename eines zu
+    schuetzenden Users) aktiviert den User-Impersonation-Fall.
+    """
     cases: list[TestCase] = []
 
     # --- Baseline ----------------------------------------------------------- #
@@ -346,6 +352,28 @@ def make_cases(spoof_from: Optional[str] = None) -> list[TestCase]:
             b_spoof, header_from=spoof_from,
         ))
 
+    # --- User-Impersonation (opt-in) ---------------------------------------- #
+    # Testet den Defender-Impersonation-Schutz: From-ANZEIGENAME = geschuetzter
+    # User, Absender-ADRESSE aber extern (unser Sender). Genau die "Chef-Masche".
+    if impersonate:
+        name = impersonate.strip()
+
+        def b_imp(m: EmailMessage) -> None:
+            m.set_content(_base_text(
+                "impersonation", "User-Impersonation -> Quarantaene",
+                f"\r\nDiese Mail gibt sich per Anzeigename als '{name}' aus,\r\n"
+                "kommt aber von der externen Test-Adresse. Der Defender-\r\n"
+                "Impersonation-Schutz sollte das als User-Impersonation erkennen.\r\n"
+            ))
+        cases.append(TestCase(
+            "impersonation", f"User-Impersonation ({name})", "impersonation",
+            "Quarantaene (User-Impersonation)",
+            "Quarantaene mit Grund 'Impersonation'; Defender-Portal -> "
+            "'View impersonations'. Greift nur, wenn der Name als geschuetzter "
+            "User in der Anti-Phishing-Policy hinterlegt ist.",
+            b_imp, impersonate_name=name,
+        ))
+
     return cases
 
 
@@ -363,6 +391,12 @@ def build_message(case: TestCase, run_id: str, sender: str,
     msg["X-M365Test-Case"] = case.id
     msg["X-M365Test-Category"] = case.category
     case.build(msg)
-    # From zuletzt setzen (Spoof-Faelle ueberschreiben den echten Absender).
-    msg["From"] = case.header_from or sender
+    # From zuletzt setzen:
+    #  - Impersonation: Anzeigename = geschuetzter User, Adresse = echter Sender
+    #  - Spoof: kompletter gefaelschter From-Header
+    #  - sonst: echter Sender
+    if case.impersonate_name:
+        msg["From"] = formataddr((case.impersonate_name, sender))
+    else:
+        msg["From"] = case.header_from or sender
     return msg

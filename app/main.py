@@ -105,6 +105,13 @@ def _migrate_alter_columns() -> None:
                 conn.execute(text("ALTER TABLE domains ADD COLUMN managed_at TIMESTAMP"))
             log.info("migrated: domains.managed_at added")
 
+    if "threat_tests" in inspector.get_table_names():
+        cols = {c["name"] for c in inspector.get_columns("threat_tests")}
+        if "impersonate" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE threat_tests ADD COLUMN impersonate VARCHAR(320)"))
+            log.info("migrated: threat_tests.impersonate added")
+
 
 def _bootstrap_superadmin() -> None:
     settings = get_settings()

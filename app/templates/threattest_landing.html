@@ -151,6 +151,18 @@
           </label>
         </fieldset>
 
+        <fieldset class="tt-fs">
+          <legend>User-Impersonation (optional)</legend>
+          <label class="tt-opt">
+            <input type="checkbox" name="cases" value="impersonation">
+            <code>impersonation</code> — Chef-Masche testen (Defender-Impersonation-Schutz)
+          </label>
+          <label class="tt-opt" style="margin-top:6px;">
+            <span class="exp">Anzeigename des zu testenden Users (z. B. „Regina Knöpfel"). Wir schicken eine Mail, die per Anzeigename vorgibt, von dieser Person zu sein:</span><br>
+            <input name="impersonate" type="text" placeholder="Vorname Nachname" style="max-width:340px;margin-top:4px;">
+          </label>
+        </fieldset>
+
         <div class="tt-tip">
           💡 Sende von deinem echten Setup? Dieses Tool schickt <em>von uns</em> an <em>dich</em> — das prüft deine <strong>Empfangs</strong>-Policies (Quarantäne, Junk, Block), nicht deinen Versand.
         </div>

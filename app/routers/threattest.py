@@ -60,14 +60,17 @@ def _render(request: Request, state: str, **extra):
 
 
 def _send_batch(recipient: str, case_ids: list[str], spoof_from: str | None,
-                run_id: str, delay: float = 1.0) -> None:
+                run_id: str, impersonate: str | None = None,
+                delay: float = 1.0) -> None:
     """Sendet den Test-Batch. Laeuft als BackgroundTask (Starlette-Threadpool)."""
     s = get_settings()
     if not s.smtp_host:
         log.warning("threattest[%s]: SMTP nicht konfiguriert, Abbruch", run_id)
         return
     sender = s.smtp_from or s.smtp_user
-    all_cases = make_cases(spoof_from if "spoof-from" in case_ids else None)
+    all_cases = make_cases(
+        spoof_from if "spoof-from" in case_ids else None,
+        impersonate if "impersonation" in case_ids else None)
     selected = [c for c in all_cases if c.id in case_ids and not c.skip_reason]
     if not selected:
         return
@@ -134,6 +137,7 @@ async def request_code(request: Request, db: Session = Depends(get_db)):
     recipient = (form.get("recipient") or "").strip().lower()
     case_ids = [c for c in form.getlist("cases")]
     spoof_from = (form.get("spoof_from") or "").strip().lower() or None
+    impersonate = (form.get("impersonate") or "").strip() or None
 
     if "@" not in recipient or "." not in recipient.split("@")[-1]:
         return _render(request, "form", recipient=recipient,
@@ -145,6 +149,10 @@ async def request_code(request: Request, db: Session = Depends(get_db)):
         return _render(request, "form", recipient=recipient,
                        error="Fuer den Spoof-Fall bitte die zu faelschende "
                              "Absender-Adresse angeben.")
+    if "impersonation" in case_ids and not impersonate:
+        return _render(request, "form", recipient=recipient,
+                       error="Fuer den Impersonation-Fall bitte den Anzeigenamen "
+                             "des zu testenden Users angeben.")
 
     # Rate-Limit pro IP/Tag (jede Anfrage sendet eine Code-Mail).
     ip = request.client.host if request.client else "-"
@@ -168,6 +176,7 @@ async def request_code(request: Request, db: Session = Depends(get_db)):
         expires_at=now + timedelta(minutes=CODE_TTL_MIN),
         requester_ip=ip, recipient=recipient,
         case_ids=",".join(case_ids), spoof_from=spoof_from,
+        impersonate=impersonate,
         verify_code=code, verify_attempts=0,
     )
     db.add(tt)
@@ -236,7 +245,7 @@ async def verify(token: str, request: Request, background: BackgroundTasks,
     case_ids = [c for c in tt.case_ids.split(",") if c]
     run_id = now.strftime("%m%d-%H%M") + "-" + token[:4]
     background.add_task(_send_batch, tt.recipient, case_ids, tt.spoof_from,
-                        run_id)
+                        run_id, tt.impersonate)
     log.info("threattest[%s]: verifiziert + Batch geplant an %s",
              run_id, tt.recipient)
     return _render(request, "done", **_done_ctx(tt, run_id))
@@ -245,7 +254,9 @@ async def verify(token: str, request: Request, background: BackgroundTasks,
 def _done_ctx(tt: ThreatTest, run_id: str | None = None) -> dict:
     s = get_settings()
     case_ids = [c for c in tt.case_ids.split(",") if c]
-    resolved = make_cases(tt.spoof_from if "spoof-from" in case_ids else None)
+    resolved = make_cases(
+        tt.spoof_from if "spoof-from" in case_ids else None,
+        tt.impersonate if "impersonation" in case_ids else None)
     chosen = [c for c in resolved if c.id in case_ids and not c.skip_reason]
     if run_id is None:
         run_id = (tt.sent_at or tt.created_at).strftime("%m%d-%H%M") \

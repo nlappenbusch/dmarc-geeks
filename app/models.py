@@ -447,6 +447,7 @@ class ThreatTest(Base):
     recipient: Mapped[str] = mapped_column(String(320), nullable=False)
     case_ids: Mapped[str] = mapped_column(Text, nullable=False)          # kommagetrennt
     spoof_from: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    impersonate: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)  # Anzeigename fuer Impersonation-Test
 
     verify_code: Mapped[str] = mapped_column(String(12), nullable=False)
     verify_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

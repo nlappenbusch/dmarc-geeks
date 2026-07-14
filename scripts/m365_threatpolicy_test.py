@@ -233,6 +233,10 @@ def main() -> int:
     p.add_argument("--spoof-from", metavar="ADRESSE",
                    help="Spoof/DMARC-Fall aktivieren; From wird gefaelscht "
                         "(nimm DEINE geschuetzte Domain)")
+    p.add_argument("--impersonate", metavar="ANZEIGENAME",
+                   help="User-Impersonation-Fall aktivieren; testet Defender-"
+                        "Impersonation-Schutz fuer diesen Anzeigenamen "
+                        "(z.B. \"Regina Knoepfel\")")
     p.add_argument("--dry-run", action="store_true",
                    help="Nicht senden, nur .eml nach outputs/ schreiben")
     p.add_argument("--save-eml", action="store_true",
@@ -250,7 +254,7 @@ def main() -> int:
         if loaded:
             print(f"📄 SMTP-Config geladen aus {loaded}")
 
-    all_cases = make_cases(args.spoof_from)
+    all_cases = make_cases(args.spoof_from, args.impersonate)
 
     if args.list:
         print_list(all_cases)
