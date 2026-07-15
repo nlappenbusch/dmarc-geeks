@@ -61,6 +61,11 @@
     table.tt-data th { color: var(--muted,#64748b); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
     .tt-muted { color: var(--muted,#64748b); }
     .tt-small { font-size: 12.5px; }
+    .tt-preset {
+      background: transparent; border: 1px solid var(--border,#cbd5e1); color: var(--brand,#2563eb);
+      border-radius: 999px; padding: 3px 12px; font-size: 12.5px; cursor: pointer; font-weight: 600;
+    }
+    .tt-preset:hover { background: rgba(37,99,235,.08); border-color: var(--brand,#2563eb); }
   </style>
 </head>
 <body class="mkt mkt-v3">
@@ -126,12 +131,22 @@
           <input name="recipient" type="email" required placeholder="du@deine-domain.de" value="{{ recipient or '' }}">
         </label>
 
+        <div style="margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span class="exp" style="margin-right:4px;">Schnellauswahl:</span>
+          <button type="button" class="tt-preset" onclick="ttPreset('all')">Alles</button>
+          <button type="button" class="tt-preset" onclick="ttPreset('malware')">Malware</button>
+          <button type="button" class="tt-preset" onclick="ttPreset('spam')">Spam</button>
+          <button type="button" class="tt-preset" onclick="ttPreset('impersonation')">Impersonation</button>
+          <button type="button" class="tt-preset" onclick="ttPreset('spoof')">Spoof</button>
+          <button type="button" class="tt-preset" onclick="ttPreset('none')">Keine</button>
+        </div>
+
         {% for cat, items in groups.items() %}
           <fieldset class="tt-fs">
             <legend>{{ cat_labels.get(cat, cat) }}</legend>
             {% for c in items %}
               <label class="tt-opt">
-                <input type="checkbox" name="cases" value="{{ c.id }}" checked>
+                <input type="checkbox" name="cases" value="{{ c.id }}" data-cat="{{ cat }}" checked>
                 <code>{{ c.id }}</code> — {{ c.name }}
                 <span class="exp">→ {{ c.expected }}</span>
               </label>
@@ -142,7 +157,7 @@
         <fieldset class="tt-fs">
           <legend>Anti-Spoofing / DMARC (optional)</legend>
           <label class="tt-opt">
-            <input type="checkbox" name="cases" value="spoof-from">
+            <input type="checkbox" name="cases" value="spoof-from" data-cat="spoof">
             <code>spoof-from</code> — From-Header fälschen
           </label>
           <label class="tt-opt" style="margin-top:6px;">
@@ -154,7 +169,7 @@
         <fieldset class="tt-fs">
           <legend>User-Impersonation (optional)</legend>
           <label class="tt-opt">
-            <input type="checkbox" name="cases" value="impersonation">
+            <input type="checkbox" name="cases" value="impersonation" data-cat="impersonation">
             <code>impersonation</code> — Chef-Masche testen (Defender-Impersonation-Schutz)
           </label>
           <label class="tt-opt" style="margin-top:6px;">
@@ -185,7 +200,7 @@
       <h2>2 · Code bestätigen</h2>
       <p>Wir haben einen 6-stelligen Code an <code>{{ recipient }}</code> geschickt. Schau in dein Postfach (auch Junk!) und gib ihn hier ein:</p>
       <form method="post" action="/threattest/{{ token }}/verify" style="text-align:center;margin:22px 0;">
-        <input class="tt-code-input" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••••" autofocus required>
+        <input class="tt-code-input" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••••" value="{{ prefill_code or '' }}" autofocus required>
         <div style="margin-top:16px;">
           <button type="submit" class="tt-btn">Bestätigen &amp; Test senden</button>
         </div>
@@ -196,7 +211,9 @@
   {% elif state == 'done' %}
     <div class="tt-card" style="border-left:4px solid #16a34a;">
       <h2 style="margin-top:0;">✓ Bestätigt — {{ count }} Test-Mail(s) gehen an dein Postfach</h2>
-      <p class="tt-muted tt-small">Run-ID <code>{{ run_id }}</code> · Absender <code>{{ sender }}</code> → <code>{{ recipient }}</code>. Der Versand läuft im Hintergrund (ein paar Sekunden). Warte 1–5 Min, dann prüfe unten.</p>
+      <p class="tt-muted tt-small">Run-ID <code id="tt-runid">{{ run_id }}</code>
+        <button type="button" class="tt-preset" onclick="ttCopy('{{ run_id }}', this)">kopieren</button>
+        · Absender <code>{{ sender }}</code> → <code>{{ recipient }}</code>. Der Versand läuft im Hintergrund (ein paar Sekunden). Warte 1–5 Min, dann prüfe unten.</p>
       <table class="tt-data">
         <thead><tr><th>Fall</th><th>Erwartung</th><th>Wo prüfen</th></tr></thead>
         <tbody>
@@ -229,6 +246,21 @@
 
 {% include "_marketing_footer.html" %}
 
+<script>
+function ttPreset(kind){
+  document.querySelectorAll('input[name=cases]').forEach(function(cb){
+    if(kind==='all') cb.checked = true;
+    else if(kind==='none') cb.checked = false;
+    else cb.checked = (cb.dataset.cat === kind);
+  });
+}
+function ttCopy(txt, el){
+  navigator.clipboard.writeText(txt).then(function(){
+    var o = el.textContent; el.textContent = '✓ kopiert';
+    setTimeout(function(){ el.textContent = o; }, 1500);
+  });
+}
+</script>
 <script src="/static/nav-dropdown.js" defer></script>
 </body>
 </html>

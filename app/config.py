@@ -86,7 +86,9 @@ class Settings(BaseSettings):
     # Wie viele Tests darf eine IP pro Tag starten? Anti-Spam.
     mailtest_max_per_ip_per_day: int = Field(default=20, alias="MAILTEST_MAX_PER_IP_PER_DAY")
     # M365-Threat-Test: wie viele Anfragen pro IP/Tag (jede sendet eine Code-Mail). Anti-Abuse.
-    threattest_max_per_ip_per_day: int = Field(default=5, alias="THREATTEST_MAX_PER_IP_PER_DAY")
+    threattest_max_per_ip_per_day: int = Field(default=25, alias="THREATTEST_MAX_PER_IP_PER_DAY")
+    # IPs, die das Tages-Limit umgehen (kommagetrennt) — z.B. eigene Test-IPs.
+    threattest_ratelimit_exempt_ips: str = Field(default="", alias="THREATTEST_RATELIMIT_EXEMPT_IPS")
 
 
 @lru_cache()

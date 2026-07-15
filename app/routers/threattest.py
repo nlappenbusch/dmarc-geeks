@@ -124,6 +124,26 @@ def landing(request: Request):
     return _render(request, "form")
 
 
+@router.get("/threattest/{token}/verify")
+def verify_landing(token: str, request: Request, code: str = "",
+                   db: Session = Depends(get_db)):
+    """Magic-Link aus der Code-Mail: Verify-Seite mit vorausgefuelltem Code.
+    Reiner GET (kein Versand) -> Safe-Links-Prefetch loest nichts aus."""
+    tt = db.execute(
+        select(ThreatTest).where(ThreatTest.token == token)
+    ).scalars().first()
+    if tt is None:
+        return _render(request, "form",
+                       error="Anfrage nicht gefunden. Bitte neu starten.")
+    if tt.sent_at is not None:
+        return _render(request, "done", **_done_ctx(tt))
+    if datetime.now(timezone.utc) > tt.expires_at:
+        return _render(request, "form",
+                       error="Der Code ist abgelaufen. Bitte neu starten.")
+    return _render(request, "verify", token=token, recipient=tt.recipient,
+                   ttl=CODE_TTL_MIN, prefill_code=code)
+
+
 @router.post("/threattest/request")
 async def request_code(request: Request, db: Session = Depends(get_db)):
     """Anfrage validieren, Row anlegen, Bestaetigungs-Code ans Ziel senden."""
@@ -154,19 +174,21 @@ async def request_code(request: Request, db: Session = Depends(get_db)):
                        error="Fuer den Impersonation-Fall bitte den Anzeigenamen "
                              "des zu testenden Users angeben.")
 
-    # Rate-Limit pro IP/Tag (jede Anfrage sendet eine Code-Mail).
+    # Rate-Limit pro IP/Tag (jede Anfrage sendet eine Code-Mail). Exempt-IPs umgehen es.
     ip = request.client.host if request.client else "-"
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
-                                               microsecond=0)
-    n_today = db.execute(
-        select(ThreatTest).where(ThreatTest.requester_ip == ip,
-                                 ThreatTest.created_at >= today)
-    ).scalars().all()
-    if len(n_today) >= s.threattest_max_per_ip_per_day:
-        return _render(request, "form",
-                       error=f"Tages-Limit erreicht "
-                             f"({s.threattest_max_per_ip_per_day} Anfragen/Tag). "
-                             "Bitte morgen wieder.")
+    exempt = {x.strip() for x in s.threattest_ratelimit_exempt_ips.split(",") if x.strip()}
+    if ip not in exempt:
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
+                                                   microsecond=0)
+        n_today = db.execute(
+            select(ThreatTest).where(ThreatTest.requester_ip == ip,
+                                     ThreatTest.created_at >= today)
+        ).scalars().all()
+        if len(n_today) >= s.threattest_max_per_ip_per_day:
+            return _render(request, "form",
+                           error=f"Tages-Limit erreicht "
+                                 f"({s.threattest_max_per_ip_per_day} Anfragen/Tag). "
+                                 "Bitte morgen wieder.")
 
     token = secrets.token_urlsafe(9)
     code = f"{secrets.randbelow(1000000):06d}"
@@ -183,19 +205,35 @@ async def request_code(request: Request, db: Session = Depends(get_db)):
     db.commit()
 
     # EINZIGE Mail an eine unverifizierte Adresse: der Bestaetigungs-Code.
+    base = (s.base_url or "https://dmarc-geeks.ch").rstrip("/")
+    verify_url = f"{base}/threattest/{token}/verify?code={code}"
     subject = f"DMARC-Geeks Threat-Test — Bestaetigungscode {code}"
     text = (
         "Hallo,\n\n"
         "jemand (hoffentlich du) moechte einen M365-Threat-Policy-Test an dieses\n"
         "Postfach schicken. Damit niemand Fremde beschiessen kann, bestaetige\n"
         f"bitte mit diesem Code:\n\n    {code}\n\n"
-        f"Gib ihn auf der Seite ein. Der Code gilt {CODE_TTL_MIN} Minuten.\n\n"
-        "Erst NACH der Bestaetigung gehen die eigentlichen Test-Mails raus\n"
-        "(harmlose EICAR/GTUBE-Teststrings, kein echter Schadcode).\n\n"
+        f"Oder direkt bestaetigen: {verify_url}\n\n"
+        f"Der Code gilt {CODE_TTL_MIN} Minuten. Erst NACH der Bestaetigung gehen die\n"
+        "eigentlichen Test-Mails raus (harmlose EICAR/GTUBE-Teststrings, kein Schadcode).\n\n"
         "Wenn du das nicht warst: ignoriere diese Mail einfach, dann passiert nichts.\n\n"
         "— DMARC Geeks\n"
     )
-    sent = mail_mod.send_mail(to=recipient, subject=subject, text=text)
+    html = f"""\
+<div style="font-family:-apple-system,Segoe UI,Inter,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#0f172a;">
+  <h2 style="color:#2563eb;margin:0 0 8px;">&#128737; Threat-Test bestätigen</h2>
+  <p style="line-height:1.5;">Jemand (hoffentlich du) möchte einen M365-Threat-Policy-Test an dieses Postfach schicken. Zur Bestätigung, dass es dein Postfach ist:</p>
+  <div style="background:#f1f5f9;border:2px dashed #2563eb;border-radius:12px;padding:20px;text-align:center;margin:18px 0;">
+    <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Dein Code</div>
+    <div style="font:700 34px Menlo,Consolas,monospace;letter-spacing:.3em;color:#2563eb;">{code}</div>
+  </div>
+  <p style="text-align:center;margin:22px 0;">
+    <a href="{verify_url}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:13px 30px;border-radius:8px;font-weight:700;font-size:15px;">&#10003; Bestätigen &amp; Test starten</a>
+  </p>
+  <p style="color:#64748b;font-size:13px;line-height:1.5;">Der Code gilt {CODE_TTL_MIN} Minuten. Erst nach der Bestätigung gehen die Test-Mails raus (harmlose EICAR/GTUBE-Teststrings, kein echter Schadcode). Nicht du? Ignorier diese Mail einfach — dann passiert nichts.</p>
+  <p style="color:#94a3b8;font-size:12px;">DMARC Geeks &middot; dmarc-geeks.ch</p>
+</div>"""
+    sent = mail_mod.send_mail(to=recipient, subject=subject, text=text, html=html)
     if not sent:
         return _render(request, "form", recipient=recipient,
                        error="Konnte den Bestaetigungs-Code nicht an diese "
