@@ -125,6 +125,7 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
     from .. import mail as mail_mod
     from ..config import get_settings
     from ..rate_limit import mail_limiter
+    from ..form_guard import client_ip, token_ok
 
     form = await request.form()
     name = (form.get("name") or "").strip()
@@ -135,8 +136,8 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
     topic = (form.get("topic") or "general").strip().lower()
     honeypot = (form.get("website") or "").strip()  # bots fill this
 
-    # Honeypot: Bots tappen rein
-    if honeypot:
+    # Honeypot und Zeitfalle: Bots bekommen still "gesendet" zu sehen
+    if honeypot or not token_ok(form.get("ft")):
         return RedirectResponse("/kontakt?sent=1", status_code=303)
 
     # Validierung
@@ -159,7 +160,7 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
         )
 
     # Rate-Limit pro IP -- 5 Mails / 10 min
-    ip = request.client.host if request.client else "anon"
+    ip = client_ip(request)
     if not mail_limiter.take(f"contact:{ip}"):
         return render(
             request, "kontakt.html",
@@ -213,30 +214,10 @@ async def contact_submit(request: Request, db: Session = Depends(get_db)):
         text=op_text, html=op_html, reply_to=email,
     )
 
-    # === Mail 2: Lead-Confirmation (fancy HTML mit Branding) ===
-    lead_html = mail_mod.render_email(
-        "contact_confirmation",
-        name=name, email=email, company=company,
-        topic_label=_topic_label(topic), message=message,
-        base_url=s.base_url.rstrip("/"),
-        brand_name="DMARC Geeks", brand_color="#2563eb", brand_logo=None,
-    )
-    lead_text = (
-        f"Hallo {name},\n\n"
-        f"danke fuer deine Anfrage zu \"{_topic_label(topic)}\" auf dmarc-geeks.ch!\n"
-        f"Wir melden uns innerhalb von 24 Stunden bei dir per E-Mail.\n\n"
-        f"Deine Nachricht:\n-----------\n{message}\n-----------\n\n"
-        f"Inzwischen kannst du dir die Live-Demo ansehen:\n"
-        f"{s.base_url.rstrip('/')}/demo\n\n"
-        f"Antworten auf diese Mail gehen direkt in unser Postfach -- schreib einfach "
-        f"zurueck wenn du etwas vergessen hast.\n\n"
-        f"Liebe Gruesse\nDMARC Geeks\n"
-    )
-    # Lead-Confirmation: kein Reply-To noetig, Replies gehen via SMTP_FROM zurueck an uns.
-    mail_mod.send_mail(
-        to=email, subject="Wir haben deine Anfrage erhalten - DMARC Geeks",
-        text=lead_text, html=lead_html,
-    )
+    # Keine Bestaetigungsmail an die eingegebene Adresse: Bots tragen fremde
+    # Adressen ein, und wir wuerden sonst Spam an Unbeteiligte schicken
+    # (Vorfall 09/2026, 1119 Mails an Gmail-Adressen). Die Bestaetigung
+    # zeigt die Seite nach dem Absenden.
 
     # Operator-Mail ist die "Pflicht-Sendung" -- wenn die scheitert, Fehler zeigen.
     sent = op_sent

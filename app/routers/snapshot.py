@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..dns_utils import full_dns_check, score_check
+from ..form_guard import client_ip, outbound_limiter, token_ok
 from ..models import LeadSnapshot
 from ..rate_limit import mail_limiter
 from ..templating import render
@@ -84,8 +85,8 @@ async def snapshot_submit(request: Request, db: Session = Depends(get_db)):
     consent = bool(form.get("consent"))
     honeypot = (form.get("website") or "").strip()
 
-    # Honeypot: Bots fuellen alles aus, Menschen lassen das (hidden) Feld leer
-    if honeypot:
+    # Honeypot und Zeitfalle: Bots fuellen alles aus bzw. schicken sofort ab
+    if honeypot or not token_ok(form.get("ft")):
         log.info("snapshot honeypot triggered, ip=%s", request.client.host if request.client else "-")
         return RedirectResponse("/snapshot?sent=1", status_code=303)
 
@@ -119,10 +120,10 @@ async def snapshot_submit(request: Request, db: Session = Depends(get_db)):
         )
 
     # Rate-Limit pro IP -- nicht 50 Snapshots am Stueck
-    ip = request.client.host if request.client else "-"
-    xff = request.headers.get("x-forwarded-for", "")
-    real_ip = xff.split(",")[0].strip() if xff else ip
-    if not mail_limiter.take(f"snapshot:{real_ip}"):
+    real_ip = client_ip(request)
+    # Dazu eine Obergrenze ueber alle IPs: der Bericht geht an eine vom
+    # Besucher eingegebene Adresse, rotierende Bot-IPs duerfen keine Welle ausloesen.
+    if not mail_limiter.take(f"snapshot:{real_ip}") or not outbound_limiter.take("snapshot"):
         return render(
             request, "snapshot.html",
             user=None, tenant=None, active="snapshot",

@@ -219,6 +219,7 @@
     </div>
 
     <!-- Honeypot: bots fuellen das, Menschen sehen es nicht -->
+    <input type="hidden" name="ft" value="{{ form_token() }}">
     <div class="honeypot" aria-hidden="true">
       <label>Webseite (bitte leer lassen)<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
     </div>

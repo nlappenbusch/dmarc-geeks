@@ -87,5 +87,13 @@ def _delegation_record_name(customer_domain: str, our_zone: str) -> str:
 templates.env.globals["delegation_record_name"] = _delegation_record_name
 
 
+def _form_token() -> str:
+    from .form_guard import form_token
+    return form_token()
+
+
+templates.env.globals["form_token"] = _form_token
+
+
 def render(request: Request, template: str, **context):
     return templates.TemplateResponse(request, template, context)
