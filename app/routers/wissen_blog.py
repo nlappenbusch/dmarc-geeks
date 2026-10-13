@@ -77,6 +77,7 @@ _STATIC_URLS = [
     ("/vergleich", "monthly", 0.85),
     ("/check", "weekly", 0.85),
     ("/mailtest", "weekly", 0.85),
+    ("/threattest", "weekly", 0.85),
     ("/dkim-check", "monthly", 0.7),
     ("/bimi-generator", "monthly", 0.7),
     ("/dmarc-generator", "monthly", 0.7),
