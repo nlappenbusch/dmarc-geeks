@@ -2,6 +2,10 @@
 
 Reliability features:
 - Multi-resolver: rotates through Cloudflare/Google/Quad9 + system default
+- Public Spamhaus zones (no DQS key) are only queried through resolvers that
+  pass the RFC 5782 test point (127.0.0.2). Spamhaus refuses public/open
+  resolvers with 127.255.255.254 and some (Google) even answer NXDOMAIN for
+  the test point — both would otherwise turn into false hits / false cleans.
 - Retries with exponential backoff
 - 1h in-process cache (avoid hammering rate-limited DNSBLs)
 - Optional Spamhaus DQS-Auth-Code: queries go through *.dq.spamhaus.net which
@@ -199,16 +203,69 @@ def _reverse_ip(ip: str) -> Optional[str]:
     return ".".join(reversed(str(addr).split(".")))
 
 
-def _resolve_with_retry(qname: str, rdtype: str = "A") -> Optional[list]:
+def _is_listing_code(code: str) -> bool:
+    """Only 127.0.0.0/8 return codes mean "listed". Spamhaus answers
+    127.255.255.252/254/255 when it refuses the query (public resolver,
+    rate limit, bad DQS key) — that is an error, not a listing."""
+    return code.startswith("127.") and not code.startswith("127.255.255.")
+
+
+def _is_public_spamhaus(zone: str) -> bool:
+    """Spamhaus zones queried without DQS key (CBL is operated by Spamhaus)."""
+    return zone.endswith(".spamhaus.org") or zone == "cbl.abuseat.org"
+
+
+# Test-point verdict per (zone, resolver index): (timestamp, usable?)
+_PROBE_CACHE: dict[tuple[str, int], tuple[float, bool]] = {}
+_PROBE_TTL = 1800  # 30 min
+_WARNED: dict[str, float] = {}  # zone -> last "all resolvers blocked" warning
+
+
+def _probe_resolver(zone: str, idx: int) -> bool:
+    """RFC 5782 test point: 2.0.0.127.<zone> must return a listing code.
+    A resolver that answers NXDOMAIN or 127.255.255.x here is blocked by
+    Spamhaus and its answers for real IPs are worthless."""
+    cached = _PROBE_CACHE.get((zone, idx))
+    if cached and time.time() - cached[0] < _PROBE_TTL:
+        return cached[1]
+    try:
+        answers = _RESOLVERS[idx].resolve(f"2.0.0.127.{zone}", "A", lifetime=4.0)
+        ok = any(_is_listing_code(str(a)) for a in answers)
+    except Exception:  # noqa: BLE001
+        ok = False
+    _PROBE_CACHE[(zone, idx)] = (time.time(), ok)
+    return ok
+
+
+def _resolvers_for(zone: str) -> list[dns.resolver.Resolver]:
+    if not _is_public_spamhaus(zone):
+        return list(_RESOLVERS)
+    usable = [r for i, r in enumerate(_RESOLVERS) if _probe_resolver(zone, i)]
+    if not usable and time.time() - _WARNED.get(zone, 0) > _PROBE_TTL:
+        _WARNED[zone] = time.time()
+        log.warning("DNSBL %s: no resolver passes the Spamhaus test point "
+                    "(all blocked) — zone skipped. Set SPAMHAUS_DQS_KEY.", zone)
+    return usable
+
+
+def _resolve_with_retry(qname: str, rdtype: str = "A",
+                        resolvers: Optional[list[dns.resolver.Resolver]] = None) -> Optional[list]:
     """Try resolving a name across all resolvers, with backoff between resolvers.
 
     Returns list of answers, or None on definitive NXDOMAIN/NoAnswer.
-    Raises last exception if all resolvers fail with errors (timeout etc.).
+    An A-answer consisting only of refusal codes (127.255.255.x) moves on to
+    the next resolver. Raises last exception if all resolvers fail with
+    errors (timeout, refusal etc.).
     """
     last_err: Optional[Exception] = None
-    for i, r in enumerate(_RESOLVERS):
+    pool = _RESOLVERS if resolvers is None else resolvers
+    for i, r in enumerate(pool):
         try:
-            return list(r.resolve(qname, rdtype, lifetime=4.0))
+            answers = list(r.resolve(qname, rdtype, lifetime=4.0))
+            if rdtype == "A" and not any(_is_listing_code(str(a)) for a in answers):
+                last_err = RuntimeError(f"refused: {[str(a) for a in answers]}")
+                continue
+            return answers
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             return None  # definitive: not listed (return rather than retry)
         except (dns.resolver.NoNameservers, dns.exception.Timeout) as e:
@@ -242,9 +299,12 @@ def check_ip(ip: str, lists: Optional[Iterable[tuple[str, str, int]]] = None) ->
                 hits.append(cached_val)
             continue
 
+        resolvers = _resolvers_for(zone)
+        if not resolvers:
+            continue  # no trustworthy resolver — neither listed nor clean
         qname = f"{rev}.{zone}"
         try:
-            answers = _resolve_with_retry(qname, "A")
+            answers = _resolve_with_retry(qname, "A", resolvers)
         except Exception as e:  # noqa: BLE001
             log.debug("DNSBL %s unreachable for %s: %s — skipped (no clean/listed claim)",
                       zone, ip, e)
@@ -256,10 +316,14 @@ def check_ip(ip: str, lists: Optional[Iterable[tuple[str, str, int]]] = None) ->
             _cache_set(cache_key, None)
             continue
 
-        codes = [str(r) for r in answers]
+        codes = [str(r) for r in answers if _is_listing_code(str(r))]
+        if not codes:
+            log.debug("DNSBL %s refused/odd answer for %s: %s — skipped",
+                      zone, ip, [str(r) for r in answers])
+            continue
         txt = ""
         try:
-            txt_answers = _resolve_with_retry(qname, "TXT")
+            txt_answers = _resolve_with_retry(qname, "TXT", resolvers)
             if txt_answers:
                 txt = " ".join("".join(b.decode("utf-8", errors="replace") for b in r.strings)
                                for r in txt_answers)[:200]
@@ -277,6 +341,7 @@ def cache_clear() -> int:
     """Clear the lookup cache. Returns number of entries dropped."""
     n = len(_CACHE)
     _CACHE.clear()
+    _PROBE_CACHE.clear()
     return n
 
 
